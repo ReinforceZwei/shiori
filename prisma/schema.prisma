@@ -14,11 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Collection {
-  id   Int    @id @default(autoincrement())
-  name String
-}
-
 model User {
   id            String    @id
   name          String
@@ -29,6 +24,9 @@ model User {
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]
+
+  Bookmark   Bookmark[]
+  Collection Collection[]
 
   @@unique([email])
   @@map("user")
@@ -77,4 +75,42 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+model WebsiteIcon {
+  id        String   @id @default(uuid())
+  data      Bytes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Bookmark Bookmark?
+}
+
+model Bookmark {
+  id            String       @id @default(uuid())
+  title         String
+  url           String
+  description   String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection    Collection?  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  collectionId  Int?
+  websiteIconId String?      @unique
+  websiteIcon   WebsiteIcon? @relation(fields: [websiteIconId], references: [id], onDelete: Cascade)
+}
+
+model Collection {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  color         String?
+  bookmarkOrder Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  Bookmark Bookmark[]
 }
