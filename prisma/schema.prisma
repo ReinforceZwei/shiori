@@ -96,13 +96,13 @@ model Bookmark {
   userId        String
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   collection    Collection?  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  collectionId  Int?
+  collectionId  String?
   websiteIconId String?      @unique
   websiteIcon   WebsiteIcon? @relation(fields: [websiteIconId], references: [id], onDelete: Cascade)
 }
 
 model Collection {
-  id            Int      @id @default(autoincrement())
+  id            String   @id @default(uuid())
   name          String
   description   String?
   color         String?

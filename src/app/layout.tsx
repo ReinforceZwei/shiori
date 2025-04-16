@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
+import ShioriModalProvider from '@/lib/component/provider/ShioriModalProvider'
 import "./globals.css";
 
 
@@ -35,8 +36,10 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <MantineProvider>
-          <Notifications position='top-right' />
-          {children}
+          <ShioriModalProvider>
+            <Notifications position='top-right' />
+            {children}
+          </ShioriModalProvider>
         </MantineProvider>
       </body>
     </html>
