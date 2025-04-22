@@ -1,7 +1,7 @@
 'use client';
 import { ModalsProvider } from '@mantine/modals';
-import NewBookmarkModal from '@/features/bookmark/component/modal/NewBookmarkModal';
-import NewCollectionModal from '@/features/bookmark/collection/modal/NewCollectionModal';
+import NewBookmarkModal from '@/features/bookmark/modal/NewBookmarkModal';
+import NewCollectionModal from '@/features/collection/modal/NewCollectionModal';
 
 const shioriModals = {
   newBookmark: NewBookmarkModal,

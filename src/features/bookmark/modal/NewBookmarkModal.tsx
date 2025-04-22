@@ -2,7 +2,7 @@ import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
 import NewBookmarkForm from '../form/NewBookmarkForm';
-import { createBookmark } from '../../api';
+import { createBookmark } from '../api';
 
 const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps) => {
   const handleSubmit = async (values: any) => {

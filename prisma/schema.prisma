@@ -25,8 +25,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  Bookmark   Bookmark[]
-  Collection Collection[]
+  bookmark   Bookmark[]
+  collection Collection[]
 
   @@unique([email])
   @@map("user")
@@ -83,7 +83,7 @@ model WebsiteIcon {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Bookmark Bookmark?
+  bookmark Bookmark?
 }
 
 model Bookmark {
@@ -116,5 +116,5 @@ model Collection {
   parent        Collection?  @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
   children      Collection[] @relation("ParentChild")
 
-  Bookmark Bookmark[]
+  bookmark Bookmark[]
 }

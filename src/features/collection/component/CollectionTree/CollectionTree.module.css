@@ -1,0 +1,45 @@
+/* Add modern styling for the CollectionTree component */
+.treeNode {
+  display: flex;
+  align-items: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.1s;
+  cursor: pointer;
+}
+
+.treeNode:hover {
+  background-color: var(--mantine-primary-color-light-hover);
+}
+
+.treeNode:last-child {
+  border-bottom: none;
+}
+
+.treeNodeRoot {
+  border-bottom: 1px solid #ddd;
+}
+.treeNodeRoot:last-child {
+  border-bottom: none;
+}
+
+.treeNodeLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.treeNodeIcon {
+  width: 20px; /* Fixed width for alignment */
+  margin-left: 13px;
+}
+
+.treeRoot {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.actionButtonNoTransform {
+  transform: none !important;
+}

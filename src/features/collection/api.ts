@@ -2,29 +2,32 @@
 import { getUser } from "@/lib/auth";
 import { prisma, Prisma } from "@/lib/prisma";
 
-export async function getCollections() {
+export async function getCollections(include?: Prisma.CollectionInclude) {
   const user = await getUser();
   if (!user) {
     throw new Error('Unauthorized');
   }
   const collections = await prisma.collection.findMany({
     where: { userId: user.id },
+    include,
   });
   return collections;
 }
 
-export async function getCollection(id: string) {
+export async function getCollection(id: string, include?: Prisma.CollectionInclude) {
   const user = await getUser();
   if (!user) {
     throw new Error('Unauthorized');
   }
   const collection = await prisma.collection.findUnique({
     where: { id, userId: user.id },
+    include,
   });
   return collection;
 }
 
-export async function createCollection(data: Prisma.CollectionCreateInput) {
+export type CreateCollectionInput = Pick<Prisma.CollectionCreateInput, 'name' | 'description' | 'color' | 'parent'>
+export async function createCollection(data: CreateCollectionInput) {
   const user = await getUser();
   if (!user) {
     throw new Error('Unauthorized');
@@ -40,7 +43,7 @@ export async function createCollection(data: Prisma.CollectionCreateInput) {
   return collection;
 }
 
-export async function updateCollection(id: string, data: any) {
+export async function updateCollection(id: string, data: Prisma.CollectionUpdateInput) {
   const user = await getUser();
   if (!user) {
     throw new Error('Unauthorized');

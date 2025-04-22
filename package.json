@@ -19,6 +19,7 @@
     "@mantine/notifications": "^7.17.4",
     "@prisma/client": "^6.6.0",
     "@tabler/icons-react": "^3.31.0",
+    "@tanstack/react-query": "^5.74.3",
     "better-auth": "^1.2.5",
     "dayjs": "^1.11.13",
     "next": "15.2.4",
