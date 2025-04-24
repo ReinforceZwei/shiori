@@ -17,6 +17,10 @@
   border-bottom: none;
 }
 
+.treeNode:where([data-selected]) {
+  background-color: var(--mantine-primary-color-light-hover);
+}
+
 .treeNodeRoot {
   border-bottom: 1px solid #ddd;
 }
@@ -32,7 +36,7 @@
 
 .treeNodeIcon {
   width: 20px; /* Fixed width for alignment */
-  margin-left: 13px;
+  margin-left: 8px;
 }
 
 .treeRoot {
@@ -42,4 +46,19 @@
 
 .actionButtonNoTransform {
   transform: none !important;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.loading:last-child {
+  border-bottom: none;
+}
+
+.loadingLabel {
+  margin-left: 13px;
 }

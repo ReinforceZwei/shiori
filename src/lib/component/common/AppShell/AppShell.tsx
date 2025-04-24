@@ -1,7 +1,8 @@
 "use client";
 
-import { AppShell as MantineAppShell, Burger, Title, Group } from '@mantine/core';
+import { AppShell as MantineAppShell, Burger, Title, Group, NavLink } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import Link from 'next/link';
 
 export default function AppShell({
   children,
@@ -31,9 +32,12 @@ export default function AppShell({
         </Group>
       </MantineAppShell.Header>
 
-      <MantineAppShell.Navbar p="md">Navbar</MantineAppShell.Navbar>
+      <MantineAppShell.Navbar p="md">
+      <NavLink component={Link} href='/' label="Home" leftSection={<span>📁</span>} />
+        <NavLink component={Link} href='/collection' label="Collection" leftSection={<span>📁</span>} />
+      </MantineAppShell.Navbar>
 
-      <MantineAppShell.Main>{children}</MantineAppShell.Main>
+      <MantineAppShell.Main h='100dvh'>{children}</MantineAppShell.Main>
     </MantineAppShell>
   );
 }

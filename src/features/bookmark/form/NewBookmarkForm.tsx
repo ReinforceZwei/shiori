@@ -1,9 +1,10 @@
 import { useForm } from '@mantine/form';
 import { TextInput, Button, Box } from '@mantine/core';
 
-interface NewBookmarkFormValues {
+export interface NewBookmarkFormValues {
   title: string;
   url: string;
+  collectionId?: string;
 }
 
 export default function NewBookmarkForm({ onSubmit }: { onSubmit: (values: NewBookmarkFormValues) => void }) {
@@ -11,6 +12,7 @@ export default function NewBookmarkForm({ onSubmit }: { onSubmit: (values: NewBo
     initialValues: {
       title: '',
       url: '',
+      collectionId: '',
     },
 
     validate: {
@@ -37,6 +39,12 @@ export default function NewBookmarkForm({ onSubmit }: { onSubmit: (values: NewBo
           placeholder="Enter bookmark title"
           {...form.getInputProps('title')}
           required
+        />
+
+        <TextInput
+          label="Collection ID"
+          placeholder="Enter collection ID (optional)"
+          {...form.getInputProps('collectionId')}
         />
 
         <Button type="submit" fullWidth mt="xl" loading={form.submitting}>

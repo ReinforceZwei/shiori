@@ -1,24 +1,31 @@
-'use client';
-
-import { useEffect, useState } from "react";
-import { getBookmarks } from "../../api";
 import styles from "./BookmarkList.module.css";
+import { Prisma } from "@/generated/prisma";
+import BookmarkItem from "../BookmarkItem/BookmarkItem";
+import { BookmarkItemLoading } from "../BookmarkItem/BookmarkItem";
 
-export default function BookmarkList() {
-  const [bookmarks, setBookmarks] = useState<any[]>([]);
-  useEffect(() => {
-    getBookmarks().then((bookmarks) => {
-      setBookmarks(bookmarks);
-    });
-  }, []);
+interface BookmarkListProps {
+  bookmarks?: Prisma.BookmarkGetPayload<{}>[];
+}
+
+export default function BookmarkList({ bookmarks }: BookmarkListProps) {
+  if (!bookmarks || bookmarks.length === 0) {
+    return null;
+  }
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Bookmark List</h1>
-      <ul className={styles.list}>
-        {bookmarks.map((bookmark) => (
-          <li key={bookmark.id} className={styles.listItem}>{bookmark.title}</li>
-        ))}
-      </ul>
-    </div>
+    <ul className={styles.list}>
+      {bookmarks.map((bookmark) => (
+        <BookmarkItem key={bookmark.id} bookmark={bookmark} />
+      ))}
+    </ul>
+  );
+}
+
+export function BookmarkListLoading() {
+  return (
+    <ul className={styles.list}>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <BookmarkItemLoading key={index} />
+      ))}
+    </ul>
   );
 }

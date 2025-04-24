@@ -1,13 +1,22 @@
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import NewBookmarkForm from '../form/NewBookmarkForm';
+import NewBookmarkForm, { NewBookmarkFormValues } from '../form/NewBookmarkForm';
 import { createBookmark } from '../api';
+import { Prisma } from '@/generated/prisma';
 
 const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps) => {
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: NewBookmarkFormValues) => {
     try {
-      await createBookmark(values);
+      const data: Partial<Prisma.BookmarkCreateInput> = {
+        title: values.title,
+        url: values.url,
+      };
+      if (values.collectionId) {
+        data.collection = { connect: { id: values.collectionId } };
+      }
+      await createBookmark(data as Prisma.BookmarkCreateInput);
+      context.closeModal(id);
     } catch (error) {
       console.error('Error creating bookmark:', error);
       notifications.show({
@@ -17,7 +26,6 @@ const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps) => {
         icon: <IconAlertSquareRounded />,
       });
     }
-    context.closeModal(id);
   }
   return (
     <NewBookmarkForm

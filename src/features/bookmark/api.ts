@@ -13,6 +13,20 @@ export async function getBookmarks() {
   return bookmarks;
 }
 
+export async function queryBookmarks(query: Prisma.BookmarkWhereInput) {
+  const user = await getUser();
+  if (!user) {
+    throw new Error('Unauthorized');
+  }
+  const bookmarks = await prisma.bookmark.findMany({
+    where: {
+      ...query,
+      userId: user.id,
+    },
+  });
+  return bookmarks;
+}
+
 export async function getBookmark(id: string) {
   const user = await getUser();
   if (!user) {
