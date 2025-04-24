@@ -1,9 +1,6 @@
 'use client';
-import { Group } from "@mantine/core";
-import { getCollections } from "@/features/collection/api";
 import CollectionSideNav from "@/lib/component/collection/CollectionSideNav/CollectionSideNav";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 
 export default function CollectionLayout({
   children,

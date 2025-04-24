@@ -1,13 +1,10 @@
 'use client';
 import BookmarkList from "@/features/bookmark/component/BookmarkList/BookmarkList";
 import { BookmarkListLoading } from "@/features/bookmark/component/BookmarkList/BookmarkList";
-import { getCollection } from "@/features/collection/api";
 import { Prisma } from "@/generated/prisma";
 import { Alert, Skeleton } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-
-type CollectionWithBookmarks = Prisma.CollectionGetPayload<{ include: { bookmark: true } }>;
+import { useCollectionIncludeQuery } from "@/features/collection/hook";
 
 export function CollectionBookmarksPageLoading() {
   return (
@@ -21,10 +18,10 @@ export function CollectionBookmarksPageLoading() {
 
 export default function CollectionBookmarksPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: collection, isPending, isLoadingError, error } = useQuery({
-    queryKey: ["collection", id],
-    queryFn: () => getCollection(id, { bookmark: true }) as unknown as CollectionWithBookmarks,
-  })
+  const { data: collection, isPending, isLoadingError, error } = useCollectionIncludeQuery({
+    id,
+    include: { bookmark: true },
+  });
   if (isPending) {
     return <CollectionBookmarksPageLoading />;
   }

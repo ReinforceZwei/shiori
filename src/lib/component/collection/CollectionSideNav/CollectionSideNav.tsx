@@ -1,7 +1,5 @@
 'use client';
-import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { getCollections } from "@/features/collection/api";
 import CollectionTree, {
   TreeNodeEventHandler,
   Loading as CollectionTreeLoading,
@@ -10,6 +8,7 @@ import { Prisma } from "@/generated/prisma";
 import { useEffect, useRef, useState } from "react";
 import { Alert, UseTreeReturnType } from "@mantine/core";
 import ItemButton from "../../common/ItemButton/ItemButton";
+import { useAllCollectionsQuery } from "@/features/collection/hook";
 
 function getAllParentIds(id: string, collections: Prisma.CollectionGetPayload<{}>[]): string[] {
   const collection = collections.find((collection) => collection.id === id);
@@ -17,17 +16,11 @@ function getAllParentIds(id: string, collections: Prisma.CollectionGetPayload<{}
   return [collection.parentId, ...getAllParentIds(collection.parentId, collections)];
 }
 
-interface CollectionSideNavProps {
-  //collections: Prisma.CollectionGetPayload<{}>[];
-}
-export default function CollectionSideNav(props: CollectionSideNavProps) {
+export default function CollectionSideNav() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const treeRef = useRef<UseTreeReturnType>(null);
-  const { data: collections, refetch, isPending, isLoadingError, error } = useQuery({
-    queryKey: ['collections'],
-    queryFn: () => getCollections(),
-  });
+  const { data: collections, refetch, isPending, isLoadingError, error } = useAllCollectionsQuery();
   const [uncategorizeActive, setUncategorizeActive] = useState(id === undefined);
 
   useEffect(() => {

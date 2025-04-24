@@ -1,13 +1,9 @@
 'use client';
-import { queryBookmarks } from "@/features/bookmark/api";
 import BookmarkList, { BookmarkListLoading } from "@/features/bookmark/component/BookmarkList/BookmarkList";
-import { useQuery } from "@tanstack/react-query";
+import { useQueryBookmarksQuery } from "@/features/bookmark/hook";
 
 export default function CollectionPage() {
-  const { data: bookmarks, isPending } = useQuery({
-    queryKey: ["bookmarks"],
-    queryFn: () => queryBookmarks({ collectionId: null }),
-  })
+  const { data: bookmarks, isPending } = useQueryBookmarksQuery({ collectionId: null })
   return (
     <div>
       <h1>Collection</h1>

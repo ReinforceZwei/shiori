@@ -3,18 +3,13 @@ import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import { useQuery } from '@tanstack/react-query';
 import NewCollectionForm, { NewCollectionFormValues } from '../form/NewCollectionForm';
-import { createCollection, getCollections } from '../api';
 import { Prisma } from '@/generated/prisma';
-
-type CollectionWithParent = Prisma.CollectionGetPayload<{ include: { parent: true }}>
+import { useAllCollectionsQuery, useCreateCollectionMutation } from '../hook';
 
 const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
-  const { data: collections, refetch, isPending } = useQuery({
-    queryKey: ['collections'],
-    queryFn: () => getCollections({ parent: true }) as unknown as CollectionWithParent[],
-  });
+  const { data: collections, refetch, isPending } = useAllCollectionsQuery();
+  const { mutateAsync: createCollection } = useCreateCollectionMutation();
   const handleSubmit = async (values: NewCollectionFormValues) => {
     try {
       const data: Partial<Prisma.CollectionCreateInput> = {

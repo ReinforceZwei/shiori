@@ -10,7 +10,7 @@ export interface NewCollectionFormValues {
 
 interface NewCollectionFormProps {
   onSubmit: (values: NewCollectionFormValues) => void;
-  collections: Prisma.CollectionGetPayload<{ include: { parent: true }}>[];
+  collections: Prisma.CollectionGetPayload<{}>[];
 }
 
 export default function NewCollectionForm({ onSubmit, collections }: NewCollectionFormProps) {
