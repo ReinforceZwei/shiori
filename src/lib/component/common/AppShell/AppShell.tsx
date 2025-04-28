@@ -1,6 +1,6 @@
 "use client";
 
-import { AppShell as MantineAppShell, Burger, Title, Group, NavLink } from '@mantine/core';
+import { AppShell as MantineAppShell, Burger, Title, Group, NavLink, Tabs } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import Link from 'next/link';
 
@@ -21,7 +21,8 @@ export default function AppShell({
       padding="md"
     >
       <MantineAppShell.Header>
-        <Group h='100%' px="md">
+        <Group h='100%' px="md" justify='space-between'>
+          <Group>
           <Burger
             opened={opened}
             onClick={toggle}
@@ -29,6 +30,15 @@ export default function AppShell({
             //size="sm"
           />
           <Title order={2}>Shiori</Title>
+          </Group>
+          <Group>
+            <Tabs defaultValue="bookmarks" variant="pills">
+              <Tabs.List>
+                <Tabs.Tab value="bookmarks">Bookmarks</Tabs.Tab>
+                <Tabs.Tab value="collections">Collections</Tabs.Tab>
+              </Tabs.List>
+            </Tabs>
+          </Group>
         </Group>
       </MantineAppShell.Header>
 

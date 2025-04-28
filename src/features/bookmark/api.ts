@@ -1,11 +1,12 @@
 'use server';
+import { unauthorized } from 'next/navigation';
 import { getUser } from "@/lib/auth";
 import { prisma, Prisma } from "@/lib/prisma";
 
 export async function getBookmarks() {
   const user = await getUser();
   if (!user) {
-    throw new Error('Unauthorized');
+    return unauthorized();
   }
   const bookmarks = await prisma.bookmark.findMany({
     where: { userId: user.id },
@@ -13,16 +14,17 @@ export async function getBookmarks() {
   return bookmarks;
 }
 
-export async function queryBookmarks(query: Prisma.BookmarkWhereInput) {
+export async function queryBookmarks(query: Prisma.BookmarkWhereInput, include?: Prisma.BookmarkInclude) {
   const user = await getUser();
   if (!user) {
-    throw new Error('Unauthorized');
+    return unauthorized();
   }
   const bookmarks = await prisma.bookmark.findMany({
     where: {
       ...query,
       userId: user.id,
     },
+    include,
   });
   return bookmarks;
 }
@@ -30,7 +32,7 @@ export async function queryBookmarks(query: Prisma.BookmarkWhereInput) {
 export async function getBookmark(id: string) {
   const user = await getUser();
   if (!user) {
-    throw new Error('Unauthorized');
+    return unauthorized();
   }
   const bookmark = await prisma.bookmark.findUnique({
     where: { id, userId: user.id },
@@ -41,7 +43,7 @@ export async function getBookmark(id: string) {
 export async function createBookmark(data: Prisma.BookmarkCreateInput) {
   const user = await getUser();
   if (!user) {
-    throw new Error('Unauthorized');
+    return unauthorized();
   }
   const bookmark = await prisma.bookmark.create({
     data: {
@@ -57,7 +59,7 @@ export async function createBookmark(data: Prisma.BookmarkCreateInput) {
 export async function updateBookmark(id: string, data: any) {
   const user = await getUser();
   if (!user) {
-    throw new Error('Unauthorized');
+    return unauthorized();
   }
   const bookmark = await prisma.bookmark.update({
     where: { id, userId: user.id },
@@ -69,7 +71,7 @@ export async function updateBookmark(id: string, data: any) {
 export async function deleteBookmark(id: string) {
   const user = await getUser();
   if (!user) {
-    throw new Error('Unauthorized');
+    return unauthorized();
   }
   await prisma.bookmark.delete({
     where: { id, userId: user.id },

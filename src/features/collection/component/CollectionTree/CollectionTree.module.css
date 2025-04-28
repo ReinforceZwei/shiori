@@ -9,7 +9,7 @@
   cursor: pointer;
 }
 
-.treeNode:hover {
+.treeNode:hover:where([data-disabled="false"]) {
   background-color: var(--mantine-primary-color-light-hover);
 }
 
@@ -19,6 +19,12 @@
 
 .treeNode:where([data-selected]) {
   background-color: var(--mantine-primary-color-light-hover);
+}
+
+.treeNode:where([data-disabled="true"]) {
+  cursor: not-allowed;
+  color: var(--mantine-color-dimmed);
+  background-color: var(--mantine-primary-color-0);
 }
 
 .treeNodeRoot {
@@ -31,7 +37,7 @@
 .treeNodeLabel {
   font-size: 14px;
   font-weight: 500;
-  color: #333;
+  /* color: #333; */
 }
 
 .treeNodeIcon {

@@ -30,16 +30,29 @@ function collectionToMantineTreeData(data: Prisma.CollectionGetPayload<{}>[]): T
 }
 
 export type TreeNodeEventHandler = (collectionId: string, treeControl: UseTreeReturnType) => void;
+export type TreeNodeActionRederer = (collectionId: string, treeControl: UseTreeReturnType) => React.ReactNode;
+export type TreeNodeDisableHandler = (collectionId: string, treeControl: UseTreeReturnType) => boolean;
 interface TreeNodeConfig {
   onClick?: TreeNodeEventHandler;
   onSelect?: TreeNodeEventHandler;
+  rightSection?: TreeNodeActionRederer;
+  shouldDisable?: TreeNodeDisableHandler;
   selectOnClick?: boolean;
   selectCheckmark?: boolean;
   allowDeselect?: boolean;
 }
 function renderTreeNode(payload: RenderTreeNodePayload, config: TreeNodeConfig) {
-  const { onClick, onSelect, selectOnClick = true, selectCheckmark = false, allowDeselect = true } = config;
+  const {
+    onClick,
+    onSelect,
+    rightSection,
+    shouldDisable = () => false,
+    selectOnClick = true,
+    selectCheckmark = false,
+    allowDeselect = true
+  } = config;
   const { node, elementProps, hasChildren, expanded, tree, selected } = payload;
+  const disabled = shouldDisable(node.value, tree);
   const toggleExpand: MouseEventHandler = (e) => {
     // prevent node selection when clicking on the expand icon
     e.stopPropagation();
@@ -47,6 +60,7 @@ function renderTreeNode(payload: RenderTreeNodePayload, config: TreeNodeConfig) 
   }
   const toggleSelect: MouseEventHandler = (e) => {
     if (selectOnClick) {
+      if (disabled) return;
       if (selected && allowDeselect) {
         tree.deselect(node.value);
       } else {
@@ -64,6 +78,7 @@ function renderTreeNode(payload: RenderTreeNodePayload, config: TreeNodeConfig) 
       className={`${styles.treeNode} ${elementProps.className}`}
       onClick={toggleSelect}
       justify="space-between"
+      data-disabled={disabled}
     >
       <Group>
         <Group className={styles.treeNodeIcon}>
@@ -79,29 +94,27 @@ function renderTreeNode(payload: RenderTreeNodePayload, config: TreeNodeConfig) 
         <div className={styles.treeNodeLabel}>{node.label}</div>
       </Group>
       <Group pr={8}>
-        <ActionIcon variant="subtle" >
-          <IconEdit />
-        </ActionIcon>
+        <div onClick={(e) => e.stopPropagation()}>
+          {rightSection && rightSection(node.value, tree)}
+        </div>
         {selected && selectCheckmark && <IconCheck size={20} color="green" />}
       </Group>
     </Group>
   );
 }
 
-export interface CollectionTreeProps extends TreeNodeConfig {
+export interface CollectionTreeProps {
   collections: Prisma.CollectionGetPayload<{}>[];
   initialSelected?: string[];
   treeRef?: React.RefObject<UseTreeReturnType | undefined | null>;
+  nodeConfig?: TreeNodeConfig;
 }
 export default function CollectionTree(props: CollectionTreeProps) {
-  const { collections, treeRef, onClick, onSelect, selectOnClick, initialSelected, allowDeselect } = props;
+  const { collections, treeRef, nodeConfig, initialSelected } = props;
   const tree = useTree({
     initialSelectedState: initialSelected || [],
   });
   const treeData = useMemo(() => collectionToMantineTreeData(collections), [collections]);
-  const nodeConfig: TreeNodeConfig = useMemo(() => ({
-    onClick, onSelect, selectOnClick, allowDeselect
-  }), [onClick, onSelect, selectOnClick, allowDeselect]);
 
   useEffect(() => {
     if (treeRef) {
@@ -116,7 +129,7 @@ export default function CollectionTree(props: CollectionTreeProps) {
     <Tree
       tree={tree}
       data={treeData}
-      renderNode={(payload) => renderTreeNode(payload, nodeConfig)}
+      renderNode={(payload) => renderTreeNode(payload, nodeConfig || {})}
       classNames={{
         root: styles.treeRoot,
         node: styles.treeNodeRoot

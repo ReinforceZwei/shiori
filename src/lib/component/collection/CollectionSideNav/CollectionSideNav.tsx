@@ -6,9 +6,12 @@ import CollectionTree, {
 } from "@/features/collection/component/CollectionTree/CollectionTree";
 import { Prisma } from "@/generated/prisma";
 import { useEffect, useRef, useState } from "react";
-import { Alert, UseTreeReturnType } from "@mantine/core";
+import { ActionIcon, Alert, UseTreeReturnType } from "@mantine/core";
+import { modals } from '@mantine/modals';
 import ItemButton from "../../common/ItemButton/ItemButton";
 import { useAllCollectionsQuery } from "@/features/collection/hook";
+import { IconEdit } from "@tabler/icons-react";
+import { EditCollectionFormValues } from "@/features/collection/form/EditCollectionForm";
 
 function getAllParentIds(id: string, collections: Prisma.CollectionGetPayload<{}>[]): string[] {
   const collection = collections.find((collection) => collection.id === id);
@@ -49,6 +52,24 @@ export default function CollectionSideNav() {
     console.log(`Clicked on collection with ID: ${collectionId}`);
     router.push(`/collection/${collectionId}`);
   }
+  const onEditClick: TreeNodeEventHandler = (collectionId, tree) => {
+    console.log(`Clicked on edit collection with ID: ${collectionId}`);
+    const collection = collections?.find((collection) => collection.id === collectionId);
+    if (!collection) return;
+    const initialValues: EditCollectionFormValues = {
+      name: collection.name,
+      description: collection.description || '',
+      parentId: collection.parentId || undefined,
+    };
+    modals.openContextModal({
+      modal: 'editCollection',
+      title: 'Edit Collection',
+      innerProps: {
+        collectionId,
+        initialValues,
+      },
+    });
+  }
   if (isPending) {
     return <CollectionTreeLoading />;
   }
@@ -63,7 +84,19 @@ export default function CollectionSideNav() {
   return (
     <>
     <ItemButton label="未分類" mb={8} style={{paddingInlineStart: '50px'}} active={uncategorizeActive} onClick={onClick} />
-    <CollectionTree collections={collections} onSelect={onTreeSelect} allowDeselect={false} treeRef={treeRef} />
+    <CollectionTree
+      collections={collections}
+      treeRef={treeRef}
+      nodeConfig={{
+        onSelect: onTreeSelect,
+        rightSection: (id, tree) => (
+          <ActionIcon variant="subtle" onClick={() => onEditClick(id, tree)}>
+            <IconEdit />
+          </ActionIcon>
+        ),
+        allowDeselect: false,
+      }}
+    />
     </>
   )
 }
