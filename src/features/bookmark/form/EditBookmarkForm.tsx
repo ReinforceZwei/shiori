@@ -9,31 +9,25 @@ import { Prisma } from '@/generated/prisma';
 import { resizeImage } from '@/lib/utils/image';
 import { useState, useEffect, useRef } from 'react';
 
-export interface NewBookmarkFormValues {
+export interface EditBookmarkFormValues {
   title: string;
   url: string;
   collectionId?: string;
   websiteIcon?: string;
 }
 
-interface NewBookmarkFormProps {
-  onSubmit: (values: NewBookmarkFormValues) => void;
+interface EditBookmarkFormProps {
+  onSubmit: (values: EditBookmarkFormValues) => void;
   collections: Prisma.CollectionGetPayload<{}>[];
-  initialValues?: Partial<NewBookmarkFormValues>;
+  initialValues: EditBookmarkFormValues;
+  bookmarkId: string;
 }
 
-export default function NewBookmarkForm({ onSubmit, collections, initialValues }: NewBookmarkFormProps) {
+export default function EditBookmarkForm({ onSubmit, collections, initialValues, bookmarkId }: EditBookmarkFormProps) {
   const [isMetadataLoading, setIsMetadataLoading] = useState(false);
   const urlInputRef = useRef<HTMLInputElement>(null);
-  const form = useForm<NewBookmarkFormValues>({
-    initialValues: {
-      title: '',
-      url: '',
-      collectionId: '',
-      websiteIcon: '',
-      ...initialValues,
-    },
-
+  const form = useForm<EditBookmarkFormValues>({
+    initialValues,
     validate: {
       title: (value) => (value ? null : 'Title is required'),
       url: (value) => (/^https?:\/\/.+/.test(value) ? null : 'Invalid URL'),
@@ -45,11 +39,6 @@ export default function NewBookmarkForm({ onSubmit, collections, initialValues }
     if (urlInputRef.current) {
       urlInputRef.current.focus();
     }
-    setTimeout(() => {
-      if (urlInputRef.current) {
-        urlInputRef.current.focus();
-      }
-    }, 1);
   }, []);
 
   const handleImageUpload = async (file: File | null) => {
@@ -166,7 +155,7 @@ export default function NewBookmarkForm({ onSubmit, collections, initialValues }
         />
 
         <Button type="submit" fullWidth mt="xl" loading={form.submitting}>
-          Create Bookmark
+          Save Changes
         </Button>
       </form>
     </Box>

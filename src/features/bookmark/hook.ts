@@ -33,8 +33,9 @@ export function useCreateBookmarkMutation() {
     mutationFn: (newBookmark: Prisma.BookmarkCreateInput) => {
       return createBookmark(newBookmark);
     },
-    onSuccess: () => {
+    onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["bookmarks", "*"] });
+      queryClient.invalidateQueries({ queryKey: ["collections", data.collectionId] });
     },
   });
 }
@@ -48,6 +49,7 @@ export function useUpdateBookmarkMutation() {
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["bookmarks", "*"] });
       queryClient.invalidateQueries({ queryKey: ["bookmarks", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["collections", data.collectionId] });
     },
   });
 }
@@ -61,6 +63,8 @@ export function useDeleteBookmarkMutation() {
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["bookmarks", "*"] });
       queryClient.invalidateQueries({ queryKey: ["bookmarks", variables] });
+      // we don't have collection id here, so we need to invalidate all collections
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
     },
   });
 }

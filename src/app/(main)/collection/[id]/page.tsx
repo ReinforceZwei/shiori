@@ -2,9 +2,10 @@
 import BookmarkList from "@/features/bookmark/component/BookmarkList/BookmarkList";
 import { BookmarkListLoading } from "@/features/bookmark/component/BookmarkList/BookmarkList";
 import { Prisma } from "@/generated/prisma";
-import { Alert, Skeleton } from "@mantine/core";
+import { Alert, Button, Skeleton } from "@mantine/core";
 import { useParams } from "next/navigation";
 import { useCollectionIncludeQuery } from "@/features/collection/hook";
+import { modals } from "@mantine/modals";
 
 export function CollectionBookmarksPageLoading() {
   return (
@@ -52,6 +53,18 @@ export default function CollectionBookmarksPage() {
   }
   return (
     <div>
+      <Button
+        mt="xl"
+        onClick={() => modals.openContextModal({
+          modal: 'newBookmark',
+          innerProps: {
+            initialValues: { collectionId: id }
+          },
+          title: 'Create Bookmark'
+        })}
+      >
+        Create Bookmark
+      </Button>
       <h1>{collection.name}</h1>
       { collection.description && <p>{collection.description}</p>}
       <BookmarkList bookmarks={collection.bookmark} />

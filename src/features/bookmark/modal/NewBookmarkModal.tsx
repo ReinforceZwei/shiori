@@ -3,12 +3,13 @@ import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
 import NewBookmarkForm, { NewBookmarkFormValues } from '../form/NewBookmarkForm';
-import { createBookmark } from '../api';
 import { Prisma } from '@/generated/prisma';
 import { useAllCollectionsQuery } from '@/features/collection/hook';
+import { useCreateBookmarkMutation } from '../hook';
 
-const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps) => {
+const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initialValues?: { collectionId?: string }}>) => {
   const { data: collections, isPending } = useAllCollectionsQuery();
+  const { mutateAsync: createBookmark } = useCreateBookmarkMutation();
 
   const handleSubmit = async (values: NewBookmarkFormValues) => {
     try {
@@ -55,6 +56,7 @@ const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps) => {
       <NewBookmarkForm
         onSubmit={handleSubmit}
         collections={collections || []}
+        initialValues={innerProps.initialValues}
       />
     </Box>
   );

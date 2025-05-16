@@ -3,11 +3,13 @@ import { ModalsProvider } from '@mantine/modals';
 import NewBookmarkModal from '@/features/bookmark/modal/NewBookmarkModal';
 import NewCollectionModal from '@/features/collection/modal/NewCollectionModal';
 import EditCollectionModal from '@/features/collection/modal/EditCollectionModal';
+import EditBookmarkModal from '@/features/bookmark/modal/EditBookmarkModal';
 
 const shioriModals = {
   newBookmark: NewBookmarkModal,
   newCollection: NewCollectionModal,
   editCollection: EditCollectionModal,
+  editBookmark: EditBookmarkModal,
 };
 
 declare module '@mantine/modals' {
