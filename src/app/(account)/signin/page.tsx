@@ -1,6 +1,6 @@
 'use client';
 import { useForm } from '@mantine/form';
-import { TextInput, PasswordInput, Button, Box, Title, Text, Alert } from '@mantine/core';
+import { TextInput, PasswordInput, Button, Box, Title, Text, Alert, Checkbox } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { authClient } from '@/lib/auth-client';
 import { useState } from 'react';
@@ -12,6 +12,7 @@ export default function SigninPage() {
     initialValues: {
       email: '',
       password: '',
+      rememberMe: true,
     },
 
     validate: {
@@ -74,6 +75,12 @@ export default function SigninPage() {
           {...form.getInputProps('password')}
           required
           mt="md"
+        />
+
+        <Checkbox
+          label="Remember me"
+          mt="md"
+          {...form.getInputProps('rememberMe', { type: 'checkbox' })}
         />
 
         <Button type="submit" fullWidth mt="xl" loading={form.submitting}>
