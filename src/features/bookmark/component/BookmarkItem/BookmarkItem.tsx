@@ -1,3 +1,4 @@
+"use client";
 import styles from "./BookmarkItem.module.css";
 import { Prisma } from "@/generated/prisma";
 import { Skeleton, Group, ActionIcon, Menu } from '@mantine/core';

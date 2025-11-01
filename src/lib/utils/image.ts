@@ -155,3 +155,58 @@ export async function getImageDimensions(
     throw error;
   }
 }
+
+/**
+ * Converts an SVG string to a PNG base64 string
+ * @param svgString - The SVG string to convert
+ * @param width - The width of the resulting PNG
+ * @param height - The height of the resulting PNG
+ * @param mimeType - Optional MIME type for the SVG (defaults to image/svg+xml)
+ * @returns Promise with the PNG base64 string
+ */
+export function svgToPng(
+  svgString: string, 
+  width: number, 
+  height: number, 
+  mimeType: 'image/svg+xml' | 'image/svg' | 'application/svg' | 'application/svg+xml' = 'image/svg+xml'
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // Create a canvas element
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      reject(new Error('Canvas 2D context not available'));
+      return;
+    }
+
+    // Create an image element
+    const img = new Image();
+    
+    // Convert SVG string to data URL
+    const blob = new Blob([svgString], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    
+    img.onload = () => {
+      // Draw image to canvas
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convert to PNG base64
+      const pngBase64 = canvas.toDataURL('image/png').split(',')[1];
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      
+      resolve(pngBase64);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Failed to load SVG'));
+    };
+
+    img.src = url;
+  });
+}

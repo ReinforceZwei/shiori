@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { useCollectionIncludeQuery } from "@/features/collection/hook";
 import { modals } from "@mantine/modals";
 
-export function CollectionBookmarksPageLoading() {
+function CollectionBookmarksPageLoading() {
   return (
     <div>
       <Skeleton height={32} width="40%" mb={16} />

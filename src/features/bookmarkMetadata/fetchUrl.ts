@@ -37,7 +37,7 @@ export async function fetchUrl(url: string, init?: RequestInit){
   let response = await fetch(url, requestOptions);
   while (response.status >= 300 && response.status < 400 && response.headers.has('location')) {
     const redirectUrl = response.headers.get('location')!;
-    const redirectParsedUrl = new URL(redirectUrl);
+    const redirectParsedUrl = new URL(redirectUrl, url);
     const redirectHostname = redirectParsedUrl.hostname;
 
     if (isIP(redirectHostname)) {
@@ -52,7 +52,7 @@ export async function fetchUrl(url: string, init?: RequestInit){
         throw new Error('Redirect to private IP ranges is not allowed.');
       }
     }
-    response = await fetch(redirectUrl, requestOptions);
+    response = await fetch(redirectParsedUrl, requestOptions);
   }
 
   return response;
