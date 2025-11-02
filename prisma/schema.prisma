@@ -78,27 +78,27 @@ model Verification {
 }
 
 model WebsiteIcon {
-  id        String   @id @default(uuid())
-  data      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  bookmark Bookmark?
+  id         String   @id @default(uuid())
+  data       Bytes
+  mimeType   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  bookmarkId String   @unique
+  bookmark   Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
 }
 
 model Bookmark {
-  id            String       @id @default(uuid())
-  title         String
-  url           String
-  description   String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  userId        String
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  collection    Collection?  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  collectionId  String?
-  websiteIconId String?      @unique
-  websiteIcon   WebsiteIcon? @relation(fields: [websiteIconId], references: [id], onDelete: Cascade)
+  id           String       @id @default(uuid())
+  title        String
+  url          String
+  description  String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collection   Collection?  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  collectionId String?
+  websiteIcon  WebsiteIcon?
 }
 
 model Collection {

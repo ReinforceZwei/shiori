@@ -7,8 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "migrate": "prisma migrate dev",
-    "generate": "prisma generate"
+    "db:push": "prisma db push",
+    "db:gen": "prisma generate",
+    "db:studio": "prisma studio",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@mantine/core": "^8.3.6",
