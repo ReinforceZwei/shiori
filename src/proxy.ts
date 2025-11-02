@@ -7,7 +7,7 @@ import { getSessionCookie } from 'better-auth/cookies';
  * Performs a fast initial check using session cookie
  * Individual routes use withAuth() for full session validation
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
   
   if (!sessionCookie) {
