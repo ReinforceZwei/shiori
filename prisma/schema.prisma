@@ -112,9 +112,5 @@ model Collection {
   userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  parentId      String?
-  parent        Collection?  @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
-  children      Collection[] @relation("ParentChild")
-
   bookmark Bookmark[]
 }
