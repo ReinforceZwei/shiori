@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import AppShell from '@/lib/component/common/AppShell/AppShell';
+import AppShell from '@/component/layout/AppShell';
 
 export default async function IndexLayout({
   children,

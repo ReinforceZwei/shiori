@@ -5,8 +5,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import ShioriModalProvider from '@/lib/component/provider/ShioriModalProvider'
-import QueryProvider from '@/lib/component/provider/QueryProvider';
+import ShioriModalProvider from '@/component/provider/ShioriModalProvider'
+import QueryProvider from '@/component/provider/QueryProvider';
 import theme from '@/lib/theme';
 import "./globals.css";
 
