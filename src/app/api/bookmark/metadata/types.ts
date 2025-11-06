@@ -19,6 +19,20 @@ export interface BookmarkTitle {
 }
 
 /**
+ * Description metadata with source information
+ */
+export interface BookmarkDescription {
+  /** Description text */
+  value: string;
+  
+  /** Source type where the description was found */
+  source: 'html' | 'opengraph' | 'twitter' | 'manifest';
+  
+  /** Property name (e.g., 'description', 'og:description', 'twitter:description') */
+  property: string;
+}
+
+/**
  * Icon metadata returned by the API
  */
 export interface BookmarkIcon {
@@ -68,6 +82,9 @@ export interface BookmarkMetadataResponse {
   
   /** Array of all titles from multiple sources with metadata */
   titles: BookmarkTitle[];
+  
+  /** Array of all descriptions from multiple sources with metadata */
+  descriptions: BookmarkDescription[];
   
   /** Array of icons found on the page */
   icons: BookmarkIcon[];

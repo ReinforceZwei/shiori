@@ -89,6 +89,25 @@ export default function MetadataPage() {
                   </Stack>
                 </>
               )}
+              
+              {data.descriptions && data.descriptions.length > 0 && (
+                <>
+                  <Text size="sm" c="dimmed" mt="md">All Descriptions ({data.descriptions.length}):</Text>
+                  <Stack gap="xs">
+                    {data.descriptions.map((descObj, index) => (
+                      <Card key={index} padding="sm" withBorder>
+                        <Text size="sm">{descObj.value}</Text>
+                        <Group gap="xs" mt="xs">
+                          <Badge size="xs" variant="light" color="green">
+                            {descObj.source}
+                          </Badge>
+                          <Text size="xs" c="dimmed">{descObj.property}</Text>
+                        </Group>
+                      </Card>
+                    ))}
+                  </Stack>
+                </>
+              )}
             </Stack>
           </Paper>
 
@@ -190,6 +209,7 @@ export default function MetadataPage() {
                 url: data.url,
                 title: data.title,
                 titles: data.titles,
+                descriptions: data.descriptions,
                 icons: data.icons.map(icon => ({
                   ...icon,
                   base64: `${icon.base64.substring(0, 50)}... (truncated)`

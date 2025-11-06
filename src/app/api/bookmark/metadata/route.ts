@@ -54,6 +54,7 @@ export const GET = withAuth(async (request: Request) => {
       url: result.url,
       title: result.title,
       titles: result.titles,
+      descriptions: result.descriptions,
       icons: iconsWithBase64,
     });
   } catch (error) {
