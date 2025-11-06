@@ -1,21 +1,20 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/with-auth';
+import { getBookmark } from '@/features/bookmark/service';
+import { BadRequestError, NotFoundError } from '@/lib/errors';
 
 // Get a single bookmark by ID
 export const GET = withAuth(async (request, { params, user }) => {
   const { id } = await params;
 
   if (!id) {
-    return NextResponse.json({ error: 'Bookmark ID is required' }, { status: 400 });
+    throw new BadRequestError('Bookmark ID is required');
   }
 
-  const bookmark = await prisma.bookmark.findUnique({
-    where: { id, userId: user.id },
-  });
+  const bookmark = await getBookmark({ id, userId: user.id });
 
   if (!bookmark) {
-    return NextResponse.json({ error: 'Bookmark not found' }, { status: 404 });
+    throw new NotFoundError(`Bookmark(id: ${id}) not found`);
   }
 
   return NextResponse.json(bookmark);

@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { AppError, ERROR_CODES } from '@/lib/errors';
+import { ZodError } from 'zod';
+import { Prisma } from '@/lib/prisma';
 
 /**
  * Type for authenticated user from Better Auth session
  */
 type AuthenticatedUser = NonNullable<
-  Awaited<ReturnType<typeof auth.api.getSession>>['user']
->;
+  Awaited<ReturnType<typeof auth.api.getSession>>
+>['user'];
 
 /**
  * Route handler with authenticated user in context
@@ -42,7 +45,7 @@ export function withAuth<T = any>(
 
       if (!session?.user) {
         return NextResponse.json(
-          { error: 'Unauthorized' },
+          { error: 'Unauthorized', code: ERROR_CODES.UNAUTHORIZED },
           { status: 401 }
         );
       }
@@ -56,21 +59,68 @@ export function withAuth<T = any>(
     } catch (error) {
       console.error('API Route Error:', error);
       
-      // Handle specific error types
-      if (error instanceof Error) {
-        if (error.message === 'Unauthorized') {
+      // Handle custom application errors
+      if (error instanceof AppError) {
+        return NextResponse.json(
+          { error: error.message, code: error.code },
+          { status: error.statusCode }
+        );
+      }
+
+      // Handle Zod validation errors
+      if (error instanceof ZodError) {
+        return NextResponse.json(
+          { 
+            error: 'Validation failed', 
+            code: ERROR_CODES.VALIDATION_ERROR,
+            details: error.issues 
+          },
+          { status: 400 }
+        );
+      }
+
+      // Handle Prisma errors
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // Common Prisma error codes:
+        // P2002: Unique constraint violation
+        // P2025: Record not found
+        // P2003: Foreign key constraint violation
+        
+        if (error.code === 'P2002') {
           return NextResponse.json(
-            { error: 'Unauthorized' },
-            { status: 401 }
+            { 
+              error: 'A record with this value already exists',
+              code: ERROR_CODES.CONFLICT 
+            },
+            { status: 409 }
           );
         }
         
-        // You can add more specific error handling here
-        // e.g., Prisma errors, validation errors, etc.
+        if (error.code === 'P2025') {
+          return NextResponse.json(
+            { 
+              error: 'Record not found',
+              code: ERROR_CODES.NOT_FOUND 
+            },
+            { status: 404 }
+          );
+        }
+        
+        return NextResponse.json(
+          { 
+            error: 'Database operation failed',
+            code: ERROR_CODES.DATABASE_ERROR 
+          },
+          { status: 400 }
+        );
       }
 
+      // Generic fallback for unknown errors
       return NextResponse.json(
-        { error: 'Internal server error' },
+        { 
+          error: 'Internal server error',
+          code: ERROR_CODES.INTERNAL_SERVER_ERROR 
+        },
         { status: 500 }
       );
     }

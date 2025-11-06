@@ -5,7 +5,7 @@ import { IconAlertSquareRounded } from '@tabler/icons-react';
 import NewBookmarkForm, { NewBookmarkFormValues } from '../form/NewBookmarkForm';
 import { Prisma } from '@/generated/prisma';
 import { useAllCollectionsQuery } from '@/features/collection/hook';
-import { useCreateBookmarkMutation } from '../hook';
+import { useCreateBookmarkMutation } from '../query';
 
 const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initialValues?: { collectionId?: string }}>) => {
   const { data: collections, isPending } = useAllCollectionsQuery();

@@ -1,3 +1,36 @@
+import { fileTypeFromBuffer } from "file-type";
+
+/**
+ * Validates image data and returns the detected MIME type
+ * @param base64Data - Base64 encoded image data
+ * @param allowedTypes - Array of allowed MIME types
+ * @returns Detected MIME type
+ * @throws Error if data is not a valid image
+ */
+export async function validateAndDetectImageType(
+  base64Data: string,
+  allowedTypes: readonly string[]
+): Promise<string> {
+  // Convert base64 to buffer
+  const buffer = Buffer.from(base64Data, 'base64');
+  
+  // Detect actual file type from binary data
+  const fileType = await fileTypeFromBuffer(buffer);
+  
+  if (!fileType) {
+    throw new Error('Unable to detect file type. The data may be corrupted or invalid.');
+  }
+  
+  // Check if it's an allowed image type
+  if (!allowedTypes.includes(fileType.mime)) {
+    throw new Error(
+      `Invalid image type: ${fileType.mime}. Allowed types: ${allowedTypes.join(', ')}`
+    );
+  }
+  
+  return fileType.mime;
+}
+
 /**
  * Resizes an image to the specified dimensions using the Canvas API
  * @param imageSource - The source image (can be a File, Blob, or data URL)

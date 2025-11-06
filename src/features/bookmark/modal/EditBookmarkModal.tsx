@@ -3,7 +3,7 @@ import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
 import { EditBookmarkFormValues } from '../form/EditBookmarkForm';
-import { useUpdateBookmarkMutation } from '../hook';
+import { useUpdateBookmarkMutation } from '../query';
 import { useAllCollectionsQuery } from '@/features/collection/hook';
 import EditBookmarkForm from '../form/EditBookmarkForm';
 

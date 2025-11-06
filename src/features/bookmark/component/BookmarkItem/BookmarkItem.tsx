@@ -7,7 +7,7 @@ import { notifications } from '@mantine/notifications';
 import { IconDots, IconEdit, IconTrash } from '@tabler/icons-react';
 import { DEFAULT_ICON } from '../../constant';
 import { useEffect, useState } from 'react';
-import { useDeleteBookmarkMutation } from '../../hook';
+import { useDeleteBookmarkMutation } from '../../query';
 
 interface BookmarkItemProps {
   bookmark: Prisma.BookmarkGetPayload<{}>;
