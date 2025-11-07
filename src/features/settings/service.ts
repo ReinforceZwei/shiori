@@ -1,8 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { NotFoundError, ValidationError } from "@/lib/errors";
-import { validateTopLevelOrder } from "@/lib/ordering";
-import type { LayoutType } from "@/lib/ordering";
+import { NotFoundError } from "@/lib/errors";
 
 export async function getSettings({ userId }: { userId: string }) {
   const settings = await prisma.settings.findUnique({
@@ -17,13 +15,11 @@ export async function getSettings({ userId }: { userId: string }) {
 /**
  * Upsert settings - creates if not exists, updates if exists
  * This is the recommended way to interact with settings
- * Validates ordering data and performs all operations in a transaction
+ * Note: Ordering is now managed through the Order table, not Settings
  */
 const upsertSettingsInputSchema = z.object({
   userId: z.string(),
   layoutMode: z.enum(["launcher", "grid", "list"]).optional(),
-  topLevelOrdering: z.any().optional(), // JSON - validated in transaction
-  launcherTopLevelOrdering: z.any().optional(), // JSON - validated in transaction
   pinnedCollectionId: z.string().nullable().optional(),
 });
 
@@ -35,50 +31,11 @@ export async function upsertSettings(data: z.infer<typeof upsertSettingsInputSch
     // Build the data object for create/update
     const settingsData: {
       layoutMode?: typeof validatedData.layoutMode;
-      topLevelOrdering?: any;
-      launcherTopLevelOrdering?: any;
       pinnedCollectionId?: string | null;
     } = {};
 
     if (validatedData.layoutMode !== undefined) {
       settingsData.layoutMode = validatedData.layoutMode;
-    }
-
-    // Validate topLevelOrdering if provided (for grid/list modes)
-    if (validatedData.topLevelOrdering !== undefined) {
-      const layoutType: LayoutType = validatedData.layoutMode === 'launcher' ? 'grid' : (validatedData.layoutMode || 'grid');
-      const validation = await validateTopLevelOrder(
-        tx,
-        layoutType,
-        validatedData.topLevelOrdering,
-        { userId: validatedData.userId },
-        { strict: false }
-      );
-
-      if (!validation.valid) {
-        throw new ValidationError(`Invalid topLevelOrdering: ${validation.errors.join(', ')}`);
-      }
-
-      // Use normalized data
-      settingsData.topLevelOrdering = validation.normalized;
-    }
-
-    // Validate launcherTopLevelOrdering if provided (for launcher mode)
-    if (validatedData.launcherTopLevelOrdering !== undefined) {
-      const validation = await validateTopLevelOrder(
-        tx,
-        'launcher',
-        validatedData.launcherTopLevelOrdering,
-        { userId: validatedData.userId },
-        { strict: false }
-      );
-
-      if (!validation.valid) {
-        throw new ValidationError(`Invalid launcherTopLevelOrdering: ${validation.errors.join(', ')}`);
-      }
-
-      // Use normalized data
-      settingsData.launcherTopLevelOrdering = validation.normalized;
     }
 
     // Validate pinned collection if provided

@@ -17,8 +17,6 @@ async function getSettings(): Promise<SettingsWithRelations | null> {
 
 async function upsertSettings(data: {
   layoutMode?: "launcher" | "grid" | "list";
-  topLevelOrdering?: any;
-  launcherTopLevelOrdering?: any;
   pinnedCollectionId?: string | null;
 }): Promise<SettingsWithRelations> {
   const response = await fetch("/api/settings", {
@@ -61,6 +59,9 @@ export function useSettingsQuery() {
  * Hook to upsert (create or update) settings
  * Supports updating any combination of settings fields
  * 
+ * Note: Ordering is now managed through the Order table.
+ * Use the Order service to manage collection and bookmark ordering.
+ * 
  * @example
  * ```tsx
  * const { mutate } = useUpsertSettingsMutation();
@@ -70,17 +71,6 @@ export function useSettingsQuery() {
  * 
  * // Update pinned collection
  * mutate({ pinnedCollectionId: "collection-id" });
- * 
- * // Update top-level ordering (for grid/list modes)
- * mutate({ topLevelOrdering: ["bookmark-1", "bookmark-2"] });
- * 
- * // Update launcher ordering
- * mutate({ 
- *   launcherTopLevelOrdering: [
- *     { type: "collection", id: "col-1" },
- *     { type: "bookmark", id: "bm-1" },
- *   ]
- * });
  * 
  * // Update multiple fields at once
  * mutate({

@@ -40,7 +40,6 @@ export type CreateCollectionInput = {
   name: string;
   description?: string;
   color?: string;
-  bookmarkOrder?: any;
 }
 
 export async function createCollection(data: CreateCollectionInput) {

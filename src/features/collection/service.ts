@@ -1,7 +1,6 @@
 import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { NotFoundError, ValidationError } from "@/lib/errors";
-import { validateCollectionOrder } from "@/lib/ordering";
+import { NotFoundError } from "@/lib/errors";
 
 export async function getCollections({ userId }: { userId?: string } = {}) {
   const collections = await prisma.collection.findMany({
@@ -27,16 +26,41 @@ const createCollectionInputSchema = z.object({
 export async function createCollection(data: z.infer<typeof createCollectionInputSchema>) {
   const validatedData = createCollectionInputSchema.parse(data);
   
-  const collection = await prisma.collection.create({
-    data: {
-      name: validatedData.name,
-      description: validatedData.description,
-      color: validatedData.color,
-      user: {
-        connect: { id: validatedData.userId },
+  // Create collection with its associated order record in a transaction
+  const collection = await prisma.$transaction(async (tx) => {
+    // 1. Create the order record first (for bookmarks within this collection)
+    const order = await tx.order.create({
+      data: {
+        userId: validatedData.userId,
+        type: 'bookmark',
+        order: [], // Empty initially
       },
-    },
+    });
+
+    // 2. Create collection linked to order
+    const newCollection = await tx.collection.create({
+      data: {
+        name: validatedData.name,
+        description: validatedData.description,
+        color: validatedData.color,
+        user: {
+          connect: { id: validatedData.userId },
+        },
+        order: {
+          connect: { id: order.id },
+        },
+      },
+    });
+
+    // 3. Update order with collectionId
+    await tx.order.update({
+      where: { id: order.id },
+      data: { collectionId: newCollection.id },
+    });
+
+    return newCollection;
   });
+
   return collection;
 }
 
@@ -46,7 +70,6 @@ const updateCollectionInputSchema = z.object({
   name: z.string().optional(),
   description: z.string().nullable().optional(), // Allow null to clear
   color: z.string().nullable().optional(), // Allow null to clear
-  bookmarkOrder: z.any().optional(), // Json type
 });
 
 export async function updateCollection(data: z.infer<typeof updateCollectionInputSchema>) {
@@ -75,42 +98,16 @@ export async function updateCollection(data: z.infer<typeof updateCollectionInpu
     updateData.color = validatedData.color;
   }
 
-  // Validate bookmarkOrder if provided
-  if (validatedData.bookmarkOrder !== undefined) {
-    // Wrap in transaction to ensure atomicity
-    return await prisma.$transaction(async (tx) => {
-      const validationResult = await validateCollectionOrder(
-        tx,
-        'list', // Use 'list' as all strategies have the same collection order validation
-        validatedData.bookmarkOrder,
-        { userId: collection.userId, collectionId: validatedData.id },
-        { strict: false }
-      );
-
-      if (!validationResult.valid) {
-        throw new ValidationError(`Invalid bookmarkOrder: ${validationResult.errors.join(', ')}`);
-      }
-
-      // Use validated and normalized bookmarkOrder
-      updateData.bookmarkOrder = validationResult.normalized as Prisma.InputJsonValue;
-
-      // Perform the update
-      return await tx.collection.update({
-        where: { id: validatedData.id },
-        data: updateData,
-      });
+  // Update collection if there are changes
+  if (Object.keys(updateData).length > 0) {
+    return await prisma.collection.update({
+      where: { id: validatedData.id },
+      data: updateData,
     });
-  } else {
-    // No bookmarkOrder update, just update other fields if any
-    if (Object.keys(updateData).length > 0) {
-      return await prisma.collection.update({
-        where: { id: validatedData.id },
-        data: updateData,
-      });
-    }
-    // No update
-    return collection;
   }
+  
+  // No changes
+  return collection;
 }
 
 const deleteCollectionInputSchema = z.object({

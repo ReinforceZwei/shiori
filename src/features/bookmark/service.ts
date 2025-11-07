@@ -94,20 +94,50 @@ export async function createBookmark(data: z.infer<typeof createBookmarkInputSch
       },
     });
 
-    // Update collection's bookmarkOrder if bookmark was added to a collection
+    // Update Order table if bookmark was added to a collection
     if (validatedData.collectionId) {
       const collection = await tx.collection.findUnique({
         where: { id: validatedData.collectionId },
-        select: { bookmarkOrder: true },
+        include: { order: true },
       });
       
-      const currentOrder = (collection?.bookmarkOrder as string[]) || [];
-      const updatedOrder = [...currentOrder, newBookmark.id];
-      
-      await tx.collection.update({
-        where: { id: validatedData.collectionId },
-        data: { bookmarkOrder: updatedOrder },
+      if (collection?.order) {
+        const currentOrder = (collection.order.order as string[]) || [];
+        const updatedOrder = [...currentOrder, newBookmark.id];
+        
+        await tx.order.update({
+          where: { id: collection.order.id },
+          data: { order: updatedOrder },
+        });
+      }
+    } else {
+      // Bookmark is top-level, add to top-level bookmark order
+      // Note: Using findFirst instead of findUnique due to Prisma limitation with null in unique constraints
+      const existingOrder = await tx.order.findFirst({
+        where: {
+          userId: validatedData.userId,
+          type: 'bookmark',
+          collectionId: null,
+        },
       });
+
+      if (existingOrder) {
+        const currentOrder = (existingOrder.order as string[]) || [];
+        await tx.order.update({
+          where: { id: existingOrder.id },
+          data: { order: [...currentOrder, newBookmark.id] },
+        });
+      } else {
+        // Create order if it doesn't exist
+        await tx.order.create({
+          data: {
+            userId: validatedData.userId,
+            type: 'bookmark',
+            collectionId: null,
+            order: [newBookmark.id],
+          },
+        });
+      }
     }
 
     return newBookmark;
@@ -202,7 +232,7 @@ export async function updateBookmark(data: z.infer<typeof updateBookmarkInputSch
       data: updateData,
     });
 
-    // Update bookmarkOrder in collections if collection changed
+    // Update Order table if collection changed
     if (validatedData.collectionId !== undefined) {
       const newCollectionId = validatedData.collectionId;
       
@@ -210,16 +240,35 @@ export async function updateBookmark(data: z.infer<typeof updateBookmarkInputSch
       if (oldCollectionId) {
         const oldCollection = await tx.collection.findUnique({
           where: { id: oldCollectionId },
-          select: { bookmarkOrder: true },
+          include: { order: true },
         });
         
-        if (oldCollection) {
-          const oldOrder = (oldCollection.bookmarkOrder as string[]) || [];
+        if (oldCollection?.order) {
+          const oldOrder = (oldCollection.order.order as string[]) || [];
           const updatedOldOrder = oldOrder.filter(id => id !== validatedData.id);
           
-          await tx.collection.update({
-            where: { id: oldCollectionId },
-            data: { bookmarkOrder: updatedOldOrder },
+          await tx.order.update({
+            where: { id: oldCollection.order.id },
+            data: { order: updatedOldOrder },
+          });
+        }
+      } else {
+        // Remove from top-level bookmark order
+        const topLevelOrder = await tx.order.findFirst({
+          where: {
+            userId: bookmark.userId,
+            type: 'bookmark',
+            collectionId: null,
+          },
+        });
+
+        if (topLevelOrder) {
+          const currentOrder = (topLevelOrder.order as string[]) || [];
+          const updatedOrder = currentOrder.filter(id => id !== validatedData.id);
+          
+          await tx.order.update({
+            where: { id: topLevelOrder.id },
+            data: { order: updatedOrder },
           });
         }
       }
@@ -228,20 +277,50 @@ export async function updateBookmark(data: z.infer<typeof updateBookmarkInputSch
       if (newCollectionId) {
         const newCollection = await tx.collection.findUnique({
           where: { id: newCollectionId },
-          select: { bookmarkOrder: true },
+          include: { order: true },
         });
         
-        if (newCollection) {
-          const newOrder = (newCollection.bookmarkOrder as string[]) || [];
+        if (newCollection?.order) {
+          const newOrder = (newCollection.order.order as string[]) || [];
           // Only add if not already present (safety check)
           if (!newOrder.includes(validatedData.id)) {
             const updatedNewOrder = [...newOrder, validatedData.id];
             
-            await tx.collection.update({
-              where: { id: newCollectionId },
-              data: { bookmarkOrder: updatedNewOrder },
+            await tx.order.update({
+              where: { id: newCollection.order.id },
+              data: { order: updatedNewOrder },
             });
           }
+        }
+      } else {
+        // Add to top-level bookmark order
+        const topLevelOrder = await tx.order.findFirst({
+          where: {
+            userId: bookmark.userId,
+            type: 'bookmark',
+            collectionId: null,
+          },
+        });
+
+        if (topLevelOrder) {
+          const currentOrder = (topLevelOrder.order as string[]) || [];
+          // Only add if not already present
+          if (!currentOrder.includes(validatedData.id)) {
+            await tx.order.update({
+              where: { id: topLevelOrder.id },
+              data: { order: [...currentOrder, validatedData.id] },
+            });
+          }
+        } else {
+          // Create order if it doesn't exist
+          await tx.order.create({
+            data: {
+              userId: bookmark.userId,
+              type: 'bookmark',
+              collectionId: null,
+              order: [validatedData.id],
+            },
+          });
         }
       }
     }
@@ -272,20 +351,40 @@ export async function deleteBookmark(data: z.infer<typeof deleteBookmarkInputSch
 
   // Wrap in transaction to ensure atomicity
   await prisma.$transaction(async (tx) => {
-    // Remove bookmark from collection's bookmarkOrder if it belongs to a collection
+    // Remove bookmark from Order table
     if (bookmark.collectionId) {
+      // Remove from collection's order
       const collection = await tx.collection.findUnique({
         where: { id: bookmark.collectionId },
-        select: { bookmarkOrder: true },
+        include: { order: true },
       });
       
-      if (collection) {
-        const currentOrder = (collection.bookmarkOrder as string[]) || [];
+      if (collection?.order) {
+        const currentOrder = (collection.order.order as string[]) || [];
         const updatedOrder = currentOrder.filter(id => id !== validatedData.id);
         
-        await tx.collection.update({
-          where: { id: bookmark.collectionId },
-          data: { bookmarkOrder: updatedOrder },
+        await tx.order.update({
+          where: { id: collection.order.id },
+          data: { order: updatedOrder },
+        });
+      }
+    } else {
+      // Remove from top-level bookmark order
+      const topLevelOrder = await tx.order.findFirst({
+        where: {
+          userId: bookmark.userId,
+          type: 'bookmark',
+          collectionId: null,
+        },
+      });
+
+      if (topLevelOrder) {
+        const currentOrder = (topLevelOrder.order as string[]) || [];
+        const updatedOrder = currentOrder.filter(id => id !== validatedData.id);
+        
+        await tx.order.update({
+          where: { id: topLevelOrder.id },
+          data: { order: updatedOrder },
         });
       }
     }

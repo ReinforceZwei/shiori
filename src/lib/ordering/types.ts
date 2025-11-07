@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import type { PrismaClient } from '@/generated/prisma';
 
-export type LayoutType = 'launcher' | 'grid' | 'list';
+// Matches Prisma OrderType enum
+export type OrderType = 'collection' | 'bookmark';
 
 export interface ValidationResult<T = unknown> {
   valid: boolean;
@@ -11,7 +12,7 @@ export interface ValidationResult<T = unknown> {
 
 export interface ValidationContext {
   userId: string;
-  collectionId?: string;
+  collectionId?: string; // Required when type='bookmark' and ordering bookmarks within a collection
 }
 
 export interface ValidationOptions {

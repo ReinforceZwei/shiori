@@ -1,68 +1,133 @@
 import { z } from 'zod';
-import type { ValidationResult, ValidationContext, ValidationOptions, PrismaClientLike } from './types';
-import { prisma } from '@/lib/prisma';
-
-// Collection ordering schema - always array of bookmark IDs
-// Exported for use in helpers and type definitions
-export const CollectionOrderSchema = z.array(z.uuid());
-export type CollectionOrder = z.infer<typeof CollectionOrderSchema>;
+import type { ValidationResult, ValidationContext, ValidationOptions, PrismaClientLike, OrderType } from './types';
 
 /**
- * Abstract base class for ordering validation strategies
- * Each layout mode implements its own validation logic
+ * Simplified ordering schemas
+ * - Collection order: array of collection IDs
+ * - Bookmark order: array of bookmark IDs
  */
-export abstract class OrderingStrategy<TOrder = unknown> {
-  abstract readonly layoutType: string;
-  abstract readonly orderSchema: z.ZodSchema<TOrder>;
-  
-  /**
-   * Validate top-level ordering for this layout
-   * Used when user updates ordering from the UI
-   * Each layout implements its own logic since top-level can differ
-   * @param prismaClient - Prisma client or transaction client for database queries
-   */
-  abstract validateTopLevelOrder(
-    prismaClient: PrismaClientLike,
-    order: unknown,
-    context: ValidationContext,
-    options?: ValidationOptions
-  ): Promise<ValidationResult<TOrder>>;
+export const CollectionOrderSchema = z.array(z.uuid());
+export const BookmarkOrderSchema = z.array(z.uuid());
 
-  /**
-   * Validate collection-level ordering
-   * Collections always contain only bookmarks (array of UUIDs), regardless of layout mode
-   * This is implemented in the base class to avoid duplication
-   * @param prismaClient - Prisma client or transaction client for database queries
-   */
-  async validateCollectionOrder(
-    prismaClient: PrismaClientLike,
-    order: unknown,
-    context: ValidationContext & { collectionId: string },
-    options?: ValidationOptions
-  ): Promise<ValidationResult<CollectionOrder>> {
-    const errors: string[] = [];
-    
-    // 1. Schema validation
-    const parseResult = CollectionOrderSchema.safeParse(order);
-    if (!parseResult.success) {
-      return {
-        valid: false,
-        errors: [parseResult.error.message],
-      };
+export type CollectionOrder = z.infer<typeof CollectionOrderSchema>;
+export type BookmarkOrder = z.infer<typeof BookmarkOrderSchema>;
+
+/**
+ * Validate collection ordering (type=collection)
+ * Used to order collections at the top level
+ * 
+ * @param prismaClient - Prisma client or transaction client
+ * @param order - Array of collection IDs
+ * @param context - Must include userId
+ * @param options - Validation options
+ */
+export async function validateCollectionOrder(
+  prismaClient: PrismaClientLike,
+  order: unknown,
+  context: ValidationContext,
+  options?: ValidationOptions
+): Promise<ValidationResult<CollectionOrder>> {
+  const errors: string[] = [];
+  
+  // 1. Schema validation
+  const parseResult = CollectionOrderSchema.safeParse(order);
+  if (!parseResult.success) {
+    return {
+      valid: false,
+      errors: [parseResult.error.message],
+    };
+  }
+  
+  const normalizedOrder = parseResult.data;
+  
+  // 2. Check for duplicates
+  const seenIds = new Set<string>();
+  for (const id of normalizedOrder) {
+    if (seenIds.has(id)) {
+      errors.push(`Duplicate collection: ${id}`);
     }
+    seenIds.add(id);
+  }
+  
+  // 3. Validate all collections exist and belong to user
+  if (normalizedOrder.length > 0) {
+    const collections = await prismaClient.collection.findMany({
+      where: {
+        id: { in: normalizedOrder },
+        userId: context.userId,
+      },
+      select: { id: true },
+    });
     
-    const normalizedOrder = parseResult.data;
-    
-    // 2. Check for duplicates
-    const seenIds = new Set<string>();
+    const foundIds = new Set(collections.map((c) => c.id));
     for (const id of normalizedOrder) {
-      if (seenIds.has(id)) {
-        errors.push(`Duplicate bookmark: ${id}`);
+      if (!foundIds.has(id)) {
+        errors.push(`Collection not found or access denied: ${id}`);
       }
-      seenIds.add(id);
     }
-    
-    // 3. Verify collection exists and belongs to user
+
+    // 4. Check completeness if strict mode
+    if (options?.strict) {
+      const allCollections = await prismaClient.collection.findMany({
+        where: { userId: context.userId },
+        select: { id: true },
+      });
+      for (const collection of allCollections) {
+        if (!seenIds.has(collection.id)) {
+          errors.push(`Missing collection in order: ${collection.id}`);
+        }
+      }
+    }
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+    normalized: errors.length === 0 ? normalizedOrder : undefined,
+  };
+}
+
+/**
+ * Validate bookmark ordering (type=bookmark)
+ * Can be used for:
+ * - Top-level bookmarks (collectionId=null): orders bookmarks without a collection
+ * - Collection bookmarks (collectionId=<id>): orders bookmarks within a collection
+ * 
+ * @param prismaClient - Prisma client or transaction client
+ * @param order - Array of bookmark IDs
+ * @param context - Must include userId; collectionId optional (null means top-level)
+ * @param options - Validation options
+ */
+export async function validateBookmarkOrder(
+  prismaClient: PrismaClientLike,
+  order: unknown,
+  context: ValidationContext,
+  options?: ValidationOptions
+): Promise<ValidationResult<BookmarkOrder>> {
+  const errors: string[] = [];
+  
+  // 1. Schema validation
+  const parseResult = BookmarkOrderSchema.safeParse(order);
+  if (!parseResult.success) {
+    return {
+      valid: false,
+      errors: [parseResult.error.message],
+    };
+  }
+  
+  const normalizedOrder = parseResult.data;
+  
+  // 2. Check for duplicates
+  const seenIds = new Set<string>();
+  for (const id of normalizedOrder) {
+    if (seenIds.has(id)) {
+      errors.push(`Duplicate bookmark: ${id}`);
+    }
+    seenIds.add(id);
+  }
+  
+  // 3. If collectionId provided, verify collection exists and belongs to user
+  if (context.collectionId) {
     const collection = await prismaClient.collection.findUnique({
       where: { id: context.collectionId },
       select: { userId: true },
@@ -77,64 +142,76 @@ export abstract class OrderingStrategy<TOrder = unknown> {
       errors.push(`Access denied to collection: ${context.collectionId}`);
       return { valid: false, errors };
     }
+  }
+  
+  // 4. Validate all bookmarks exist, belong to user, and match collection context
+  if (normalizedOrder.length > 0) {
+    const bookmarks = await prismaClient.bookmark.findMany({
+      where: {
+        id: { in: normalizedOrder },
+        userId: context.userId,
+        // If collectionId provided, bookmarks must belong to that collection
+        // If null, bookmarks must NOT belong to any collection (top-level)
+        collectionId: context.collectionId ?? null,
+      },
+      select: { id: true, collectionId: true },
+    });
     
-    // 4. Validate all bookmarks exist and belong to this collection
-    if (normalizedOrder.length > 0) {
-      const bookmarks = await prismaClient.bookmark.findMany({
-        where: {
-          id: { in: normalizedOrder },
-          collectionId: context.collectionId,
+    const foundIds = new Set(bookmarks.map((b) => b.id));
+    for (const id of normalizedOrder) {
+      if (!foundIds.has(id)) {
+        const contextMsg = context.collectionId 
+          ? `in collection ${context.collectionId}`
+          : `at top level (no collection)`;
+        errors.push(
+          `Bookmark ${id} not found, access denied, or not ${contextMsg}`
+        );
+      }
+    }
+
+    // 5. Check completeness if strict mode
+    if (options?.strict) {
+      const allBookmarks = await prismaClient.bookmark.findMany({
+        where: { 
+          userId: context.userId,
+          collectionId: context.collectionId ?? null,
         },
         select: { id: true },
       });
-      
-      const foundIds = new Set(bookmarks.map((b) => b.id));
-      for (const id of normalizedOrder) {
-        if (!foundIds.has(id)) {
-          errors.push(
-            `Bookmark ${id} not found or does not belong to collection ${context.collectionId}`
-          );
-        }
-      }
-
-      // 5. Check completeness if strict mode
-      if (options?.strict) {
-        const allBookmarks = await prismaClient.bookmark.findMany({
-          where: { collectionId: context.collectionId },
-          select: { id: true },
-        });
-        for (const bookmark of allBookmarks) {
-          if (!foundIds.has(bookmark.id)) {
-            errors.push(`Missing bookmark in order: ${bookmark.id}`);
-          }
+      for (const bookmark of allBookmarks) {
+        if (!seenIds.has(bookmark.id)) {
+          errors.push(`Missing bookmark in order: ${bookmark.id}`);
         }
       }
     }
-    
-    return {
-      valid: errors.length === 0,
-      errors,
-      normalized: errors.length === 0 ? normalizedOrder : undefined,
-    };
   }
-
-  /**
-   * Parse raw JSON from client
-   * First-pass schema validation before detailed checks
-   */
-  parse(value: unknown): ValidationResult<TOrder> {
-    const result = this.orderSchema.safeParse(value);
-    if (!result.success) {
-      return {
-        valid: false,
-        errors: [result.error.message],
-      };
-    }
-    return {
-      valid: true,
-      errors: [],
-      normalized: result.data,
-    };
-  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+    normalized: errors.length === 0 ? normalizedOrder : undefined,
+  };
 }
 
+/**
+ * Generic order validator that routes to the appropriate validator based on type
+ * 
+ * @param prismaClient - Prisma client or transaction client
+ * @param type - Order type ('collection' or 'bookmark')
+ * @param order - Order data to validate
+ * @param context - Validation context (userId required, collectionId optional)
+ * @param options - Validation options
+ */
+export async function validateOrder(
+  prismaClient: PrismaClientLike,
+  type: OrderType,
+  order: unknown,
+  context: ValidationContext,
+  options?: ValidationOptions
+): Promise<ValidationResult> {
+  if (type === 'collection') {
+    return validateCollectionOrder(prismaClient, order, context, options);
+  } else {
+    return validateBookmarkOrder(prismaClient, order, context, options);
+  }
+}

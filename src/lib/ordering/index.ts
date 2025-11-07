@@ -1,94 +1,72 @@
-import { getOrderingStrategy } from './registry';
-import type { LayoutType, ValidationContext, ValidationResult, ValidationOptions, PrismaClientLike } from './types';
+/**
+ * Simplified ordering validation system
+ * 
+ * With the new Order table schema, we no longer mix collection and bookmark ordering.
+ * Instead, we have separate order records:
+ * 
+ * - type=collection, collectionId=null: Orders collections at top level
+ * - type=bookmark, collectionId=null: Orders top-level bookmarks (not in any collection)
+ * - type=bookmark, collectionId=<id>: Orders bookmarks within a specific collection
+ */
+
+import type { OrderType, ValidationContext, ValidationResult, ValidationOptions, PrismaClientLike } from './types';
+import { validateOrder, validateCollectionOrder, validateBookmarkOrder } from './base';
 
 // Re-export types
-export * from './types';
-export { OrderingStrategy, CollectionOrderSchema } from './base';
-export type { CollectionOrder } from './base';
-export { getOrderingStrategy, registerOrderingStrategy, hasOrderingStrategy, getRegisteredLayoutTypes } from './registry';
-
-// Re-export strategy types
-export type { LauncherOrder } from './strategies/launcher';
-export type { ListOrder } from './strategies/list';
+export type { OrderType, ValidationContext, ValidationResult, ValidationOptions, PrismaClientLike } from './types';
+export type { CollectionOrder, BookmarkOrder } from './base';
+export { 
+  validateOrder, 
+  validateCollectionOrder, 
+  validateBookmarkOrder,
+  CollectionOrderSchema,
+  BookmarkOrderSchema,
+} from './base';
 
 // Re-export helpers for server-side operations
 export * from './helpers';
 
 /**
- * Validate top-level ordering for a specific layout type
- * Use this in service functions when client updates top-level ordering
+ * Main validation function - routes to appropriate validator based on type
  * 
  * @param prismaClient - Prisma client or transaction client for database queries
- * @param layoutType - The layout mode (launcher, grid, list)
- * @param order - The ordering data from client
- * @param context - Validation context (userId)
+ * @param type - Order type ('collection' or 'bookmark')
+ * @param order - The ordering data from client (array of UUIDs)
+ * @param context - Validation context (userId required, collectionId for bookmark orders in collections)
  * @param options - Validation options (strict mode, etc.)
  * @returns Validation result with normalized data or errors
  * 
  * @example
  * ```typescript
- * const result = await validateTopLevelOrder(
+ * // Validate collection ordering (top-level collections)
+ * const result = await validateOrder(
  *   tx,
- *   'launcher',
- *   orderData,
- *   { userId: user.id },
- *   { strict: false }
+ *   'collection',
+ *   ['col-id-1', 'col-id-2'],
+ *   { userId: user.id }
+ * );
+ * 
+ * // Validate top-level bookmarks (no collection)
+ * const result = await validateOrder(
+ *   tx,
+ *   'bookmark',
+ *   ['bookmark-id-1', 'bookmark-id-2'],
+ *   { userId: user.id }
+ * );
+ * 
+ * // Validate bookmarks within a collection
+ * const result = await validateOrder(
+ *   tx,
+ *   'bookmark',
+ *   ['bookmark-id-1', 'bookmark-id-2'],
+ *   { userId: user.id, collectionId: 'col-123' }
  * );
  * 
  * if (!result.valid) {
  *   throw new ValidationError(result.errors.join(', '));
  * }
  * 
- * // Use result.normalized when saving
+ * // Use result.normalized when saving to database
  * ```
  */
-export async function validateTopLevelOrder(
-  prismaClient: PrismaClientLike,
-  layoutType: LayoutType,
-  order: unknown,
-  context: ValidationContext,
-  options?: ValidationOptions
-): Promise<ValidationResult> {
-  const strategy = getOrderingStrategy(layoutType);
-  return strategy.validateTopLevelOrder(prismaClient, order, context, options);
-}
-
-/**
- * Validate collection-level ordering for a specific layout type
- * Use this in service functions when client updates collection bookmark order
- * 
- * @param prismaClient - Prisma client or transaction client for database queries
- * @param layoutType - The layout mode (launcher, grid, list)
- * @param order - The ordering data from client
- * @param context - Validation context (userId, collectionId)
- * @param options - Validation options (strict mode, etc.)
- * @returns Validation result with normalized data or errors
- * 
- * @example
- * ```typescript
- * const result = await validateCollectionOrder(
- *   tx,
- *   'list',
- *   orderData,
- *   { userId: user.id, collectionId: 'col-123' },
- *   { strict: false }
- * );
- * 
- * if (!result.valid) {
- *   throw new ValidationError(result.errors.join(', '));
- * }
- * 
- * // Use result.normalized when saving
- * ```
- */
-export async function validateCollectionOrder(
-  prismaClient: PrismaClientLike,
-  layoutType: LayoutType,
-  order: unknown,
-  context: ValidationContext & { collectionId: string },
-  options?: ValidationOptions
-): Promise<ValidationResult> {
-  const strategy = getOrderingStrategy(layoutType);
-  return strategy.validateCollectionOrder(prismaClient, order, context, options);
-}
-
+export { validateOrder as default };

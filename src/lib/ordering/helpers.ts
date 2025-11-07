@@ -10,168 +10,114 @@
  * DO NOT use these for client-submitted ordering updates!
  */
 
-import type { LauncherOrder } from './strategies/launcher';
-import type { ListOrder } from './strategies/list';
-import type { CollectionOrder } from './base';
+import type { CollectionOrder, BookmarkOrder } from './base';
 
 /**
- * Add a bookmark to launcher ordering
- * @param currentOrder - Current launcher order array
- * @param bookmarkId - ID of bookmark to add
+ * Add an item to an order array
+ * @param currentOrder - Current order array
+ * @param itemId - ID of item to add
  * @param position - Optional position (defaults to end)
  */
-export function addBookmarkToLauncherOrder(
-  currentOrder: LauncherOrder,
-  bookmarkId: string,
+export function addToOrder(
+  currentOrder: string[],
+  itemId: string,
   position?: number
-): LauncherOrder {
-  const newItem = { type: 'bookmark' as const, id: bookmarkId };
-  
+): string[] {
   if (position !== undefined && position >= 0 && position <= currentOrder.length) {
     return [
       ...currentOrder.slice(0, position),
-      newItem,
+      itemId,
       ...currentOrder.slice(position),
     ];
   }
   
-  return [...currentOrder, newItem];
+  return [...currentOrder, itemId];
 }
 
 /**
- * Add a collection to launcher ordering
- * @param currentOrder - Current launcher order array
- * @param collectionId - ID of collection to add
- * @param position - Optional position (defaults to end)
+ * Remove an item from an order array
+ * @param currentOrder - Current order array
+ * @param itemId - ID of item to remove
  */
-export function addCollectionToLauncherOrder(
-  currentOrder: LauncherOrder,
-  collectionId: string,
-  position?: number
-): LauncherOrder {
-  const newItem = { type: 'collection' as const, id: collectionId };
-  
-  if (position !== undefined && position >= 0 && position <= currentOrder.length) {
-    return [
-      ...currentOrder.slice(0, position),
-      newItem,
-      ...currentOrder.slice(position),
-    ];
-  }
-  
-  return [...currentOrder, newItem];
+export function removeFromOrder(
+  currentOrder: string[],
+  itemId: string
+): string[] {
+  return currentOrder.filter((id) => id !== itemId);
 }
 
 /**
- * Remove a bookmark from launcher ordering
- * @param currentOrder - Current launcher order array
- * @param bookmarkId - ID of bookmark to remove
- */
-export function removeBookmarkFromLauncherOrder(
-  currentOrder: LauncherOrder,
-  bookmarkId: string
-): LauncherOrder {
-  return currentOrder.filter(
-    (item) => !(item.type === 'bookmark' && item.id === bookmarkId)
-  );
-}
-
-/**
- * Remove a collection from launcher ordering
- * @param currentOrder - Current launcher order array
- * @param collectionId - ID of collection to remove
- */
-export function removeCollectionFromLauncherOrder(
-  currentOrder: LauncherOrder,
-  collectionId: string
-): LauncherOrder {
-  return currentOrder.filter(
-    (item) => !(item.type === 'collection' && item.id === collectionId)
-  );
-}
-
-/**
- * Add a bookmark to list ordering
- * Works for both top-level ordering (list/grid mode) and collection ordering
- * @param currentOrder - Current list/collection order array
- * @param bookmarkId - ID of bookmark to add
- * @param position - Optional position (defaults to end)
- */
-export function addBookmarkToListOrder(
-  currentOrder: ListOrder | CollectionOrder,
-  bookmarkId: string,
-  position?: number
-): ListOrder {
-  if (position !== undefined && position >= 0 && position <= currentOrder.length) {
-    return [
-      ...currentOrder.slice(0, position),
-      bookmarkId,
-      ...currentOrder.slice(position),
-    ];
-  }
-  
-  return [...currentOrder, bookmarkId];
-}
-
-/**
- * Remove a bookmark from list ordering
- * Works for both top-level ordering (list/grid mode) and collection ordering
- * @param currentOrder - Current list/collection order array
- * @param bookmarkId - ID of bookmark to remove
- */
-export function removeBookmarkFromListOrder(
-  currentOrder: ListOrder | CollectionOrder,
-  bookmarkId: string
-): ListOrder {
-  return currentOrder.filter((id) => id !== bookmarkId);
-}
-
-/**
- * Clean up launcher order by removing non-existent items
+ * Clean up order by removing non-existent items
  * Use after bulk deletions or database inconsistencies
  * 
- * @param order - Current launcher order
- * @param existingBookmarks - Set of existing bookmark IDs
- * @param existingCollections - Set of existing collection IDs
+ * @param order - Current order array
+ * @param existingIds - Set of existing item IDs
  */
-export function cleanupLauncherOrder(
-  order: LauncherOrder,
-  existingBookmarks: Set<string>,
-  existingCollections: Set<string>
-): LauncherOrder {
-  return order.filter((item) => {
-    if (item.type === 'bookmark') return existingBookmarks.has(item.id);
-    if (item.type === 'collection') return existingCollections.has(item.id);
-    return false;
-  });
+export function cleanupOrder(
+  order: string[],
+  existingIds: Set<string>
+): string[] {
+  return order.filter((id) => existingIds.has(id));
 }
 
 /**
- * Clean up list order by removing non-existent bookmarks
- * Works for both top-level ordering (list/grid mode) and collection ordering
- * Use after bulk deletions or database inconsistencies
- * 
- * @param order - Current list/collection order
- * @param existingBookmarks - Set of existing bookmark IDs
+ * Initialize empty order
  */
-export function cleanupListOrder(
-  order: ListOrder | CollectionOrder,
-  existingBookmarks: Set<string>
-): ListOrder {
-  return order.filter((id) => existingBookmarks.has(id));
-}
-
-/**
- * Initialize empty launcher order
- */
-export function createEmptyLauncherOrder(): LauncherOrder {
+export function createEmptyOrder(): string[] {
   return [];
 }
 
 /**
- * Initialize empty list order
+ * Move an item within an order array
+ * @param currentOrder - Current order array
+ * @param itemId - ID of item to move
+ * @param newPosition - New position for the item
  */
-export function createEmptyListOrder(): ListOrder {
-  return [];
+export function moveInOrder(
+  currentOrder: string[],
+  itemId: string,
+  newPosition: number
+): string[] {
+  const currentIndex = currentOrder.indexOf(itemId);
+  if (currentIndex === -1) {
+    // Item not in order, just add it at the position
+    return addToOrder(currentOrder, itemId, newPosition);
+  }
+  
+  // Remove from current position
+  const withoutItem = removeFromOrder(currentOrder, itemId);
+  
+  // Add at new position
+  return addToOrder(withoutItem, itemId, newPosition);
 }
 
+/**
+ * Check if an item exists in an order
+ * @param order - Order array
+ * @param itemId - ID to check
+ */
+export function isInOrder(order: string[], itemId: string): boolean {
+  return order.includes(itemId);
+}
+
+/**
+ * Get position of an item in order (-1 if not found)
+ * @param order - Order array
+ * @param itemId - ID to find
+ */
+export function getOrderPosition(order: string[], itemId: string): number {
+  return order.indexOf(itemId);
+}
+
+// Type-safe aliases for clarity
+export type { CollectionOrder, BookmarkOrder };
+
+// Re-export for convenience
+export {
+  addToOrder as addToCollectionOrder,
+  removeFromOrder as removeFromCollectionOrder,
+  cleanupOrder as cleanupCollectionOrder,
+  addToOrder as addToBookmarkOrder,
+  removeFromOrder as removeFromBookmarkOrder,
+  cleanupOrder as cleanupBookmarkOrder,
+};
