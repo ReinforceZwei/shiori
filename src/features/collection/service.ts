@@ -1,6 +1,7 @@
 import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { NotFoundError } from "@/lib/errors";
+import { NotFoundError, ValidationError } from "@/lib/errors";
+import { validateCollectionOrder } from "@/lib/ordering";
 
 export async function getCollections({ userId }: { userId?: string } = {}) {
   const collections = await prisma.collection.findMany({
@@ -21,7 +22,6 @@ const createCollectionInputSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   color: z.string().optional(),
-  bookmarkOrder: z.any().optional(), // Json type
 });
 
 export async function createCollection(data: z.infer<typeof createCollectionInputSchema>) {
@@ -32,7 +32,6 @@ export async function createCollection(data: z.infer<typeof createCollectionInpu
       name: validatedData.name,
       description: validatedData.description,
       color: validatedData.color,
-      bookmarkOrder: validatedData.bookmarkOrder,
       user: {
         connect: { id: validatedData.userId },
       },
@@ -75,14 +74,43 @@ export async function updateCollection(data: z.infer<typeof updateCollectionInpu
   if (validatedData.color !== undefined) {
     updateData.color = validatedData.color;
   }
-  if (validatedData.bookmarkOrder !== undefined) {
-    updateData.bookmarkOrder = validatedData.bookmarkOrder;
-  }
 
-  await prisma.collection.update({
-    where: { id: validatedData.id },
-    data: updateData,
-  });
+  // Validate bookmarkOrder if provided
+  if (validatedData.bookmarkOrder !== undefined) {
+    // Wrap in transaction to ensure atomicity
+    return await prisma.$transaction(async (tx) => {
+      const validationResult = await validateCollectionOrder(
+        tx,
+        'list', // Use 'list' as all strategies have the same collection order validation
+        validatedData.bookmarkOrder,
+        { userId: collection.userId, collectionId: validatedData.id },
+        { strict: false }
+      );
+
+      if (!validationResult.valid) {
+        throw new ValidationError(`Invalid bookmarkOrder: ${validationResult.errors.join(', ')}`);
+      }
+
+      // Use validated and normalized bookmarkOrder
+      updateData.bookmarkOrder = validationResult.normalized as Prisma.InputJsonValue;
+
+      // Perform the update
+      return await tx.collection.update({
+        where: { id: validatedData.id },
+        data: updateData,
+      });
+    });
+  } else {
+    // No bookmarkOrder update, just update other fields if any
+    if (Object.keys(updateData).length > 0) {
+      return await prisma.collection.update({
+        where: { id: validatedData.id },
+        data: updateData,
+      });
+    }
+    // No update
+    return collection;
+  }
 }
 
 const deleteCollectionInputSchema = z.object({

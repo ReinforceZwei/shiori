@@ -2,37 +2,39 @@ import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import NewBookmarkForm, { NewBookmarkFormValues } from '../form/NewBookmarkForm';
-import { Prisma } from '@/generated/prisma';
+import NewBookmarkForm, { NewBookmarkFormValues } from './NewBookmarkForm';
 import { useAllCollectionsQuery } from '@/features/collection/hook';
-import { useCreateBookmarkMutation } from '../query';
+import { useCreateBookmarkMutation, CreateBookmarkInput } from '../query';
 
 const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initialValues?: { collectionId?: string }}>) => {
   const { data: collections, isPending } = useAllCollectionsQuery();
-  const { mutateAsync: createBookmark } = useCreateBookmarkMutation();
+  const { mutateAsync: createBookmark, isPending: isCreating } = useCreateBookmarkMutation();
 
   const handleSubmit = async (values: NewBookmarkFormValues) => {
     try {
-      const data: Partial<Prisma.BookmarkCreateInput> = {
+      const data: CreateBookmarkInput = {
         title: values.title,
         url: values.url,
       };
 
-      // Add collection connection if selected
+      // Add collection if selected
       if (values.collectionId) {
-        data.collection = { connect: { id: values.collectionId } };
+        data.collectionId = values.collectionId;
       }
 
-      // Add website icon if provided
+      // Add website icon if provided (backend will validate and detect MIME type)
       if (values.websiteIcon) {
         data.websiteIcon = {
-          create: {
-            data: values.websiteIcon
-          }
+          data: values.websiteIcon,
         };
       }
 
-      await createBookmark(data as Prisma.BookmarkCreateInput);
+      // Add description if provided
+      if (values.description) {
+        data.description = values.description;
+      }
+
+      await createBookmark(data);
       context.closeModal(id);
       notifications.show({
         title: 'Bookmark created',
@@ -57,6 +59,7 @@ const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initi
         onSubmit={handleSubmit}
         collections={collections || []}
         initialValues={innerProps.initialValues}
+        isSubmitting={isCreating}
       />
     </Box>
   );

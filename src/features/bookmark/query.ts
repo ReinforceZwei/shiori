@@ -1,6 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Prisma, Bookmark } from "@/generated/prisma";
+import { Bookmark } from "@/generated/prisma";
 import type { BookmarkMetadataResponse } from "@/app/api/bookmark/metadata/types";
+
+// Type definitions that match the backend service schema
+export interface CreateBookmarkInput {
+  title: string;
+  url: string;
+  description?: string;
+  collectionId?: string;
+  websiteIcon?: {
+    data: string;  // base64 encoded string
+  };
+}
+
+export interface UpdateBookmarkInput {
+  title?: string;
+  url?: string;
+  description?: string | null;
+  collectionId?: string | null;
+  websiteIcon?: {
+    data: string;  // base64 encoded string
+  };
+}
 
 // API fetch functions
 async function getBookmarks(): Promise<Bookmark[]> {
@@ -19,7 +40,7 @@ async function getBookmark(id: string): Promise<Bookmark> {
   return response.json();
 }
 
-async function createBookmark(data: Prisma.BookmarkCreateInput): Promise<Bookmark> {
+async function createBookmark(data: CreateBookmarkInput): Promise<Bookmark> {
   const response = await fetch("/api/bookmark", {
     method: "POST",
     headers: {
@@ -33,7 +54,7 @@ async function createBookmark(data: Prisma.BookmarkCreateInput): Promise<Bookmar
   return response.json();
 }
 
-async function updateBookmark(id: string, data: Prisma.BookmarkUpdateInput): Promise<Bookmark> {
+async function updateBookmark(id: string, data: UpdateBookmarkInput): Promise<Bookmark> {
   const response = await fetch("/api/bookmark", {
     method: "PUT",
     headers: {
@@ -91,8 +112,8 @@ export function useAllBookmarksQuery() {
 
 export function useCreateBookmarkMutation() {
   const queryClient = useQueryClient();
-  return useMutation<Bookmark, Error, Prisma.BookmarkCreateInput>({
-    mutationFn: (newBookmark: Prisma.BookmarkCreateInput) => {
+  return useMutation<Bookmark, Error, CreateBookmarkInput>({
+    mutationFn: (newBookmark: CreateBookmarkInput) => {
       return createBookmark(newBookmark);
     },
     onSuccess: (data, variables, context) => {
@@ -104,8 +125,8 @@ export function useCreateBookmarkMutation() {
 
 export function useUpdateBookmarkMutation() {
   const queryClient = useQueryClient();
-  return useMutation<Bookmark, Error, { id: string; data: Prisma.BookmarkUpdateInput }>({
-    mutationFn: ({ id, data }: { id: string; data: Prisma.BookmarkUpdateInput }) => {
+  return useMutation<Bookmark, Error, { id: string; data: UpdateBookmarkInput }>({
+    mutationFn: ({ id, data }: { id: string; data: UpdateBookmarkInput }) => {
       return updateBookmark(id, data);
     },
     onSuccess: (data, variables, context) => {

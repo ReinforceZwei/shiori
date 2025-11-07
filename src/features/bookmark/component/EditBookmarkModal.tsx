@@ -2,10 +2,10 @@ import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import { EditBookmarkFormValues } from '../form/EditBookmarkForm';
-import { useUpdateBookmarkMutation } from '../query';
+import { EditBookmarkFormValues } from './EditBookmarkForm';
+import { useUpdateBookmarkMutation, UpdateBookmarkInput } from '../query';
 import { useAllCollectionsQuery } from '@/features/collection/hook';
-import EditBookmarkForm from '../form/EditBookmarkForm';
+import EditBookmarkForm from './EditBookmarkForm';
 
 interface EditBookmarkModalProps extends ContextModalProps<{
   bookmarkId: string;
@@ -15,34 +15,32 @@ interface EditBookmarkModalProps extends ContextModalProps<{
 const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) => {
   const { bookmarkId, initialValues } = innerProps;
   const { data: collections, isPending } = useAllCollectionsQuery();
-  const { mutateAsync: updateBookmark } = useUpdateBookmarkMutation();
+  const { mutateAsync: updateBookmark, isPending: isUpdating } = useUpdateBookmarkMutation();
 
   const handleSubmit = async (values: EditBookmarkFormValues) => {
     try {
-      const data: any = {
+      const data: UpdateBookmarkInput = {
         title: values.title,
         url: values.url,
       };
 
-      // Update collection connection if selected
+      // Update collection if selected, or null to remove
       if (values.collectionId) {
-        data.collection = { connect: { id: values.collectionId } };
-      } else {
-        data.collection = { disconnect: true };
+        data.collectionId = values.collectionId;
+      } else if (values.collectionId === '') {
+        data.collectionId = null;
       }
 
-      // Update website icon if provided
+      // Update website icon if provided (backend will validate and detect MIME type)
       if (values.websiteIcon) {
         data.websiteIcon = {
-          upsert: {
-            create: {
-              data: values.websiteIcon
-            },
-            update: {
-              data: values.websiteIcon
-            }
-          }
+          data: values.websiteIcon,
         };
+      }
+
+      // Update description if provided
+      if (values.description !== undefined) {
+        data.description = values.description || null;
       }
 
       await updateBookmark({ id: bookmarkId, data });
@@ -70,7 +68,7 @@ const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) 
         onSubmit={handleSubmit}
         collections={collections || []}
         initialValues={initialValues}
-        bookmarkId={bookmarkId}
+        isSubmitting={isUpdating}
       />
     </Box>
   );

@@ -1,7 +1,8 @@
 "use client";
 
-import { AppShell as MantineAppShell, Burger, Title, Group, NavLink, Tabs } from '@mantine/core';
+import { AppShell as MantineAppShell, Burger, Title, Group, NavLink, Button } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { modals } from '@mantine/modals';
 import Link from 'next/link';
 
 export default function AppShell({
@@ -32,12 +33,26 @@ export default function AppShell({
           <Title order={2}>Shiori</Title>
           </Group>
           <Group>
-            <Tabs defaultValue="bookmarks" variant="pills">
-              <Tabs.List>
-                <Tabs.Tab value="bookmarks">Bookmarks</Tabs.Tab>
-                <Tabs.Tab value="collections">Collections</Tabs.Tab>
-              </Tabs.List>
-            </Tabs>
+            <Button 
+              variant="light" 
+              onClick={() => modals.openContextModal({
+                modal: 'newBookmark',
+                title: 'Create New Bookmark',
+                innerProps: {}
+              })}
+            >
+              New Bookmark
+            </Button>
+            <Button 
+              variant="light"
+              onClick={() => modals.openContextModal({
+                modal: 'newCollection',
+                title: 'Create New Collection',
+                innerProps: {}
+              })}
+            >
+              New Collection
+            </Button>
           </Group>
         </Group>
       </MantineAppShell.Header>

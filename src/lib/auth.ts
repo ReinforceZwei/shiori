@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@/generated/prisma/client";
 import { headers } from "next/headers";
+import { UnauthorizedError } from "./errors";
 
 const prisma = new PrismaClient();
 export const auth = betterAuth({
@@ -27,4 +28,16 @@ export async function getUser() {
     return session.user;
   }
   return null;
+}
+
+/**
+ * Get the current user or throw an UnauthorizedError if not authenticated.
+ * Use this in authenticated contexts where a user must exist.
+ */
+export async function requireUser() {
+  const user = await getUser();
+  if (!user) {
+    throw new UnauthorizedError("Authentication required");
+  }
+  return user;
 }

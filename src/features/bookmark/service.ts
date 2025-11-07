@@ -61,7 +61,7 @@ export async function createBookmark(data: z.infer<typeof createBookmarkInputSch
   }
   
   // Validate image and detect actual MIME type from binary data
-  let websiteIconData;
+  let websiteIconData: Prisma.WebsiteIconCreateNestedOneWithoutBookmarkInput | undefined;
   if (validatedData.websiteIcon) {
     const detectedMimeType = await validateAndDetectImageType(
       validatedData.websiteIcon.data,
@@ -80,16 +80,39 @@ export async function createBookmark(data: z.infer<typeof createBookmarkInputSch
   const userData = {
     connect: { id: validatedData.userId },
   };
-  const bookmark = await prisma.bookmark.create({
-    data: {
-      title: validatedData.title,
-      url: validatedData.url,
-      description: validatedData.description,
-      websiteIcon: websiteIconData,
-      collection: collectionData,
-      user: userData,
-    },
+
+  // Wrap in transaction to ensure atomicity
+  const bookmark = await prisma.$transaction(async (tx) => {
+    const newBookmark = await tx.bookmark.create({
+      data: {
+        title: validatedData.title,
+        url: validatedData.url,
+        description: validatedData.description,
+        websiteIcon: websiteIconData,
+        collection: collectionData,
+        user: userData,
+      },
+    });
+
+    // Update collection's bookmarkOrder if bookmark was added to a collection
+    if (validatedData.collectionId) {
+      const collection = await tx.collection.findUnique({
+        where: { id: validatedData.collectionId },
+        select: { bookmarkOrder: true },
+      });
+      
+      const currentOrder = (collection?.bookmarkOrder as string[]) || [];
+      const updatedOrder = [...currentOrder, newBookmark.id];
+      
+      await tx.collection.update({
+        where: { id: validatedData.collectionId },
+        data: { bookmarkOrder: updatedOrder },
+      });
+    }
+
+    return newBookmark;
   });
+
   return bookmark;
 }
 
@@ -117,6 +140,9 @@ export async function updateBookmark(data: z.infer<typeof updateBookmarkInputSch
   if (!bookmark) {
     throw new NotFoundError(`Bookmark(id: ${validatedData.id}) not found`);
   }
+
+  // Track old collection ID for bookmarkOrder updates
+  const oldCollectionId = bookmark.collectionId;
 
   // Build update data object with only fields to update
   const updateData: Prisma.BookmarkUpdateInput = {};
@@ -169,9 +195,58 @@ export async function updateBookmark(data: z.infer<typeof updateBookmarkInputSch
     };
   }
 
-  const updatedBookmark = await prisma.bookmark.update({
-    where: { id: validatedData.id },
-    data: updateData,
+  // Wrap in transaction to ensure atomicity
+  const updatedBookmark = await prisma.$transaction(async (tx) => {
+    const updated = await tx.bookmark.update({
+      where: { id: validatedData.id },
+      data: updateData,
+    });
+
+    // Update bookmarkOrder in collections if collection changed
+    if (validatedData.collectionId !== undefined) {
+      const newCollectionId = validatedData.collectionId;
+      
+      // Remove bookmark from old collection's order
+      if (oldCollectionId) {
+        const oldCollection = await tx.collection.findUnique({
+          where: { id: oldCollectionId },
+          select: { bookmarkOrder: true },
+        });
+        
+        if (oldCollection) {
+          const oldOrder = (oldCollection.bookmarkOrder as string[]) || [];
+          const updatedOldOrder = oldOrder.filter(id => id !== validatedData.id);
+          
+          await tx.collection.update({
+            where: { id: oldCollectionId },
+            data: { bookmarkOrder: updatedOldOrder },
+          });
+        }
+      }
+      
+      // Add bookmark to new collection's order
+      if (newCollectionId) {
+        const newCollection = await tx.collection.findUnique({
+          where: { id: newCollectionId },
+          select: { bookmarkOrder: true },
+        });
+        
+        if (newCollection) {
+          const newOrder = (newCollection.bookmarkOrder as string[]) || [];
+          // Only add if not already present (safety check)
+          if (!newOrder.includes(validatedData.id)) {
+            const updatedNewOrder = [...newOrder, validatedData.id];
+            
+            await tx.collection.update({
+              where: { id: newCollectionId },
+              data: { bookmarkOrder: updatedNewOrder },
+            });
+          }
+        }
+      }
+    }
+
+    return updated;
   });
   
   return updatedBookmark;
@@ -195,8 +270,29 @@ export async function deleteBookmark(data: z.infer<typeof deleteBookmarkInputSch
     throw new NotFoundError(`Bookmark(id: ${validatedData.id}) not found`);
   }
 
-  // Delete the bookmark (websiteIcon will be cascade deleted automatically)
-  await prisma.bookmark.delete({
-    where: { id: validatedData.id },
+  // Wrap in transaction to ensure atomicity
+  await prisma.$transaction(async (tx) => {
+    // Remove bookmark from collection's bookmarkOrder if it belongs to a collection
+    if (bookmark.collectionId) {
+      const collection = await tx.collection.findUnique({
+        where: { id: bookmark.collectionId },
+        select: { bookmarkOrder: true },
+      });
+      
+      if (collection) {
+        const currentOrder = (collection.bookmarkOrder as string[]) || [];
+        const updatedOrder = currentOrder.filter(id => id !== validatedData.id);
+        
+        await tx.collection.update({
+          where: { id: bookmark.collectionId },
+          data: { bookmarkOrder: updatedOrder },
+        });
+      }
+    }
+
+    // Delete the bookmark (websiteIcon will be cascade deleted automatically)
+    await tx.bookmark.delete({
+      where: { id: validatedData.id },
+    });
   });
 }
