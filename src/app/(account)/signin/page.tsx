@@ -1,24 +1,32 @@
 'use client';
 import { useForm } from '@mantine/form';
+import { zodResolver } from 'mantine-form-zod-resolver';
+import { z } from 'zod';
 import { TextInput, PasswordInput, Button, Box, Title, Text, Alert, Checkbox } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { authClient } from '@/lib/auth-client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+// Zod schema for sign-in form validation
+const signinFormSchema = z.object({
+  email: z.email('Invalid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  rememberMe: z.boolean(),
+});
+
+type SigninFormValues = z.infer<typeof signinFormSchema>;
 
 export default function SigninPage() {
   const router = useRouter();
-  const form = useForm({
+  const form = useForm<SigninFormValues>({
     initialValues: {
       email: '',
       password: '',
       rememberMe: true,
     },
-
-    validate: {
-      email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
-      password: (value) => (value.length >= 6 ? null : 'Password must be at least 6 characters'),
-    },
+    validate: zodResolver(signinFormSchema),
   });
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -46,7 +54,7 @@ export default function SigninPage() {
   };
 
   return (
-    <Box maw={400} mx="auto" mt="xl">
+    <Box maw={400} mx="auto" mt="xl" p="sm">
       <Title ta="center" order={1} mb="sm">
         Shiori
       </Title>
@@ -87,6 +95,13 @@ export default function SigninPage() {
           Sign In
         </Button>
       </form>
+
+      <Text ta="center" mt="lg" size="sm">
+        Don't have an account?{' '}
+        <Text component={Link} href="/signup" c="blue" style={{ textDecoration: 'none', fontWeight: 500 }}>
+          Sign up
+        </Text>
+      </Text>
     </Box>
   );
 }

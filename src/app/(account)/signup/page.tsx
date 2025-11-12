@@ -1,26 +1,33 @@
-'use client'
+'use client';
 import { useForm } from '@mantine/form';
-import { TextInput, PasswordInput, Button, Box, Title, Text, Alert } from '@mantine/core';
+import { zodResolver } from 'mantine-form-zod-resolver';
+import { z } from 'zod';
+import { TextInput, PasswordInput, Button, Box, Title, Text, Alert, Popover } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { authClient } from '@/lib/auth-client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+// Zod schema for sign-up form validation
+const signupFormSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.email('Invalid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+type SignupFormValues = z.infer<typeof signupFormSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
-  const form = useForm({
+  const form = useForm<SignupFormValues>({
     initialValues: {
       name: '',
       email: '',
       password: '',
     },
-
-    validate: {
-      name: (value) => (value ? null : 'Name is required'),
-      email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
-      password: (value) => (value.length >= 6 ? null : 'Password must be at least 6 characters'),
-    },
+    validate: zodResolver(signupFormSchema),
   });
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -48,7 +55,7 @@ export default function SignupPage() {
   };
 
   return (
-    <Box maw={400} mx="auto" mt="xl">
+    <Box maw={400} mx="auto" mt="xl" p="sm">
       <Title ta="center" order={1} mb="sm">
         Shiori
       </Title>
@@ -77,6 +84,18 @@ export default function SignupPage() {
           {...form.getInputProps('email')}
           required
           mt="md"
+          rightSection={
+            <Popover width={220} position="bottom" withArrow shadow="md">
+              <Popover.Target>
+                <IconInfoCircle size={16} style={{ cursor: 'pointer' }} />
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Text size="sm">
+                Drop any email here. We won’t send you jack. Fake emails welcome (just don’t forget it, genius).
+                </Text>
+              </Popover.Dropdown>
+            </Popover>
+          }
         />
 
         <PasswordInput
@@ -91,6 +110,13 @@ export default function SignupPage() {
           Sign Up
         </Button>
       </form>
+
+      <Text ta="center" mt="lg" size="sm">
+        Already have an account?{' '}
+        <Text component={Link} href="/signin" c="blue" style={{ textDecoration: 'none', fontWeight: 500 }}>
+          Sign in
+        </Text>
+      </Text>
     </Box>
   );
 }

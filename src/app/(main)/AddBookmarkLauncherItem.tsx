@@ -1,21 +1,19 @@
 "use client";
 
-import { Box, Text, Image } from "@mantine/core";
+import { Box, Text } from "@mantine/core";
+import { IconPlus } from "@tabler/icons-react";
+import { modals } from "@mantine/modals";
 import { useState } from "react";
+import { LauncherItemSize } from "./BookmarkLauncherItem";
 
-export type LauncherItemSize = "medium" | "small";
-
-interface BookmarkLauncherItemProps {
-  id: string;
-  title: string;
-  url: string;
+interface AddBookmarkLauncherItemProps {
   size?: LauncherItemSize;
 }
 
 const SIZE_CONFIG = {
   medium: {
     iconSize: 64,
-    imageSize: 64,
+    plusIconSize: 32,
     borderRadius: "16px",
     gap: "8px",
     textSize: "xs" as const,
@@ -23,7 +21,7 @@ const SIZE_CONFIG = {
   },
   small: {
     iconSize: 48,
-    imageSize: 48,
+    plusIconSize: 24,
     borderRadius: "12px",
     gap: "6px",
     textSize: "xs" as const,
@@ -31,9 +29,17 @@ const SIZE_CONFIG = {
   },
 };
 
-export function BookmarkLauncherItem({ id, title, url, size = "medium" }: BookmarkLauncherItemProps) {
+export function AddBookmarkLauncherItem({ size = "medium" }: AddBookmarkLauncherItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const config = SIZE_CONFIG[size];
+
+  const handleClick = () => {
+    modals.openContextModal({
+      modal: "newBookmark",
+      title: "Create New Bookmark",
+      innerProps: {},
+    });
+  };
 
   return (
     <Box
@@ -46,12 +52,8 @@ export function BookmarkLauncherItem({ id, title, url, size = "medium" }: Bookma
     >
       {/* Icon Container */}
       <Box
-        component="a"
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
+        onClick={handleClick}
         style={{
-          textDecoration: "none",
           cursor: "pointer",
           width: `${config.iconSize}px`,
           height: `${config.iconSize}px`,
@@ -62,20 +64,21 @@ export function BookmarkLauncherItem({ id, title, url, size = "medium" }: Bookma
           justifyContent: "center",
           backgroundColor: "var(--mantine-color-default-hover)",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-          border: "1px solid var(--mantine-color-default-border)",
-          transition: "transform 0.2s ease",
+          border: "2px dashed var(--mantine-color-default-border)",
+          transition: "transform 0.2s ease, border-color 0.2s ease",
           transform: isHovered ? "scale(1.1)" : "scale(1)",
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <Image
-          src={`/api/bookmark/${id}/websiteicon?fallback=true`}
-          alt={title}
-          width={config.imageSize}
-          height={config.imageSize}
-          fit="contain"
-          fallbackSrc="/assets/world-wide-web.png"
+        <IconPlus
+          size={config.plusIconSize}
+          stroke={1.5}
+          style={{
+            color: "var(--mantine-color-dimmed)",
+            opacity: isHovered ? 1 : 0.6,
+            transition: "opacity 0.2s ease",
+          }}
         />
       </Box>
 
@@ -90,7 +93,7 @@ export function BookmarkLauncherItem({ id, title, url, size = "medium" }: Bookma
           color: "var(--mantine-color-text)",
         }}
       >
-        {title}
+        Add Bookmark
       </Text>
     </Box>
   );

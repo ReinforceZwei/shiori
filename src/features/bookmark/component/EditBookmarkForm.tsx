@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from '@mantine/form';
+import { zodResolver } from 'mantine-form-zod-resolver';
+import { z } from 'zod';
 import {
   TextInput,
   Button,
@@ -19,14 +20,50 @@ import { useFetchBookmarkMetadataMutation } from '@/features/bookmark/query';
 import { selectBestIcon, createIconDataUrl } from '@/app/api/bookmark/metadata/types';
 import CollectionSelect from '@/features/collection/component/CollectionSelect/CollectionSelect';
 
-export interface EditBookmarkFormValues {
-  url: string;
-  title: string;
-  description?: string;
-  websiteIcon?: string;
-  websiteIconMimeType?: string;
-  collectionId?: string;
+// Helper functions
+function normalizeUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
 }
+
+function isValidUrl(url: string): boolean {
+  try {
+    const normalized = normalizeUrl(url);
+    new URL(normalized);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Zod schema for form validation
+const editBookmarkFormSchema = z.object({
+  url: z
+    .string()
+    .min(1, 'URL is required')
+    .refine(
+      (value) => {
+        try {
+          const normalized = normalizeUrl(value);
+          new URL(normalized);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Please enter a valid URL' }
+    ),
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  websiteIcon: z.string().optional(),
+  websiteIconMimeType: z.string().optional(),
+  collectionId: z.string().optional(),
+});
+
+export type EditBookmarkFormValues = z.infer<typeof editBookmarkFormSchema>;
 
 interface EditBookmarkFormProps {
   collections: Prisma.CollectionGetPayload<{}>[];
@@ -41,19 +78,10 @@ export default function EditBookmarkForm({
   onSubmit,
   isSubmitting = false,
 }: EditBookmarkFormProps) {
-  const {
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<EditBookmarkFormValues>({
-    defaultValues: initialValues,
+  const form = useForm<EditBookmarkFormValues>({
+    initialValues: initialValues,
+    validate: zodResolver(editBookmarkFormSchema),
   });
-
-  const urlValue = watch('url');
-  const currentIcon = watch('websiteIcon');
-  const currentIconMimeType = watch('websiteIconMimeType');
 
   const {
     mutate: fetchMetadata,
@@ -62,23 +90,23 @@ export default function EditBookmarkForm({
   } = useFetchBookmarkMetadataMutation();
 
   const handleRefreshMetadata = () => {
-    if (urlValue && isValidUrl(urlValue)) {
-      const normalizedUrl = normalizeUrl(urlValue);
+    if (form.values.url && isValidUrl(form.values.url)) {
+      const normalizedUrl = normalizeUrl(form.values.url);
       fetchMetadata(normalizedUrl, {
         onSuccess: (data) => {
           // Auto-populate with best options
           if (data.title) {
-            setValue('title', data.title);
+            form.setFieldValue('title', data.title);
           }
           
           const bestIcon = selectBestIcon(data.icons);
           if (bestIcon) {
-            setValue('websiteIcon', bestIcon.base64);
-            setValue('websiteIconMimeType', bestIcon.mimeType);
+            form.setFieldValue('websiteIcon', bestIcon.base64);
+            form.setFieldValue('websiteIconMimeType', bestIcon.mimeType);
           }
 
           if (data.descriptions && data.descriptions.length > 0) {
-            setValue('description', data.descriptions[0].value);
+            form.setFieldValue('description', data.descriptions[0].value);
           }
         },
       });
@@ -87,39 +115,28 @@ export default function EditBookmarkForm({
 
   return (
     <Box maw={600} mx="auto">
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={form.onSubmit(onSubmit)}>
         <Stack gap="md">
           {/* URL Input */}
-          <Controller
-            name="url"
-            control={control}
-            rules={{
-              required: 'URL is required',
-              validate: (value) => isValidUrl(value) || 'Please enter a valid URL',
-            }}
-            render={({ field }) => (
-              <TextInput
-                {...field}
-                label="URL"
-                placeholder="https://example.com"
-                error={errors.url?.message}
-                required
-                rightSection={
-                  isFetchingMetadata ? (
-                    <Loader size="xs" />
-                  ) : (
-                    <ActionIcon
-                      variant="subtle"
-                      onClick={handleRefreshMetadata}
-                      disabled={!urlValue || !isValidUrl(urlValue)}
-                      title="Refresh metadata from URL"
-                    >
-                      <IconRefresh size={16} />
-                    </ActionIcon>
-                  )
-                }
-              />
-            )}
+          <TextInput
+            label="URL"
+            placeholder="https://example.com"
+            required
+            {...form.getInputProps('url')}
+            rightSection={
+              isFetchingMetadata ? (
+                <Loader size="xs" />
+              ) : (
+                <ActionIcon
+                  variant="subtle"
+                  onClick={handleRefreshMetadata}
+                  disabled={!form.values.url || !isValidUrl(form.values.url)}
+                  title="Refresh metadata from URL"
+                >
+                  <IconRefresh size={16} />
+                </ActionIcon>
+              )
+            }
           />
 
           {/* Metadata Error */}
@@ -130,62 +147,42 @@ export default function EditBookmarkForm({
           )}
 
           {/* Title Input */}
-          <Controller
-            name="title"
-            control={control}
-            rules={{ required: 'Title is required' }}
-            render={({ field }) => (
-              <TextInput
-                {...field}
-                label="Title"
-                placeholder="Enter bookmark title"
-                error={errors.title?.message}
-                required
-                leftSection={
-                  currentIcon ? (
-                    <Image
-                      src={createIconDataUrl({
-                        base64: currentIcon,
-                        mimeType: currentIconMimeType || 'image/png',
-                      } as any)}
-                      alt="Website icon"
-                      w={16}
-                      h={16}
-                      fit="contain"
-                    />
-                  ) : (
-                    <IconWorld size={16} />
-                  )
-                }
-              />
-            )}
+          <TextInput
+            label="Title"
+            placeholder="Enter bookmark title"
+            required
+            {...form.getInputProps('title')}
+            leftSection={
+              form.values.websiteIcon ? (
+                <Image
+                  src={createIconDataUrl({
+                    base64: form.values.websiteIcon,
+                    mimeType: form.values.websiteIconMimeType || 'image/png',
+                  } as any)}
+                  alt="Website icon"
+                  w={16}
+                  h={16}
+                  fit="contain"
+                />
+              ) : (
+                <IconWorld size={16} />
+              )
+            }
           />
 
           {/* Description Input */}
-          <Controller
-            name="description"
-            control={control}
-            render={({ field }) => (
-              <TextInput
-                {...field}
-                label="Description"
-                placeholder="Enter bookmark description (optional)"
-              />
-            )}
+          <TextInput
+            label="Description"
+            placeholder="Enter bookmark description (optional)"
+            {...form.getInputProps('description')}
           />
 
           {/* Collection Selection */}
-          <Controller
-            name="collectionId"
-            control={control}
-            render={({ field }) => (
-              <CollectionSelect
-                {...field}
-                label="Collection"
-                placeholder="Select a collection (optional)"
-                data={collections}
-              />
-            )}
+          <CollectionSelect
+            label="Collection"
+            placeholder="Select a collection (optional)"
+            data={collections}
+            {...form.getInputProps('collectionId')}
           />
 
           {/* Submit Button */}
@@ -194,7 +191,7 @@ export default function EditBookmarkForm({
               variant="light"
               onClick={handleRefreshMetadata}
               loading={isFetchingMetadata}
-              disabled={!urlValue || !isValidUrl(urlValue)}
+              disabled={!form.values.url || !isValidUrl(form.values.url)}
             >
               Refresh Metadata
             </Button>
@@ -206,24 +203,4 @@ export default function EditBookmarkForm({
       </form>
     </Box>
   );
-}
-
-// Validation helper
-function isValidUrl(url: string): boolean {
-  try {
-    const normalized = normalizeUrl(url);
-    new URL(normalized);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// URL normalization helper
-function normalizeUrl(url: string): string {
-  const trimmed = url.trim();
-  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-    return `https://${trimmed}`;
-  }
-  return trimmed;
 }

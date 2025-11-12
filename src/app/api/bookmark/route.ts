@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { withAuth } from '@/lib/with-auth';
 import {
   createBookmark,
@@ -14,6 +15,10 @@ export const POST = withAuth(async (request, { user }) => {
     userId: user.id,
     ...data,
   });
+  
+  // Revalidate the main layout to update all bookmark-related UI
+  revalidatePath('/(main)', 'layout');
+  
   return NextResponse.json(bookmark);
 });
 
@@ -30,6 +35,10 @@ export const PUT = withAuth(async (request, { user }) => {
     userId: user.id,
     ...data,
   });
+  
+  // Revalidate the main layout to update all bookmark-related UI
+  revalidatePath('/(main)', 'layout');
+  
   return NextResponse.json(bookmark);
 });
 
@@ -40,5 +49,9 @@ export const DELETE = withAuth(async (request, { user }) => {
     id,
     userId: user.id,
   });
+  
+  // Revalidate the main layout to update all bookmark-related UI
+  revalidatePath('/(main)', 'layout');
+  
   return NextResponse.json({ message: 'Bookmark deleted successfully' });
 });

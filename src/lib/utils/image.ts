@@ -17,18 +17,65 @@ export async function validateAndDetectImageType(
   // Detect actual file type from binary data
   const fileType = await fileTypeFromBuffer(buffer);
   
-  if (!fileType) {
-    throw new Error('Unable to detect file type. The data may be corrupted or invalid.');
+  // If fileType is detected, validate and return it
+  if (fileType) {
+    // Check if it's an allowed image type
+    if (!allowedTypes.includes(fileType.mime)) {
+      throw new Error(
+        `Invalid image type: ${fileType.mime}. Allowed types: ${allowedTypes.join(', ')}`
+      );
+    }
+    return fileType.mime;
   }
   
-  // Check if it's an allowed image type
-  if (!allowedTypes.includes(fileType.mime)) {
-    throw new Error(
-      `Invalid image type: ${fileType.mime}. Allowed types: ${allowedTypes.join(', ')}`
-    );
+  // Fall back to SVG detection (text-based format)
+  const svgMimeType = detectSvg(buffer);
+  if (svgMimeType) {
+    // Check if SVG is in allowed types
+    if (!allowedTypes.includes(svgMimeType)) {
+      throw new Error(
+        `Invalid image type: ${svgMimeType}. Allowed types: ${allowedTypes.join(', ')}`
+      );
+    }
+    return svgMimeType;
   }
   
-  return fileType.mime;
+  throw new Error('Unable to detect file type. The data may be corrupted or invalid.');
+}
+
+/**
+ * Detects if a buffer contains SVG data
+ * @param buffer - Buffer to check
+ * @returns SVG MIME type if detected, null otherwise
+ */
+function detectSvg(buffer: Buffer): string | null {
+  try {
+    // Convert buffer to string
+    const text = buffer.toString('utf8');
+    
+    // Check for SVG markers
+    // SVGs typically start with <?xml or directly with <svg
+    const trimmedText = text.trim();
+    
+    // Check if it contains <svg tag (case-insensitive)
+    const hasSvgTag = /<svg[\s>]/i.test(trimmedText);
+    
+    // Additional validation: check for xmlns attribute or common SVG structure
+    const hasXmlns = /xmlns="http:\/\/www\.w3\.org\/2000\/svg"/i.test(text);
+    const startsWithXml = /^<\?xml/i.test(trimmedText);
+    const startsWithSvg = /^<svg[\s>]/i.test(trimmedText);
+    
+    // Consider it an SVG if:
+    // 1. It has an <svg tag AND (has xmlns OR starts with <?xml OR starts with <svg)
+    if (hasSvgTag && (hasXmlns || startsWithXml || startsWithSvg)) {
+      return 'image/svg+xml';
+    }
+    
+    return null;
+  } catch (error) {
+    // If we can't decode as UTF-8, it's probably not an SVG
+    return null;
+  }
 }
 
 /**

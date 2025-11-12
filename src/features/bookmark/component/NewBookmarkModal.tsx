@@ -1,46 +1,42 @@
+import { useState } from 'react';
 import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
 import NewBookmarkForm, { NewBookmarkFormValues } from './NewBookmarkForm';
 import { useAllCollectionsQuery } from '@/features/collection/hook';
-import { useCreateBookmarkMutation, CreateBookmarkInput } from '../query';
+import { createBookmarkAction } from '@/app/actions/bookmark';
 
 const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initialValues?: { collectionId?: string }}>) => {
   const { data: collections, isPending } = useAllCollectionsQuery();
-  const { mutateAsync: createBookmark, isPending: isCreating } = useCreateBookmarkMutation();
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleSubmit = async (values: NewBookmarkFormValues) => {
+    setIsCreating(true);
     try {
-      const data: CreateBookmarkInput = {
+      const result = await createBookmarkAction({
         title: values.title,
         url: values.url,
-      };
-
-      // Add collection if selected
-      if (values.collectionId) {
-        data.collectionId = values.collectionId;
-      }
-
-      // Add website icon if provided (backend will validate and detect MIME type)
-      if (values.websiteIcon) {
-        data.websiteIcon = {
-          data: values.websiteIcon,
-        };
-      }
-
-      // Add description if provided
-      if (values.description) {
-        data.description = values.description;
-      }
-
-      await createBookmark(data);
-      context.closeModal(id);
-      notifications.show({
-        title: 'Bookmark created',
-        message: 'Your bookmark has been created successfully.',
-        color: 'green',
+        description: values.description,
+        collectionId: values.collectionId,
+        websiteIcon: values.websiteIcon ? { data: values.websiteIcon } : undefined,
       });
+
+      if (result.success) {
+        context.closeModal(id);
+        notifications.show({
+          title: 'Bookmark created',
+          message: 'Your bookmark has been created successfully.',
+          color: 'green',
+        });
+      } else {
+        notifications.show({
+          title: 'Cannot create bookmark',
+          message: result.error || 'An error occurred while creating the bookmark. Please try again.',
+          color: 'red',
+          icon: <IconAlertSquareRounded />,
+        });
+      }
     } catch (error) {
       console.error('Error creating bookmark:', error);
       notifications.show({
@@ -49,6 +45,8 @@ const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initi
         color: 'red',
         icon: <IconAlertSquareRounded />,
       });
+    } finally {
+      setIsCreating(false);
     }
   };
   
