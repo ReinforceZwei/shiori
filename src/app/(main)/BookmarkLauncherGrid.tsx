@@ -4,6 +4,7 @@ import { SimpleGrid, Box, Text, Switch, Group, Container } from "@mantine/core";
 import { BookmarkLauncherItem } from "./BookmarkLauncherItem";
 import { AddBookmarkLauncherItem } from "./AddBookmarkLauncherItem";
 import { useState } from "react";
+import { modals } from "@mantine/modals";
 
 export type DensityMode = "default" | "compact";
 
@@ -12,6 +13,8 @@ interface BookmarkLauncherGridProps {
     id: string;
     title: string;
     url: string;
+    description?: string | null;
+    collectionId?: string | null;
   }>;
 }
 
@@ -30,7 +33,24 @@ const DENSITY_CONFIG = {
 
 export function BookmarkLauncherGrid({ bookmarks }: BookmarkLauncherGridProps) {
   const [density, setDensity] = useState<DensityMode>("default");
+  const [editMode, setEditMode] = useState(false);
   const config = DENSITY_CONFIG[density];
+
+  const handleEditBookmark = (bookmark: BookmarkLauncherGridProps['bookmarks'][0]) => {
+    modals.openContextModal({
+      modal: 'editBookmark',
+      title: 'Edit Bookmark',
+      innerProps: {
+        bookmarkId: bookmark.id,
+        initialValues: {
+          title: bookmark.title,
+          url: bookmark.url,
+          description: bookmark.description || '',
+          collectionId: bookmark.collectionId || '',
+        },
+      },
+    });
+  };
 
   if (bookmarks.length === 0) {
     return (
@@ -68,7 +88,12 @@ export function BookmarkLauncherGrid({ bookmarks }: BookmarkLauncherGridProps) {
 
   return (
     <Container size="xl" py="xl">
-      <Group justify="flex-end" mb="lg">
+      <Group justify="flex-end" mb="lg" gap="md">
+        <Switch
+          label="Edit mode"
+          checked={editMode}
+          onChange={(event) => setEditMode(event.currentTarget.checked)}
+        />
         <Switch
           label="Compact mode"
           checked={density === "compact"}
@@ -91,6 +116,8 @@ export function BookmarkLauncherGrid({ bookmarks }: BookmarkLauncherGridProps) {
             title={bookmark.title}
             url={bookmark.url}
             size={config.size}
+            editMode={editMode}
+            onEdit={() => handleEditBookmark(bookmark)}
           />
         ))}
       </SimpleGrid>

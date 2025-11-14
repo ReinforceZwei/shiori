@@ -31,7 +31,13 @@ export const GET = withAuth(async (request: Request) => {
         
         // Detect MIME type from actual buffer data (more reliable than format string)
         const fileType = await fileTypeFromBuffer(buffer);
-        const mimeType = fileType?.mime || inferMimeTypeFromFormat(metadata.format);
+        let mimeType = fileType?.mime || inferMimeTypeFromFormat(metadata.format);
+        
+        // Special handling for SVG: fileTypeFromBuffer detects SVG as application/xml
+        // but we need image/svg+xml for proper browser handling
+        if (mimeType === 'application/xml' && metadata.format.toLowerCase() === 'svg') {
+          mimeType = 'image/svg+xml';
+        }
         
         return {
           url: icon.url,           // Original URL (for reference)

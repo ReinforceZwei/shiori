@@ -3,14 +3,13 @@ import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import { EditBookmarkFormValues } from './EditBookmarkForm';
+import NewBookmarkForm, { NewBookmarkFormValues } from './NewBookmarkForm';
 import { useAllCollectionsQuery } from '@/features/collection/hook';
-import EditBookmarkForm from './EditBookmarkForm';
 import { updateBookmarkAction } from '@/app/actions/bookmark';
 
 interface EditBookmarkModalProps extends ContextModalProps<{
   bookmarkId: string;
-  initialValues: EditBookmarkFormValues;
+  initialValues: Partial<NewBookmarkFormValues>;
 }> {}
 
 const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) => {
@@ -18,7 +17,7 @@ const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) 
   const { data: collections, isPending } = useAllCollectionsQuery();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const handleSubmit = async (values: EditBookmarkFormValues) => {
+  const handleSubmit = async (values: NewBookmarkFormValues) => {
     setIsUpdating(true);
     try {
       const formData: {
@@ -84,10 +83,11 @@ const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) 
   return (
     <Box pos="relative">
       <LoadingOverlay visible={isPending} />
-      <EditBookmarkForm
+      <NewBookmarkForm
         onSubmit={handleSubmit}
         collections={collections || []}
         initialValues={initialValues}
+        submitLabel="Save Changes"
         isSubmitting={isUpdating}
       />
     </Box>

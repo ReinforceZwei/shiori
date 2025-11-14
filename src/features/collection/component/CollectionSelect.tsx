@@ -1,0 +1,74 @@
+'use client';
+
+import { Select, Group, Box } from '@mantine/core';
+import { forwardRef } from 'react';
+import { Prisma } from '@/generated/prisma';
+
+interface ItemProps extends Omit<React.ComponentPropsWithoutRef<'div'>, 'color'> {
+  label: string;
+  color?: string | null;
+}
+
+const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
+  ({ label, color, ...others }: ItemProps, ref) => (
+    <div ref={ref} {...others}>
+      <Group gap="sm">
+        {color && (
+          <Box
+            w={12}
+            h={12}
+            style={{ borderRadius: '50%', backgroundColor: color }}
+          />
+        )}
+        <span>{label}</span>
+      </Group>
+    </div>
+  )
+);
+
+SelectItem.displayName = 'SelectItem';
+
+interface CollectionSelectProps {
+  data: Prisma.CollectionGetPayload<{}>[];
+  value?: string;
+  onChange?: (value: string | null) => void;
+  label?: string;
+  placeholder?: string;
+  error?: React.ReactNode;
+  required?: boolean;
+  onBlur?: () => void;
+  onFocus?: () => void;
+}
+
+export default function CollectionSelect({
+  data,
+  value,
+  onChange,
+  label,
+  placeholder,
+  error,
+  required,
+  onBlur,
+  onFocus,
+}: CollectionSelectProps) {
+  return (
+    <Select
+      label={label}
+      placeholder={placeholder}
+      data={data.map((c) => ({
+        value: c.id,
+        label: c.name,
+        color: c.color,
+      }))}
+      value={value || null}
+      onChange={onChange}
+      clearable
+      searchable
+      error={error}
+      required={required}
+      onBlur={onBlur}
+      onFocus={onFocus}
+      renderOption={(item) => <SelectItem {...item.option} />}
+    />
+  );
+}

@@ -1,14 +1,13 @@
 'use client';
-import { LoadingOverlay, Box } from '@mantine/core';
+import { Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
 import NewCollectionForm, { NewCollectionFormValues } from '../form/NewCollectionForm';
 import { Prisma } from '@/generated/prisma';
-import { useAllCollectionsQuery, useCreateCollectionMutation } from '../hook';
+import { useCreateCollectionMutation } from '../hook';
 
 const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
-  const { data: collections, refetch, isPending } = useAllCollectionsQuery();
   const { mutateAsync: createCollection } = useCreateCollectionMutation();
   const handleSubmit = async (values: NewCollectionFormValues) => {
     try {
@@ -16,9 +15,6 @@ const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
         name: values.name,
         description: values.description || undefined,
       };
-      if (values.parentId) {
-        data.parent = { connect: { id: values.parentId } };
-      }
       await createCollection(data as Prisma.CollectionCreateInput);
       context.closeModal(id);
     } catch (error) {
@@ -34,10 +30,8 @@ const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
 
   return (
     <Box pos="relative">
-      <LoadingOverlay visible={isPending} />
       <NewCollectionForm
         onSubmit={handleSubmit}
-        collections={collections || []}
       />
     </Box>
   );

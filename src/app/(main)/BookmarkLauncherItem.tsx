@@ -1,7 +1,8 @@
 "use client";
 
-import { Box, Text, Image } from "@mantine/core";
+import { Box, Text, Image, ActionIcon } from "@mantine/core";
 import { useState } from "react";
+import { IconEdit } from "@tabler/icons-react";
 
 export type LauncherItemSize = "medium" | "small";
 
@@ -10,6 +11,8 @@ interface BookmarkLauncherItemProps {
   title: string;
   url: string;
   size?: LauncherItemSize;
+  editMode?: boolean;
+  onEdit?: () => void;
 }
 
 const SIZE_CONFIG = {
@@ -31,9 +34,23 @@ const SIZE_CONFIG = {
   },
 };
 
-export function BookmarkLauncherItem({ id, title, url, size = "medium" }: BookmarkLauncherItemProps) {
+export function BookmarkLauncherItem({ 
+  id, 
+  title, 
+  url, 
+  size = "medium", 
+  editMode = false,
+  onEdit 
+}: BookmarkLauncherItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const config = SIZE_CONFIG[size];
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (editMode && onEdit) {
+      e.preventDefault();
+      onEdit();
+    }
+  };
 
   return (
     <Box
@@ -46,10 +63,11 @@ export function BookmarkLauncherItem({ id, title, url, size = "medium" }: Bookma
     >
       {/* Icon Container */}
       <Box
-        component="a"
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
+        component={editMode ? "div" : "a"}
+        href={editMode ? undefined : url}
+        target={editMode ? undefined : "_blank"}
+        rel={editMode ? undefined : "noopener noreferrer"}
+        onClick={handleClick}
         style={{
           textDecoration: "none",
           cursor: "pointer",
@@ -65,6 +83,7 @@ export function BookmarkLauncherItem({ id, title, url, size = "medium" }: Bookma
           border: "1px solid var(--mantine-color-default-border)",
           transition: "transform 0.2s ease",
           transform: isHovered ? "scale(1.1)" : "scale(1)",
+          position: "relative",
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -77,6 +96,32 @@ export function BookmarkLauncherItem({ id, title, url, size = "medium" }: Bookma
           fit="contain"
           fallbackSrc="/assets/world-wide-web.png"
         />
+        
+        {/* Edit Icon Overlay */}
+        {editMode && isHovered && (
+          <Box
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              borderRadius: config.borderRadius,
+            }}
+          >
+            <ActionIcon
+              variant="transparent"
+              size="lg"
+              style={{ color: "white" }}
+            >
+              <IconEdit size={size === "medium" ? 32 : 24} />
+            </ActionIcon>
+          </Box>
+        )}
       </Box>
 
       {/* Title */}

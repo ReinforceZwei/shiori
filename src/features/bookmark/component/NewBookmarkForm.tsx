@@ -11,19 +11,22 @@ import {
   Group,
   Text,
   Loader,
-  Radio,
   Box,
   Paper,
   Image,
   ActionIcon,
   Alert,
+  Autocomplete,
+  ComboboxItem,
+  OptionsFilter,
+  Textarea,
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { IconRefresh, IconAlertCircle } from '@tabler/icons-react';
 import { Prisma } from '@/generated/prisma';
 import { useFetchBookmarkMetadataMutation } from '@/features/bookmark/query';
 import { BookmarkIcon, createIconDataUrl } from '@/app/api/bookmark/metadata/types';
-import CollectionSelect from '@/features/collection/component/CollectionSelect/CollectionSelect';
+import CollectionSelect from '@/features/collection/component/CollectionSelect';
 
 // Helper functions
 function normalizeUrl(url: string): string {
@@ -171,6 +174,21 @@ export default function NewBookmarkForm({
     }
   };
 
+  // Prepare autocomplete data for titles
+  const titleAutocompleteData = useMemo(() => {
+    return uniqueTitles.map((title) => ({
+      value: title.value,
+      label: title.value,
+      source: title.source,
+      property: title.property,
+    }));
+  }, [uniqueTitles]);
+
+  // Show all options without filtering (since there are typically only a few)
+  const optionsFilter: OptionsFilter = ({ options }) => {
+    return options;
+  };
+
   return (
     <Box maw={600} mx="auto">
       <form onSubmit={form.onSubmit(onSubmit)}>
@@ -203,43 +221,32 @@ export default function NewBookmarkForm({
             </Alert>
           )}
 
-          {/* Title Selection */}
-          {uniqueTitles.length > 0 && (
-            <Box>
-              <Text size="sm" fw={500} mb="xs">
-                Title <span style={{ color: 'var(--mantine-color-error)' }}>*</span>
-              </Text>
-              <Radio.Group {...form.getInputProps('title')}>
-                <Stack gap="xs">
-                  {uniqueTitles.map((title, index) => (
-                    <Paper key={index} p="xs" withBorder radius="sm">
-                      <Radio
-                        value={title.value}
-                        label={
-                          <Box>
-                            <Text size="sm">{title.value}</Text>
-                            <Text size="xs" c="dimmed">
-                              Source: {title.source} ({title.property})
-                            </Text>
-                          </Box>
-                        }
-                      />
-                    </Paper>
-                  ))}
-                </Stack>
-              </Radio.Group>
-            </Box>
-          )}
-
-          {/* Manual Title Input (when no metadata or as fallback) */}
-          {uniqueTitles.length === 0 && (
-            <TextInput
-              label="Title"
-              placeholder="Enter bookmark title"
-              required
-              {...form.getInputProps('title')}
-            />
-          )}
+          {/* Title Autocomplete */}
+          <Autocomplete
+            label="Title"
+            placeholder="Select or enter bookmark title"
+            required
+            data={titleAutocompleteData}
+            filter={optionsFilter}
+            {...form.getInputProps('title')}
+            renderOption={({ option }) => {
+              const customOption = option as ComboboxItem & {
+                source?: string;
+                property?: string;
+              };
+              const label = typeof option === 'string' ? option : customOption.label;
+              return (
+                <Box>
+                  <Text size="sm">{label}</Text>
+                  {customOption.source && customOption.property && (
+                    <Text size="xs" c="dimmed">
+                      Source: {customOption.source} ({customOption.property})
+                    </Text>
+                  )}
+                </Box>
+              );
+            }}
+          />
 
           {/* Icon Selection */}
           {uniqueIcons.length > 0 && (
@@ -263,38 +270,61 @@ export default function NewBookmarkForm({
             </Box>
           )}
 
-          {/* Description Selection */}
-          {uniqueDescriptions.length > 0 && (
-            <Box>
-              <Text size="sm" fw={500} mb="xs">
-                Description (optional)
-              </Text>
-              <Radio.Group {...form.getInputProps('description')}>
-                <Stack gap="xs">
+          {/* Description with Suggestions */}
+          <Box>
+            <Text size="sm" fw={500} mb="xs">
+              Description (optional)
+            </Text>
+
+            {/* Suggestion chips - only show if we have fetched descriptions */}
+            {uniqueDescriptions.length > 0 && (
+              <Box mb="xs">
+                <Text size="xs" c="dimmed" mb={4}>
+                  Suggestions (click to use):
+                </Text>
+                <Group gap="xs">
                   {uniqueDescriptions.map((desc, index) => (
-                    <Paper key={index} p="xs" withBorder radius="sm">
-                      <Radio
-                        value={desc.value}
-                        label={
-                          <Box>
-                            <Text size="sm" lineClamp={2}>
-                              {desc.value}
-                            </Text>
-                            <Text size="xs" c="dimmed">
-                              Source: {desc.source} ({desc.property})
-                            </Text>
-                          </Box>
-                        }
-                      />
+                    <Paper
+                      key={index}
+                      p="xs"
+                      withBorder
+                      radius="sm"
+                      style={{
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s',
+                      }}
+                      onClick={() => form.setFieldValue('description', desc.value)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--mantine-primary-color-6)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '';
+                      }}
+                    >
+                      <Text size="xs" lineClamp={1} maw={300}>
+                        {desc.value}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {desc.source} ({desc.property})
+                      </Text>
                     </Paper>
                   ))}
-                  <Paper p="xs" withBorder radius="sm">
-                    <Radio value="" label="None" />
-                  </Paper>
-                </Stack>
-              </Radio.Group>
-            </Box>
-          )}
+                </Group>
+              </Box>
+            )}
+
+            {/* Textarea for custom or edited description */}
+            <Textarea
+              placeholder={
+                uniqueDescriptions.length > 0
+                  ? 'Enter description or select from suggestions above'
+                  : 'Enter description'
+              }
+              minRows={3}
+              autosize
+              {...form.getInputProps('description')}
+            />
+          </Box>
 
           {/* Collection Selection */}
           <CollectionSelect
@@ -329,8 +359,8 @@ function IconOption({ icon, selected, onClick }: IconOptionProps) {
       radius="sm"
       style={{
         cursor: 'pointer',
-        borderColor: selected ? 'var(--mantine-color-blue-6)' : undefined,
-        borderWidth: selected ? 2 : 1,
+        outline: selected ? '2px solid var(--mantine-primary-color-6)' : 'none',
+        outlineOffset: '-1px',
       }}
       onClick={onClick}
     >

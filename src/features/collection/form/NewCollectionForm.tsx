@@ -1,19 +1,16 @@
 import { useForm } from '@mantine/form';
-import { TextInput, Button, Box, Select } from '@mantine/core';
-import { Prisma } from '@/generated/prisma';
+import { TextInput, Button, Box } from '@mantine/core';
 
 export interface NewCollectionFormValues {
   name: string;
   description: string;
-  parentId?: string;
 }
 
 interface NewCollectionFormProps {
   onSubmit: (values: NewCollectionFormValues) => void;
-  collections: Prisma.CollectionGetPayload<{}>[];
 }
 
-export default function NewCollectionForm({ onSubmit, collections }: NewCollectionFormProps) {
+export default function NewCollectionForm({ onSubmit }: NewCollectionFormProps) {
   const form = useForm<NewCollectionFormValues>({
     initialValues: {
       name: '',
@@ -26,8 +23,6 @@ export default function NewCollectionForm({ onSubmit, collections }: NewCollecti
     },
     validateInputOnBlur: true,
   });
-
-  console.log(collections)
 
   return (
     <Box maw={400} mx="auto">
@@ -43,13 +38,6 @@ export default function NewCollectionForm({ onSubmit, collections }: NewCollecti
           label="Description"
           placeholder="Enter collection description (optional)"
           {...form.getInputProps('description')}
-        />
-
-        <Select
-          label="Parent Collection"
-          placeholder="Select a parent collection (optional)"
-          data={collections.map((collection) => ({ value: collection.id, label: collection.name }))}
-          {...form.getInputProps('parentId')}
         />
 
         <Button type="submit" fullWidth mt="xl" loading={form.submitting}>
