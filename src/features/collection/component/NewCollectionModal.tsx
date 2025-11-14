@@ -3,19 +3,19 @@ import { Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import NewCollectionForm, { NewCollectionFormValues } from '../form/NewCollectionForm';
-import { Prisma } from '@/generated/prisma';
-import { useCreateCollectionMutation } from '../hook';
+import CollectionForm, { CollectionFormValues } from './CollectionForm';
+import { useCreateCollectionMutation, CreateCollectionInput } from '../query';
 
 const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
   const { mutateAsync: createCollection } = useCreateCollectionMutation();
-  const handleSubmit = async (values: NewCollectionFormValues) => {
+  const handleSubmit = async (values: CollectionFormValues) => {
     try {
-      const data: Partial<Prisma.CollectionCreateInput> = {
+      const data: CreateCollectionInput = {
         name: values.name,
         description: values.description || undefined,
+        color: values.color || undefined,
       };
-      await createCollection(data as Prisma.CollectionCreateInput);
+      await createCollection(data);
       context.closeModal(id);
     } catch (error) {
       console.error('Error creating collection:', error);
@@ -30,8 +30,9 @@ const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
 
   return (
     <Box pos="relative">
-      <NewCollectionForm
+      <CollectionForm
         onSubmit={handleSubmit}
+        submitLabel="Create Collection"
       />
     </Box>
   );

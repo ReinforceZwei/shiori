@@ -109,7 +109,7 @@ model Bookmark {
   updatedAt    DateTime     @updatedAt
   userId       String
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  collection   Collection?  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  collection   Collection?  @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   collectionId String?
   websiteIcon  WebsiteIcon?
 }
@@ -124,10 +124,8 @@ model Collection {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  bookmark Bookmark[]
-  order    Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId  String     @unique
-
+  bookmark       Bookmark[]
+  order          Order?
   pinnedSettings Settings?
 }
 
@@ -140,8 +138,8 @@ model Order {
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   type         OrderType
   order        Json
-  collectionId String?
-  Collection   Collection?
+  collectionId String?     @unique
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: Cascade)
 
   @@unique([userId, type, collectionId])
 }

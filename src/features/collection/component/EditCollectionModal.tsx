@@ -2,18 +2,18 @@ import { Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import EditCollectionForm, { EditCollectionFormValues } from '../form/EditCollectionForm';
-import { Prisma } from '@/generated/prisma';
-import { useUpdateCollectionMutation } from '../hook';
+import CollectionForm, { CollectionFormValues } from './CollectionForm';
+import { useUpdateCollectionMutation, UpdateCollectionInput } from '../query';
 
-const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ collectionId: string; initialValues: EditCollectionFormValues }>) => {
+const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ collectionId: string; initialValues: CollectionFormValues }>) => {
   const { mutateAsync: updateCollection } = useUpdateCollectionMutation();
 
-  const handleSubmit = async (values: EditCollectionFormValues) => {
+  const handleSubmit = async (values: CollectionFormValues) => {
     try {
-      const data: Partial<Prisma.CollectionUpdateInput> = {
+      const data: UpdateCollectionInput = {
         name: values.name,
         description: values.description || undefined,
+        color: values.color || undefined,
       };
       await updateCollection({ id: innerProps.collectionId, data });
       context.closeModal(id);
@@ -30,9 +30,10 @@ const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ co
 
   return (
     <Box pos="relative">
-      <EditCollectionForm
+      <CollectionForm
         onSubmit={handleSubmit}
         initialValues={innerProps.initialValues}
+        submitLabel="Save Changes"
       />
     </Box>
   );

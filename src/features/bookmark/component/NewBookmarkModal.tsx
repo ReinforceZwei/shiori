@@ -4,7 +4,7 @@ import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
 import BookmarkForm, { BookmarkFormValues } from './BookmarkForm';
-import { useAllCollectionsQuery } from '@/features/collection/hook';
+import { useAllCollectionsQuery } from '@/features/collection/query';
 import { createBookmarkAction } from '@/app/actions/bookmark';
 
 const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initialValues?: { collectionId?: string }}>) => {
