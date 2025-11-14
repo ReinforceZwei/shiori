@@ -3,7 +3,7 @@ import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import NewBookmarkForm, { NewBookmarkFormValues } from './NewBookmarkForm';
+import BookmarkForm, { BookmarkFormValues } from './BookmarkForm';
 import { useAllCollectionsQuery } from '@/features/collection/hook';
 import { createBookmarkAction } from '@/app/actions/bookmark';
 
@@ -11,7 +11,7 @@ const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initi
   const { data: collections, isPending } = useAllCollectionsQuery();
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleSubmit = async (values: NewBookmarkFormValues) => {
+  const handleSubmit = async (values: BookmarkFormValues) => {
     setIsCreating(true);
     try {
       const result = await createBookmarkAction({
@@ -53,7 +53,7 @@ const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initi
   return (
     <Box pos="relative">
       <LoadingOverlay visible={isPending} />
-      <NewBookmarkForm
+      <BookmarkForm
         onSubmit={handleSubmit}
         collections={collections || []}
         initialValues={innerProps.initialValues}

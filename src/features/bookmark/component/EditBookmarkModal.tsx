@@ -3,21 +3,24 @@ import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import NewBookmarkForm, { NewBookmarkFormValues } from './NewBookmarkForm';
+import BookmarkForm, { BookmarkFormValues } from './BookmarkForm';
 import { useAllCollectionsQuery } from '@/features/collection/hook';
+import { useBookmarkQuery } from '@/features/bookmark/query';
 import { updateBookmarkAction } from '@/app/actions/bookmark';
 
 interface EditBookmarkModalProps extends ContextModalProps<{
   bookmarkId: string;
-  initialValues: Partial<NewBookmarkFormValues>;
 }> {}
 
 const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) => {
-  const { bookmarkId, initialValues } = innerProps;
-  const { data: collections, isPending } = useAllCollectionsQuery();
+  const { bookmarkId } = innerProps;
+  const { data: collections, isPending: isLoadingCollections } = useAllCollectionsQuery();
+  const { data: bookmark, isPending: isLoadingBookmark } = useBookmarkQuery({ id: bookmarkId });
   const [isUpdating, setIsUpdating] = useState(false);
+  
+  const isLoading = isLoadingCollections || isLoadingBookmark;
 
-  const handleSubmit = async (values: NewBookmarkFormValues) => {
+  const handleSubmit = async (values: BookmarkFormValues) => {
     setIsUpdating(true);
     try {
       const formData: {
@@ -81,15 +84,24 @@ const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) 
   };
   
   return (
-    <Box pos="relative">
-      <LoadingOverlay visible={isPending} />
-      <NewBookmarkForm
-        onSubmit={handleSubmit}
-        collections={collections || []}
-        initialValues={initialValues}
-        submitLabel="Save Changes"
-        isSubmitting={isUpdating}
-      />
+    <Box pos="relative" mih={400}>
+      <LoadingOverlay visible={isLoading} />
+        {bookmark && (
+          <BookmarkForm
+            onSubmit={handleSubmit}
+            collections={collections || []}
+            initialValues={{
+              url: bookmark.url,
+              title: bookmark.title,
+              description: bookmark.description || '',
+              websiteIcon: bookmark.websiteIcon || '',
+              websiteIconMimeType: bookmark.websiteIconMimeType || '',
+              collectionId: bookmark.collectionId || '',
+            }}
+            submitLabel="Save Changes"
+            isSubmitting={isUpdating}
+          />
+        )}
     </Box>
   );
 }

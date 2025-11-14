@@ -42,12 +42,6 @@ export function BookmarkLauncherGrid({ bookmarks }: BookmarkLauncherGridProps) {
       title: 'Edit Bookmark',
       innerProps: {
         bookmarkId: bookmark.id,
-        initialValues: {
-          title: bookmark.title,
-          url: bookmark.url,
-          description: bookmark.description || '',
-          collectionId: bookmark.collectionId || '',
-        },
       },
     });
   };

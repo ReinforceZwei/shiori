@@ -2,6 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bookmark } from "@/generated/prisma";
 import type { BookmarkMetadataResponse } from "@/app/api/bookmark/metadata/types";
 
+// Extended bookmark type with website icon data
+export interface BookmarkWithIcon extends Bookmark {
+  websiteIcon: string | null;
+  websiteIconMimeType: string | null;
+}
+
 // Type definitions that match the backend service schema
 export interface CreateBookmarkInput {
   title: string;
@@ -32,7 +38,7 @@ async function getBookmarks(): Promise<Bookmark[]> {
   return response.json();
 }
 
-async function getBookmark(id: string): Promise<Bookmark> {
+async function getBookmark(id: string): Promise<BookmarkWithIcon> {
   const response = await fetch(`/api/bookmark/${id}`);
   if (!response.ok) {
     throw new Error(`Failed to fetch bookmark: ${response.statusText}`);

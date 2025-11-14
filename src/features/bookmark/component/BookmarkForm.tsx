@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useForm } from '@mantine/form';
 import { zodResolver } from 'mantine-form-zod-resolver';
 import { z } from 'zod';
@@ -48,7 +48,7 @@ function isValidUrl(url: string): boolean {
 }
 
 // Zod schema for form validation
-const newBookmarkFormSchema = z.object({
+const bookmarkFormSchema = z.object({
   url: z
     .string()
     .min(1, 'URL is required')
@@ -71,24 +71,24 @@ const newBookmarkFormSchema = z.object({
   collectionId: z.string().optional(),
 });
 
-export type NewBookmarkFormValues = z.infer<typeof newBookmarkFormSchema>;
+export type BookmarkFormValues = z.infer<typeof bookmarkFormSchema>;
 
-interface NewBookmarkFormProps {
+interface BookmarkFormProps {
   collections: Prisma.CollectionGetPayload<{}>[];
-  initialValues?: Partial<NewBookmarkFormValues>;
-  onSubmit: (values: NewBookmarkFormValues) => void;
+  initialValues?: Partial<BookmarkFormValues>;
+  onSubmit: (values: BookmarkFormValues) => void;
   submitLabel?: string;
   isSubmitting?: boolean;
 }
 
-export default function NewBookmarkForm({
+export default function BookmarkForm({
   collections,
   initialValues,
   onSubmit,
   submitLabel = 'Create Bookmark',
   isSubmitting = false,
-}: NewBookmarkFormProps) {
-  const form = useForm<NewBookmarkFormValues>({
+}: BookmarkFormProps) {
+  const form = useForm<BookmarkFormValues>({
     initialValues: {
       url: '',
       title: '',
@@ -98,9 +98,11 @@ export default function NewBookmarkForm({
       collectionId: '',
       ...initialValues,
     },
-    validate: zodResolver(newBookmarkFormSchema),
+    validate: zodResolver(bookmarkFormSchema),
   });
 
+  // Track the initial URL to skip auto-fetch on first load
+  const initialUrlRef = useRef(initialValues?.url || '');
   const [debouncedUrl] = useDebouncedValue(form.values.url, 700);
 
   const {
@@ -110,10 +112,17 @@ export default function NewBookmarkForm({
     error: metadataError,
   } = useFetchBookmarkMetadataMutation();
 
-  // Auto-fetch metadata when URL changes
+  // Auto-fetch metadata when URL changes (but skip initial URL to avoid unnecessary fetch on open)
   useEffect(() => {
     if (debouncedUrl && isValidUrl(debouncedUrl)) {
       const normalizedUrl = normalizeUrl(debouncedUrl);
+      const normalizedInitialUrl = initialUrlRef.current ? normalizeUrl(initialUrlRef.current) : '';
+      
+      // Skip fetch if this is the initial URL (form just opened with existing data)
+      if (normalizedUrl === normalizedInitialUrl && initialUrlRef.current) {
+        return;
+      }
+      
       fetchMetadata(normalizedUrl);
     }
   }, [debouncedUrl, fetchMetadata]);
@@ -140,15 +149,41 @@ export default function NewBookmarkForm({
   }, [metadata]);
 
   const uniqueIcons = useMemo(() => {
-    if (!metadata?.icons) return [];
-    // Remove duplicate icons based on base64 content
+    const icons: BookmarkIcon[] = [];
     const seen = new Set<string>();
-    return metadata.icons.filter((icon) => {
-      if (seen.has(icon.base64)) return false;
-      seen.add(icon.base64);
-      return true;
-    });
-  }, [metadata]);
+    
+    // Add initial icon first if it exists
+    if (initialValues?.websiteIcon && initialValues?.websiteIconMimeType) {
+      const initialIcon: BookmarkIcon = {
+        base64: initialValues.websiteIcon,
+        mimeType: initialValues.websiteIconMimeType,
+        source: 'default',
+        url: '',
+        type: 'current',
+        sizes: 'unknown',
+        metadata: { 
+          width: 0, 
+          height: 0, 
+          format: initialValues.websiteIconMimeType.split('/')[1] || 'unknown',
+          size: 0,
+        },
+      };
+      icons.push(initialIcon);
+      seen.add(initialValues.websiteIcon);
+    }
+    
+    // Add metadata icons (avoiding duplicates)
+    if (metadata?.icons) {
+      metadata.icons.forEach((icon) => {
+        if (!seen.has(icon.base64)) {
+          icons.push(icon);
+          seen.add(icon.base64);
+        }
+      });
+    }
+    
+    return icons;
+  }, [metadata, initialValues?.websiteIcon, initialValues?.websiteIconMimeType]);
 
   // Auto-select first options when metadata is fetched
   useEffect(() => {
@@ -352,6 +387,8 @@ interface IconOptionProps {
 }
 
 function IconOption({ icon, selected, onClick }: IconOptionProps) {
+  const hasMetadata = icon.metadata && icon.metadata.width > 0 && icon.metadata.height > 0;
+  
   return (
     <Paper
       p="xs"
@@ -372,7 +409,7 @@ function IconOption({ icon, selected, onClick }: IconOptionProps) {
         fit="contain"
       />
       <Text size="xs" c="dimmed" ta="center" mt={4}>
-        {icon.metadata.width}×{icon.metadata.height}
+        {hasMetadata ? `${icon.metadata.width}×${icon.metadata.height}` : 'Current'}
       </Text>
     </Paper>
   );
