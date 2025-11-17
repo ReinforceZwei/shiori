@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import type { PrismaClient } from '@/generated/prisma';
 
 // Matches Prisma OrderType enum

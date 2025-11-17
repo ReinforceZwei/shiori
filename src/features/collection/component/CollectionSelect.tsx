@@ -2,7 +2,7 @@
 
 import { Select, Group, Box } from '@mantine/core';
 import { forwardRef } from 'react';
-import { Prisma } from '@/generated/prisma';
+import type { Collection } from '@/generated/prisma';
 
 interface ItemProps extends Omit<React.ComponentPropsWithoutRef<'div'>, 'color'> {
   label: string;
@@ -29,7 +29,7 @@ const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
 SelectItem.displayName = 'SelectItem';
 
 interface CollectionSelectProps {
-  data: Prisma.CollectionGetPayload<{}>[];
+  data: Collection[];
   value?: string;
   onChange?: (value: string | null) => void;
   label?: string;

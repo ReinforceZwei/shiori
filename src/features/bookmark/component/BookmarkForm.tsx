@@ -23,7 +23,7 @@ import {
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { IconRefresh, IconAlertCircle } from '@tabler/icons-react';
-import { Prisma } from '@/generated/prisma';
+import type { Collection } from '@/generated/prisma';
 import { useFetchBookmarkMetadataMutation } from '@/features/bookmark/query';
 import { BookmarkIcon, createIconDataUrl } from '@/app/api/bookmark/metadata/types';
 import CollectionSelect from '@/features/collection/component/CollectionSelect';
@@ -74,7 +74,7 @@ const bookmarkFormSchema = z.object({
 export type BookmarkFormValues = z.infer<typeof bookmarkFormSchema>;
 
 interface BookmarkFormProps {
-  collections: Prisma.CollectionGetPayload<{}>[];
+  collections: Collection[];
   initialValues?: Partial<BookmarkFormValues>;
   onSubmit: (values: BookmarkFormValues) => void;
   submitLabel?: string;

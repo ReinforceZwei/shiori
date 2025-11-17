@@ -9,8 +9,7 @@
  * - type=bookmark, collectionId=<id>: Orders bookmarks within a specific collection
  */
 
-import type { OrderType, ValidationContext, ValidationResult, ValidationOptions, PrismaClientLike } from './types';
-import { validateOrder, validateCollectionOrder, validateBookmarkOrder } from './base';
+import { validateOrder } from './base';
 
 // Re-export types
 export type { OrderType, ValidationContext, ValidationResult, ValidationOptions, PrismaClientLike } from './types';
@@ -22,9 +21,6 @@ export {
   CollectionOrderSchema,
   BookmarkOrderSchema,
 } from './base';
-
-// Re-export helpers for server-side operations
-export * from './helpers';
 
 /**
  * Main validation function - routes to appropriate validator based on type
