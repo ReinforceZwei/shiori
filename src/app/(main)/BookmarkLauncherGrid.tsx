@@ -3,19 +3,16 @@
 import { SimpleGrid, Box, Text, Switch, Group, Container } from "@mantine/core";
 import { BookmarkLauncherItem } from "./BookmarkLauncherItem";
 import { AddBookmarkLauncherItem } from "./AddBookmarkLauncherItem";
+import { CollectionLauncherSection } from "./CollectionLauncherSection";
 import { useState } from "react";
 import { modals } from "@mantine/modals";
+import { Bookmark, Collection } from "@/generated/prisma";
 
 export type DensityMode = "default" | "compact";
 
 interface BookmarkLauncherGridProps {
-  bookmarks: Array<{
-    id: string;
-    title: string;
-    url: string;
-    description?: string | null;
-    collectionId?: string | null;
-  }>;
+  uncollectedBookmarks: Bookmark[];
+  collections: (Collection & { bookmark: Bookmark[] })[];
 }
 
 const DENSITY_CONFIG = {
@@ -31,12 +28,12 @@ const DENSITY_CONFIG = {
   },
 };
 
-export function BookmarkLauncherGrid({ bookmarks }: BookmarkLauncherGridProps) {
+export function BookmarkLauncherGrid({ uncollectedBookmarks, collections }: BookmarkLauncherGridProps) {
   const [density, setDensity] = useState<DensityMode>("default");
   const [editMode, setEditMode] = useState(false);
   const config = DENSITY_CONFIG[density];
 
-  const handleEditBookmark = (bookmark: BookmarkLauncherGridProps['bookmarks'][0]) => {
+  const handleEditBookmark = (bookmark: Bookmark) => {
     modals.openContextModal({
       modal: 'editBookmark',
       title: 'Edit Bookmark',
@@ -46,7 +43,24 @@ export function BookmarkLauncherGrid({ bookmarks }: BookmarkLauncherGridProps) {
     });
   };
 
-  if (bookmarks.length === 0) {
+  const handleEditCollection = (collection: Collection) => {
+    modals.openContextModal({
+      modal: 'editCollection',
+      title: 'Edit Collection',
+      innerProps: {
+        collectionId: collection.id,
+        initialValues: {
+          name: collection.name,
+          description: collection.description || undefined,
+          color: collection.color || undefined,
+        },
+      },
+    });
+  };
+
+  const hasNoContent = uncollectedBookmarks.length === 0 && collections.length === 0;
+
+  if (hasNoContent) {
     return (
       <Container size="xl" py="xl">
         <Box
@@ -97,24 +111,42 @@ export function BookmarkLauncherGrid({ bookmarks }: BookmarkLauncherGridProps) {
         />
       </Group>
 
-      <SimpleGrid
-        cols={config.cols}
-        spacing={config.spacing}
-        verticalSpacing={config.spacing}
-      >
-        <AddBookmarkLauncherItem size={config.size} />
-        {bookmarks.map((bookmark) => (
-          <BookmarkLauncherItem
-            key={bookmark.id}
-            id={bookmark.id}
-            title={bookmark.title}
-            url={bookmark.url}
-            size={config.size}
-            editMode={editMode}
-            onEdit={() => handleEditBookmark(bookmark)}
-          />
-        ))}
-      </SimpleGrid>
+      {/* Uncollected Bookmarks Section */}
+      {uncollectedBookmarks.length > 0 && (
+        <SimpleGrid
+          cols={config.cols}
+          spacing={config.spacing}
+          verticalSpacing={config.spacing}
+          mb={collections.length > 0 ? "xl" : undefined}
+        >
+          <AddBookmarkLauncherItem size={config.size} />
+          {uncollectedBookmarks.map((bookmark) => (
+            <BookmarkLauncherItem
+              key={bookmark.id}
+              id={bookmark.id}
+              title={bookmark.title}
+              url={bookmark.url}
+              size={config.size}
+              editMode={editMode}
+              onEdit={() => handleEditBookmark(bookmark)}
+            />
+          ))}
+        </SimpleGrid>
+      )}
+
+      {/* Collections Section */}
+      {collections.map((collection) => (
+        <CollectionLauncherSection
+          key={collection.id}
+          collection={collection}
+          size={config.size}
+          spacing={config.spacing}
+          cols={config.cols}
+          editMode={editMode}
+          onEditBookmark={handleEditBookmark}
+          onEditCollection={handleEditCollection}
+        />
+      ))}
     </Container>
   );
 }

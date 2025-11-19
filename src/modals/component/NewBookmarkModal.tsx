@@ -3,7 +3,7 @@ import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import BookmarkForm, { BookmarkFormValues } from './BookmarkForm';
+import BookmarkForm, { BookmarkFormValues } from '../../features/bookmark/component/BookmarkForm';
 import { useAllCollectionsQuery } from '@/features/collection/query';
 import { createBookmarkAction } from '@/app/actions/bookmark';
 

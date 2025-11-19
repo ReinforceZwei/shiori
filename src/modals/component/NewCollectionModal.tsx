@@ -3,8 +3,8 @@ import { Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import CollectionForm, { CollectionFormValues } from './CollectionForm';
-import { useCreateCollectionMutation, CreateCollectionInput } from '../query';
+import CollectionForm, { CollectionFormValues } from '../../features/collection/component/CollectionForm';
+import { useCreateCollectionMutation, CreateCollectionInput } from '../../features/collection/query';
 
 const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
   const { mutateAsync: createCollection } = useCreateCollectionMutation();

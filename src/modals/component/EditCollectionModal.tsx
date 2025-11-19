@@ -2,8 +2,8 @@ import { Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
-import CollectionForm, { CollectionFormValues } from './CollectionForm';
-import { useUpdateCollectionMutation, UpdateCollectionInput } from '../query';
+import CollectionForm, { CollectionFormValues } from '../../features/collection/component/CollectionForm';
+import { useUpdateCollectionMutation, UpdateCollectionInput } from '../../features/collection/query';
 
 const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ collectionId: string; initialValues: CollectionFormValues }>) => {
   const { mutateAsync: updateCollection } = useUpdateCollectionMutation();

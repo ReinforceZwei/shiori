@@ -8,6 +8,7 @@ import { LauncherItemSize } from "./BookmarkLauncherItem";
 
 interface AddBookmarkLauncherItemProps {
   size?: LauncherItemSize;
+  collectionId?: string;
 }
 
 const SIZE_CONFIG = {
@@ -29,7 +30,7 @@ const SIZE_CONFIG = {
   },
 };
 
-export function AddBookmarkLauncherItem({ size = "medium" }: AddBookmarkLauncherItemProps) {
+export function AddBookmarkLauncherItem({ size = "medium", collectionId }: AddBookmarkLauncherItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const config = SIZE_CONFIG[size];
 
@@ -37,7 +38,9 @@ export function AddBookmarkLauncherItem({ size = "medium" }: AddBookmarkLauncher
     modals.openContextModal({
       modal: "newBookmark",
       title: "Create New Bookmark",
-      innerProps: {},
+      innerProps: {
+        initialValues: collectionId ? { collectionId } : undefined,
+      },
     });
   };
 

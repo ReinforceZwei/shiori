@@ -109,6 +109,9 @@ export async function createBookmark(data: z.infer<typeof createBookmarkInputSch
           where: { id: collection.order.id },
           data: { order: updatedOrder },
         });
+      } else {
+        // Order always exist because it will be created
+        // together with collection
       }
     } else {
       // Bookmark is top-level, add to top-level bookmark order

@@ -9,6 +9,16 @@ export async function getCollections({ userId }: { userId?: string } = {}) {
   return collections;
 }
 
+export async function getCollectionsWithBookmarks({ userId }: { userId?: string } = {}) {
+  const collections = await prisma.collection.findMany({
+    where: userId ? { userId } : undefined,
+    include: {
+      bookmark: true,
+    },
+  });
+  return collections;
+}
+
 export async function getCollection({ id, userId }: { id: string; userId?: string }) {
   const collection = await prisma.collection.findUnique({
     where: userId ? { id, userId } : { id },
