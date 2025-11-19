@@ -68,6 +68,32 @@ export async function createCollection(data: z.infer<typeof createCollectionInpu
       data: { collectionId: newCollection.id },
     });
 
+    // 4. Ensure the collection appears in the user's collection order
+    const collectionOrder = await tx.order.findFirst({
+      where: {
+        userId: validatedData.userId,
+        type: 'collection',
+        collectionId: null,
+      },
+    });
+
+    if (collectionOrder) {
+      const currentOrder = (collectionOrder.order as string[]) || [];
+      await tx.order.update({
+        where: { id: collectionOrder.id },
+        data: { order: [...currentOrder, newCollection.id] },
+      });
+    } else {
+      await tx.order.create({
+        data: {
+          userId: validatedData.userId,
+          type: 'collection',
+          collectionId: null,
+          order: [newCollection.id],
+        },
+      });
+    }
+
     return newCollection;
   });
 
@@ -138,9 +164,30 @@ export async function deleteCollection(data: z.infer<typeof deleteCollectionInpu
     throw new NotFoundError(`Collection(id: ${validatedData.id}) not found`);
   }
 
-  // Delete the collection (bookmarks will be cascade deleted or set to null based on schema)
-  await prisma.collection.delete({
-    where: { id: validatedData.id },
+  await prisma.$transaction(async (tx) => {
+    // Remove collection from the ordering record
+    const collectionOrder = await tx.order.findFirst({
+      where: {
+        userId: collection.userId,
+        type: 'collection',
+        collectionId: null,
+      },
+    });
+
+    if (collectionOrder) {
+      const currentOrder = (collectionOrder.order as string[]) || [];
+      const updatedOrder = currentOrder.filter(id => id !== collection.id);
+
+      await tx.order.update({
+        where: { id: collectionOrder.id },
+        data: { order: updatedOrder },
+      });
+    }
+
+    // Delete the collection (bookmarks will be cascade deleted or set to null based on schema)
+    await tx.collection.delete({
+      where: { id: validatedData.id },
+    });
   });
 }
 

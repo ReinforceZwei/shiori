@@ -52,9 +52,22 @@ export default async function IndexPage() {
     uncollectedBookmarksOrder?.order as string[] | null
   );
   
+  // Get order for collections
+  const collectionsOrder = await getOrder({
+    userId: user.id,
+    type: 'collection',
+    collectionId: null,
+  });
+  
+  // Sort collections based on order
+  const sortedCollections = sortByOrder(
+    collections,
+    collectionsOrder?.order as string[] | null
+  );
+  
   // Sort bookmarks within each collection
-  const sortedCollections = await Promise.all(
-    collections.map(async (collection) => {
+  const sortedCollectionsWithBookmarks = await Promise.all(
+    sortedCollections.map(async (collection) => {
       // Get order for this collection's bookmarks
       const collectionBookmarksOrder = await getOrder({
         userId: user.id,
@@ -78,7 +91,7 @@ export default async function IndexPage() {
   return (
     <BookmarkLauncherGrid 
       uncollectedBookmarks={sortedUncollectedBookmarks}
-      collections={sortedCollections}
+      collections={sortedCollectionsWithBookmarks}
     />
   );
 }
