@@ -1,8 +1,8 @@
 "use client";
 
-import { Box, Text, Image, ActionIcon } from "@mantine/core";
+import { Box, Text, Image, ActionIcon, Loader } from "@mantine/core";
 import { useState } from "react";
-import { IconEdit } from "@tabler/icons-react";
+import { IconEdit, IconWorld } from "@tabler/icons-react";
 
 export type LauncherItemSize = "medium" | "small";
 
@@ -88,9 +88,23 @@ export function BookmarkLauncherItem({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
+        {/* TODO: Add has icon props and use this as fallback */}
+        {false && (
+          <Box
+            style={{
+              position: "absolute",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <IconWorld size={size === "medium" ? 32 : 24} opacity={0.3} />
+          </Box>
+        )}
         <Image
           src={`/api/bookmark/${id}/websiteicon?fallback=true`}
-          alt={title}
           width={config.imageSize}
           height={config.imageSize}
           fit="contain"
