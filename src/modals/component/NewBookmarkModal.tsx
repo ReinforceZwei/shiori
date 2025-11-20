@@ -18,7 +18,7 @@ const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initi
         title: values.title,
         url: values.url,
         description: values.description,
-        collectionId: values.collectionId,
+        collectionId: values.collectionId ?? undefined,
         websiteIcon: values.websiteIcon ? { data: values.websiteIcon } : undefined,
       });
 

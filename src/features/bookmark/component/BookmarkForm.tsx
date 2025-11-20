@@ -68,7 +68,7 @@ const bookmarkFormSchema = z.object({
   description: z.string().optional(),
   websiteIcon: z.string().optional(),
   websiteIconMimeType: z.string().optional(),
-  collectionId: z.string().optional(),
+  collectionId: z.string().optional().nullable(),
 });
 
 export type BookmarkFormValues = z.infer<typeof bookmarkFormSchema>;

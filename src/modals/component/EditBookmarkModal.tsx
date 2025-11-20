@@ -37,7 +37,7 @@ const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) 
       // Update collection if selected, or null to remove
       if (values.collectionId) {
         formData.collectionId = values.collectionId;
-      } else if (values.collectionId === '') {
+      } else {
         formData.collectionId = null;
       }
 
