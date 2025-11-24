@@ -1,230 +1,271 @@
 'use client';
-import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
-import { BookmarkContainer } from "./BookmarkContainer";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners, pointerWithin, closestCenter, rectIntersection, DragOverEvent } from "@dnd-kit/core";
+
+import { SimpleGrid, Stack, Text, Switch, Group } from "@mantine/core";
+import { DndContext, DragOverlay } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useMemo, useState } from "react";
+
+// Import our new DND abstraction
+import {
+  useMultiContainerDnd,
+  SortableItem,
+  SortableContainer,
+  customCollisionDetection,
+  restrictToVertical,
+  type DndContainer,
+} from "@/lib/dnd";
+
+// Import local components
 import { Item } from "./Item";
-import { SortableItem } from "./SortableItem";
-import { SortableContainer } from "./SortableContainer";
-import { SimpleGrid } from "@mantine/core";
 
-const initialContainers = [
-  { id: "collection-1", items: [
-    { id: "bookmark-1", title: "bookmark-1" }, 
-    { id: "bookmark-2", title: "bookmark-2" },
-    { id: "bookmark-3", title: "bookmark-3" },
-    { id: "bookmark-4", title: "bookmark-4" },
-    { id: "bookmark-5", title: "bookmark-5" },
-    { id: "bookmark-6", title: "bookmark-6" },
-    { id: "bookmark-7", title: "bookmark-7" },
-    { id: "bookmark-8", title: "bookmark-8" },
-  ] },
-  { id: "collection-2", items: [
-    { id: "bookmark-23", title: "bookmark-23" }, { id: "bookmark-24", title: "bookmark-24" },
-    { id: "bookmark-25", title: "bookmark-25" }, { id: "bookmark-26", title: "bookmark-26" },
-    { id: "bookmark-27", title: "bookmark-27" }, { id: "bookmark-28", title: "bookmark-28" },
-  ] },
-  { id: "collection-3", items: [
-    { id: "bookmark-35", title: "bookmark-35" }, { id: "bookmark-36", title: "bookmark-36" },
-    { id: "bookmark-37", title: "bookmark-37" }, { id: "bookmark-38", title: "bookmark-38" },
-  ] },
-];
+// Define the shape of our bookmark items
+interface BookmarkItem {
+  id: string;
+  title: string;
+}
 
-function customCollisionDetectionAlgorithm(args: any) {
-  // First, let's see if there are any collisions with the pointer
-  const pointerCollisions = pointerWithin(args);
-  
-  // Collision detection algorithms return an array of collisions
-  if (pointerCollisions.length > 0) {
-    return pointerCollisions;
-  }
-  
-  // If there are no collisions with the pointer, return rectangle intersections
-  return rectIntersection(args);
+// Initial data - Uncollected (static) container
+const uncollectedContainer: DndContainer<BookmarkItem> = {
+  id: "uncollected",
+  items: [
+    { id: "bookmark-u1", title: "Uncollected 1" },
+    { id: "bookmark-u2", title: "Uncollected 2" },
+    { id: "bookmark-u3", title: "Uncollected 3" },
+    { id: "bookmark-u4", title: "Uncollected 4" },
+    { id: "bookmark-u5", title: "Uncollected 5" },
+  ],
 };
 
+// Sortable collections
+const sortableCollections: DndContainer<BookmarkItem>[] = [
+  {
+    id: "collection-1",
+    items: [
+      { id: "bookmark-1", title: "bookmark-1" },
+      { id: "bookmark-2", title: "bookmark-2" },
+      { id: "bookmark-3", title: "bookmark-3" },
+      { id: "bookmark-4", title: "bookmark-4" },
+    ],
+  },
+  {
+    id: "collection-2",
+    items: [
+      { id: "bookmark-23", title: "bookmark-23" },
+      { id: "bookmark-24", title: "bookmark-24" },
+      { id: "bookmark-25", title: "bookmark-25" },
+    ],
+  },
+  {
+    id: "collection-3",
+    items: [
+      { id: "bookmark-35", title: "bookmark-35" },
+      { id: "bookmark-36", title: "bookmark-36" },
+    ],
+  },
+];
+
+// Combine for the hook (uncollected first, then collections)
+const initialContainers: DndContainer<BookmarkItem>[] = [
+  uncollectedContainer,
+  ...sortableCollections,
+];
+
 export default function DndPage() {
-  const containerMap = useMemo(() => initialContainers.reduce((acc, container) => {
-    acc[container.id] = container.items;
-    return acc;
-  }, {} as Record<string, typeof initialContainers[number]['items']>), []);
-  const [items, setItems] = useState(containerMap);
-  const [containerIds, setContainerIds] = useState<string[]>(useMemo(() => Object.keys(containerMap), [containerMap]));
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeContainerId, setActiveContainerId] = useState<string | null>(null);
-  const [isDraggingContainer, setIsDraggingContainer] = useState(false);
+  // Edit mode toggle
+  const [editMode, setEditMode] = useState(false);
 
-  function handleDragStart(event: DragStartEvent) {
-    const { active } = event;
-    const activeData = active.data.current;
-    setActiveId(active.id as string);
+  // Use our custom DND hook with callbacks
+  const {
+    dndContextProps,
+    containers,
+    activeId,
+    activeType,
+    activeItem,
+    itemSourceContainerId,
+    activeContainerId,
+    containerIds,
+  } = useMultiContainerDnd<BookmarkItem>(initialContainers, {
+    onItemReorder: (containerId, oldIndex, newIndex, items) => {
+      console.log('Item reordered:', {
+        containerId,
+        oldIndex,
+        newIndex,
+        items: items.map(i => i.id),
+      });
+    },
+    onItemMove: (itemId, fromContainerId, toContainerId, toIndex, items) => {
+      console.log('Item moved:', {
+        itemId,
+        from: fromContainerId,
+        to: toContainerId,
+        toIndex,
+        newOrder: items.map(i => i.id),
+      });
+    },
+    onContainerReorder: (oldIndex, newIndex, containers) => {
+      console.log('Container reordered:', {
+        oldIndex,
+        newIndex,
+        containers: containers.map(c => c.id),
+      });
+    },
+  });
 
-    if (activeData?.type === "container") {
-      // Dragging a whole container
-      setActiveContainerId(null);
-      setIsDraggingContainer(true);
-    } else {
-      // Dragging an item — track its original container
-      setActiveContainerId(findContainer(active.id as string) || null);
-      setIsDraggingContainer(false);
-    }
-  }
+  // Get the active container for overlay
+  const activeContainer = useMemo(() => {
+    if (!activeId || activeType !== 'container') return null;
+    return containers.find(c => c.id === activeId);
+  }, [activeId, activeType, containers]);
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over) {
-      setActiveId(null);  // ← Reset overlay
-      setActiveContainerId(null);
-      setIsDraggingContainer(false);
-      return;
-    }
-    debugger
-
-    const activeIdStr = active.id as string;
-    const overIdStr = over.id as string;
-    const activeData = active.data.current;
-    const overData = over.data.current;
-
-    // Case 1: Dragging a CONTAINER
-    if (activeData?.type === "container") {
-      if (overData?.type === "container") {
-        setContainerIds((prev: string[]) => {
-          const oldIndex = prev.findIndex((id) => id === activeIdStr);
-          const newIndex = prev.findIndex((id) => id === overIdStr);
-          return arrayMove(prev, oldIndex, newIndex);
-        });
-      }
-    } 
-    // Case 2: Dragging an ITEM
-    else {
-      const activeContainerId = findContainer(activeIdStr);
-      const overContainerId = findContainer(overIdStr) || overIdStr;  // For empty drops
-
-      if (!activeContainerId) return;
-
-      if (activeContainerId === overContainerId) {
-        // Reorder in same container
-        setItems((prev) => ({
-          ...prev,
-          [activeContainerId]: arrayMove(prev[activeContainerId], prev[activeContainerId].findIndex((item) => item.id === activeIdStr), prev[activeContainerId].findIndex((item) => item.id === overIdStr))
-        }));
-      } else {
-        // Move to new container
-        setItems((prev) => ({
-          ...prev,
-          [activeContainerId]: prev[activeContainerId].filter((item) => item.id !== activeIdStr),
-          [overContainerId]: [...prev[overContainerId], ...prev[activeContainerId].filter((item) => item.id === activeIdStr)],
-        }));
-      }
-    }
-
-    setActiveId(null);  // ← Reset overlay
-    setActiveContainerId(null);
-    setIsDraggingContainer(false);
-  }
-
-  function handleDragOver(event: DragOverEvent) {
-    const { active, over } = event;
-    console.log(event)
-    if (!over || active.id === over.id) return;
-
-    const activeData = active.data.current;
-    if (activeData?.type === "container") {
-      return;
-    }
-
-    const overData = over.data.current;
-    if (overData?.type === "container") {
-      // over on a container, so we need to move the active item to the over container
-      const activeContainerId = findContainer(active.id as string);
-      if (!activeContainerId) return;
-      if (activeContainerId === over.id) return;
-      setItems((prev) => ({
-        ...prev,
-        [over.id]: [...prev[over.id], ...prev[activeContainerId].filter((item) => item.id === active.id)],
-        [activeContainerId]: prev[activeContainerId].filter((item) => item.id !== active.id),
-      }));
-      return;
-    }
-
-    const activeContainerId = findContainer(active.id as string);
-    const overContainerId = findContainer(over.id as string);
-    if (!activeContainerId || !overContainerId) return;
-    if (activeContainerId === overContainerId) return;
-
-    console.log({
-      event,
-      activeContainerId,
-      overContainerId,
-    })
-
-    // over item index in it's container
-    const overIndex = items[overContainerId].findIndex((item) => item.id === over.id);
-
-    setItems((prev) => {
-      return {
-        ...prev,
-        [activeContainerId]: prev[activeContainerId].filter((item) => item.id !== active.id),
-        [overContainerId]: [
-          ...prev[overContainerId].slice(0, overIndex),
-          ...prev[activeContainerId].filter((item) => item.id === active.id),
-          ...prev[overContainerId].slice(overIndex),
-        ],
-      }
-    })
-  }
-
-  function findContainer(itemId: string) {
-    return Object.keys(items).find((containerId) =>
-      items[containerId].some((item) => item.id === itemId)
-    );
-  }
-
-  // Custom modifier to restrict vertical movement
-  const restrictToVertical = (args: any) => {
-    const { transform } = args;
-    return {
-      ...transform,
-      x: 0,
-    };
-  };
+  // Separate uncollected container from sortable collections
+  const uncollected = containers.find(c => c.id === 'uncollected');
+  const collections = containers.filter(c => c.id !== 'uncollected');
 
   return (
     <DndContext
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-      collisionDetection={customCollisionDetectionAlgorithm}
+      {...dndContextProps}
+      collisionDetection={customCollisionDetection}
     >
-      <h1>DnD Page</h1>
-      <SortableContext
-        items={containerIds}
-        strategy={verticalListSortingStrategy}
-      >
-        {containerIds.map((containerId) => (
-          <SortableItem
-            key={containerId}
-            id={containerId}
-            data={{ type: "container", id: containerId }}
-            restrictDirection="vertical"
+      <Stack p="xl" gap="xl">
+        <Group justify="space-between" align="flex-start">
+          <Stack gap="xs">
+            <Text size="xl" fw={700}>
+              DnD Playground - Using Abstracted Logic
+            </Text>
+            <Text size="sm" c="dimmed">
+              This playground demonstrates the abstracted DND logic from @/lib/dnd
+            </Text>
+            <Text size="xs" c="dimmed" fs="italic">
+              • Static "Uncollected" container stays at top (cannot be reordered)
+            </Text>
+            <Text size="xs" c="dimmed" fs="italic">
+              • Collection containers can be reordered
+            </Text>
+            <Text size="xs" c="dimmed" fs="italic">
+              • Items can be dragged between any container
+            </Text>
+          </Stack>
+
+          <Switch
+            label="Edit Mode"
+            description="Enable to drag items"
+            checked={editMode}
+            onChange={(event) => setEditMode(event.currentTarget.checked)}
+            size="md"
+          />
+        </Group>
+
+        {/* Static Uncollected Container */}
+        {uncollected && (
+          <Stack
+            style={{
+              border: `3px solid ${
+                activeContainerId === 'uncollected' && itemSourceContainerId !== 'uncollected'
+                  ? '#40c057' // Green when drop target
+                  : '#228be6' // Blue default
+              }`,
+              borderRadius: "8px",
+              padding: "16px",
+              backgroundColor: 
+                activeContainerId === 'uncollected' && itemSourceContainerId !== 'uncollected'
+                  ? '#d3f9d8' // Light green when drop target
+                  : '#e7f5ff', // Light blue default
+              transition: 'all 0.2s ease',
+            }}
           >
-            <h2>{containerId}</h2>
+            <Text size="lg" fw={600} c="blue">
+              📌 {uncollected.id.toUpperCase()} (Static Container)
+            </Text>
+
             <SimpleGrid cols={3}>
               <SortableContainer
-                items={items[containerId]}
+                items={uncollected.items}
                 renderItem={(item) => (
-                  <Item id={item.id} title={item.title} />
+                  <Item id={item.id} title={item.title} isDraggable={editMode} />
                 )}
+                itemProps={{ disabled: !editMode }}
               />
             </SimpleGrid>
-          </SortableItem>
-        ))}
-      </SortableContext>
-      <DragOverlay modifiers={isDraggingContainer ? [restrictToVertical] : undefined}>
-        {activeId ? (
-          <Item id={activeId} title={activeId} />
-        ) : activeContainerId ? (
-          <BookmarkContainer id={activeContainerId} name={activeContainerId} items={items[activeContainerId] || []} />
+          </Stack>
+        )}
+
+        {/* Sortable Collections */}
+        <SortableContext
+          items={collections.map(c => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {collections.map((collection) => (
+            <SortableItem
+              key={collection.id}
+              id={collection.id}
+              data={{ type: "container", containerId: collection.id }}
+              restrictDirection="vertical"
+              disabled={!editMode}
+              >
+                <Stack
+                  style={{
+                    border: `2px solid ${
+                      activeContainerId === collection.id && itemSourceContainerId !== collection.id
+                        ? '#40c057' // Green when drop target
+                        : '#ddd' // Gray default
+                    }`,
+                    borderRadius: "8px",
+                    padding: "16px",
+                    backgroundColor: 
+                      activeContainerId === collection.id && itemSourceContainerId !== collection.id
+                        ? '#d3f9d8' // Light green when drop target
+                        : '#f9f9f9', // Gray default
+                    cursor: editMode ? "grab" : "default",
+                    opacity: editMode ? 1 : 0.7,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                <Text size="lg" fw={600}>
+                  ↕️ {collection.id}
+                </Text>
+
+                <SimpleGrid cols={3}>
+                  <SortableContainer
+                    items={collection.items}
+                    renderItem={(item) => (
+                      <Item id={item.id} title={item.title} isDraggable={editMode} />
+                    )}
+                    itemProps={{ disabled: !editMode }}
+                  />
+                </SimpleGrid>
+              </Stack>
+            </SortableItem>
+          ))}
+        </SortableContext>
+      </Stack>
+
+      {/* Drag Overlay */}
+      <DragOverlay
+        modifiers={activeType === 'container' ? [restrictToVertical] : undefined}
+      >
+        {activeType === 'item' && activeItem ? (
+          <div style={{ opacity: 0.8 }}>
+            <Item id={activeItem.id} title={activeItem.title} />
+          </div>
+        ) : activeType === 'container' && activeContainer ? (
+          <Stack
+            style={{
+              border: "2px solid #228be6",
+              borderRadius: "8px",
+              padding: "16px",
+              backgroundColor: "#e7f5ff",
+              opacity: 0.9,
+            }}
+          >
+            <Text size="lg" fw={600}>
+              {activeContainer.id}
+            </Text>
+            <SimpleGrid cols={3}>
+              {activeContainer.items.map((item) => (
+                <Item key={item.id} id={item.id} title={item.title} />
+              ))}
+            </SimpleGrid>
+          </Stack>
         ) : null}
       </DragOverlay>
     </DndContext>
