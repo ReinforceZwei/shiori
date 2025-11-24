@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import {
   createBookmark as createBookmarkService,
   updateBookmark as updateBookmarkService,
+  moveBookmark as moveBookmarkService,
   deleteBookmark as deleteBookmarkService,
 } from '@/features/bookmark/service';
 import { requireUser } from '@/lib/auth';
@@ -72,6 +73,38 @@ export async function updateBookmarkAction(
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to update bookmark'
+    };
+  }
+}
+
+/**
+ * Server action to move a bookmark to a different collection with specific order
+ * Automatically revalidates the UI after moving
+ */
+export async function moveBookmarkAction(
+  id: string,
+  targetCollectionId: string | null,
+  targetOrder: string[]
+) {
+  try {
+    const user = await requireUser();
+    
+    const bookmark = await moveBookmarkService({
+      id,
+      userId: user.id,
+      targetCollectionId,
+      targetOrder,
+    });
+    
+    // Revalidate the main layout to update all bookmark-related UI
+    revalidatePath('/(main)', 'layout');
+    
+    return { success: true, data: bookmark };
+  } catch (error) {
+    console.error('Error in moveBookmarkAction:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to move bookmark'
     };
   }
 }

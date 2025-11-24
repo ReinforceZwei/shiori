@@ -1,7 +1,7 @@
 import { prisma, Prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { validateAndDetectImageType } from "@/lib/utils/image";
-import { NotFoundError } from "@/lib/errors";
+import { NotFoundError, ValidationError } from "@/lib/errors";
 
 export async function getBookmarks({ userId }: { userId?: string } = {}) {
   const bookmarks = await prisma.bookmark.findMany({
@@ -332,6 +332,124 @@ export async function updateBookmark(data: z.infer<typeof updateBookmarkInputSch
   });
   
   return updatedBookmark;
+}
+
+const moveBookmarkInputSchema = z.object({
+  id: z.string(),
+  userId: z.string().optional(),
+  targetCollectionId: z.string().nullable(), // null for uncollected
+  targetOrder: z.array(z.string()), // Complete order array for the target collection
+});
+
+/**
+ * Move a bookmark to a different collection with a specific order
+ * This combines updating the bookmark's collectionId and setting the order in a single transaction
+ */
+export async function moveBookmark(data: z.infer<typeof moveBookmarkInputSchema>) {
+  const validatedData = moveBookmarkInputSchema.parse(data);
+  
+  // Check if bookmark exists and belongs to user (if userId provided)
+  const bookmark = await prisma.bookmark.findUnique({
+    where: validatedData.userId 
+      ? { id: validatedData.id, userId: validatedData.userId }
+      : { id: validatedData.id },
+  });
+  if (!bookmark) {
+    throw new NotFoundError(`Bookmark(id: ${validatedData.id}) not found`);
+  }
+
+  // Track old collection ID for cleanup
+  const oldCollectionId = bookmark.collectionId;
+  const newCollectionId = validatedData.targetCollectionId;
+
+  // Validate that the bookmark ID is in the target order array
+  if (!validatedData.targetOrder.includes(validatedData.id)) {
+    throw new ValidationError('Target order must include the bookmark being moved');
+  }
+
+  // Wrap in transaction to ensure atomicity
+  const movedBookmark = await prisma.$transaction(async (tx) => {
+    // Step 1: Update the bookmark's collectionId
+    const updated = await tx.bookmark.update({
+      where: { id: validatedData.id },
+      data: {
+        collection: newCollectionId
+          ? { connect: { id: newCollectionId } }
+          : { disconnect: true },
+      },
+    });
+
+    // Step 2: Remove bookmark from old collection's order
+    if (oldCollectionId) {
+      const oldCollectionOrder = await tx.order.findFirst({
+        where: {
+          userId: bookmark.userId,
+          type: 'bookmark',
+          collectionId: oldCollectionId,
+        },
+      });
+      
+      if (oldCollectionOrder) {
+        const currentOrder = (oldCollectionOrder.order as string[]) || [];
+        const updatedOldOrder = currentOrder.filter(id => id !== validatedData.id);
+        
+        await tx.order.update({
+          where: { id: oldCollectionOrder.id },
+          data: { order: updatedOldOrder },
+        });
+      }
+    } else {
+      // Remove from top-level bookmark order
+      const topLevelOrder = await tx.order.findFirst({
+        where: {
+          userId: bookmark.userId,
+          type: 'bookmark',
+          collectionId: null,
+        },
+      });
+
+      if (topLevelOrder) {
+        const currentOrder = (topLevelOrder.order as string[]) || [];
+        const updatedOrder = currentOrder.filter(id => id !== validatedData.id);
+        
+        await tx.order.update({
+          where: { id: topLevelOrder.id },
+          data: { order: updatedOrder },
+        });
+      }
+    }
+    
+    // Step 3: Set the complete order for the target collection
+    const targetOrder = await tx.order.findFirst({
+      where: {
+        userId: bookmark.userId,
+        type: 'bookmark',
+        collectionId: newCollectionId,
+      },
+    });
+
+    if (targetOrder) {
+      // Update existing order
+      await tx.order.update({
+        where: { id: targetOrder.id },
+        data: { order: validatedData.targetOrder },
+      });
+    } else {
+      // Create new order if it doesn't exist
+      await tx.order.create({
+        data: {
+          userId: bookmark.userId,
+          type: 'bookmark',
+          collectionId: newCollectionId,
+          order: validatedData.targetOrder,
+        },
+      });
+    }
+
+    return updated;
+  });
+  
+  return movedBookmark;
 }
 
 const deleteBookmarkInputSchema = z.object({
