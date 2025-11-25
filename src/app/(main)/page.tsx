@@ -1,7 +1,7 @@
-import { getBookmarks } from "@/features/bookmark/service";
+import { getBookmarksUncollected } from "@/features/bookmark/service";
 import { getCollectionsWithBookmarks } from "@/features/collection/service";
 import { requireUser } from "@/lib/auth";
-import { BookmarkLauncherGrid } from "./BookmarkLauncherGrid";
+import { BookmarkLauncherGrid } from "./layouts/launcher/BookmarkLauncherGrid";
 import { getOrder } from "@/features/order/service";
 
 // Helper function to sort items based on order array
@@ -33,11 +33,8 @@ function sortByOrder<T extends { id: string }>(items: T[], orderArray: string[] 
 
 export default async function IndexPage() {
   const user = await requireUser();
-  const bookmarks = await getBookmarks({ userId: user.id });
+  const uncollectedBookmarks = await getBookmarksUncollected({ userId: user.id });
   const collections = await getCollectionsWithBookmarks({ userId: user.id });
-  
-  // Filter bookmarks without a collection (uncollected)
-  const uncollectedBookmarks = bookmarks.filter(b => !b.collectionId);
 
   // Get order for uncollected bookmarks
   const uncollectedBookmarksOrder = await getOrder({

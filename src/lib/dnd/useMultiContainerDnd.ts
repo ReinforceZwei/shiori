@@ -1,8 +1,16 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
-import { DragStartEvent, DragEndEvent, DragOverEvent } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
+import { useState, useCallback, useMemo, useId, useEffect } from 'react';
+import { 
+  DragStartEvent, 
+  DragEndEvent, 
+  DragOverEvent,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type {
   DndItem,
   DndContainer,
@@ -21,6 +29,7 @@ export function useMultiContainerDnd<T extends DndItem = DndItem>(
   initialContainers: DndContainer<T>[],
   callbacks: UseDndCallbacks<T> = {}
 ): UseDndReturn<T> {
+  const dndContextId = useId();
   const [containers, setContainers] = useState<DndContainer<T>[]>(initialContainers);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<'item' | 'container' | null>(null);
@@ -28,6 +37,23 @@ export function useMultiContainerDnd<T extends DndItem = DndItem>(
   const [itemSourceContainerId, setItemSourceContainerId] = useState<string | null>(null);
   // Track the container currently being hovered over (drop target)
   const [activeContainerId, setActiveContainerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setContainers(initialContainers);
+  }, [initialContainers]);
+
+  // Configure sensors with activation constraints
+  // This prevents accidental drags on click - user must drag 8px or wait 250ms
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px of movement before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   /**
    * Find which container an item belongs to
@@ -292,6 +318,8 @@ export function useMultiContainerDnd<T extends DndItem = DndItem>(
 
   return {
     dndContextProps: {
+      id: dndContextId,
+      sensors,
       onDragStart: handleDragStart,
       onDragOver: handleDragOver,
       onDragEnd: handleDragEnd,

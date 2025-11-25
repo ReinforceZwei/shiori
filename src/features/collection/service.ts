@@ -13,7 +13,7 @@ export async function getCollectionsWithBookmarks({ userId }: { userId?: string 
   const collections = await prisma.collection.findMany({
     where: userId ? { userId } : undefined,
     include: {
-      bookmark: true,
+      bookmark: { include: { websiteIcon: { select: { id: true }}}},
     },
   });
   return collections;

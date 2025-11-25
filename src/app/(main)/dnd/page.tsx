@@ -1,15 +1,18 @@
-'use client';
+"use client";
 
 import { SimpleGrid, Stack, Text, Switch, Group } from "@mantine/core";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
 import { useMemo, useState } from "react";
 
 // Import our new DND abstraction
 import {
   useMultiContainerDnd,
   SortableItem,
-  SortableContainer,
   customCollisionDetection,
   restrictToVertical,
   type DndContainer,
@@ -86,40 +89,38 @@ export default function DndPage() {
     containerIds,
   } = useMultiContainerDnd<BookmarkItem>(initialContainers, {
     onItemReorder: (containerId, oldIndex, newIndex, items) => {
-      console.log('Item reordered:', {
+      console.log("Item reordered:", {
         containerId,
         oldIndex,
         newIndex,
-        items: items.map(i => i.id),
+        items: items.map((i) => i.id),
       });
     },
     onItemMove: (itemId, fromContainerId, toContainerId, toIndex, items) => {
-      console.log('Item moved:', {
+      console.log("Item moved:", {
         itemId,
         from: fromContainerId,
         to: toContainerId,
         toIndex,
-        newOrder: items.map(i => i.id),
+        newOrder: items.map((i) => i.id),
       });
     },
     onContainerReorder: (oldIndex, newIndex, containers) => {
-      console.log('Container reordered:', {
+      console.log("Container reordered:", {
         oldIndex,
         newIndex,
-        containers: containers.map(c => c.id),
+        containers: containers.map((c) => c.id),
       });
     },
   });
 
   // Get the active container for overlay
   const activeContainer = useMemo(() => {
-    if (!activeId || activeType !== 'container') return null;
-    return containers.find(c => c.id === activeId);
+    if (!activeId || activeType !== "container") return null;
+    return containers.find((c) => c.id === activeId);
   }, [activeId, activeType, containers]);
 
-  // Separate uncollected container from sortable collections
-  const uncollected = containers.find(c => c.id === 'uncollected');
-  const collections = containers.filter(c => c.id !== 'uncollected');
+  // No need to separate containers anymore - treat all uniformly!
 
   return (
     <DndContext
@@ -133,10 +134,12 @@ export default function DndPage() {
               DnD Playground - Using Abstracted Logic
             </Text>
             <Text size="sm" c="dimmed">
-              This playground demonstrates the abstracted DND logic from @/lib/dnd
+              This playground demonstrates the abstracted DND logic from
+              @/lib/dnd
             </Text>
             <Text size="xs" c="dimmed" fs="italic">
-              • Static "Uncollected" container stays at top (cannot be reordered)
+              • Static "Uncollected" container stays at top (cannot be
+              reordered)
             </Text>
             <Text size="xs" c="dimmed" fs="italic">
               • Collection containers can be reordered
@@ -155,99 +158,104 @@ export default function DndPage() {
           />
         </Group>
 
-        {/* Static Uncollected Container */}
-        {uncollected && (
-          <Stack
-            style={{
-              border: `3px solid ${
-                activeContainerId === 'uncollected' && itemSourceContainerId !== 'uncollected'
-                  ? '#40c057' // Green when drop target
-                  : '#228be6' // Blue default
-              }`,
-              borderRadius: "8px",
-              padding: "16px",
-              backgroundColor: 
-                activeContainerId === 'uncollected' && itemSourceContainerId !== 'uncollected'
-                  ? '#d3f9d8' // Light green when drop target
-                  : '#e7f5ff', // Light blue default
-              transition: 'all 0.2s ease',
-            }}
-          >
-            <Text size="lg" fw={600} c="blue">
-              📌 {uncollected.id.toUpperCase()} (Static Container)
-            </Text>
-
-            <SimpleGrid cols={3}>
-              <SortableContainer
-                items={uncollected.items}
-                renderItem={(item) => (
-                  <Item id={item.id} title={item.title} isDraggable={editMode} />
-                )}
-                itemProps={{ disabled: !editMode }}
-              />
-            </SimpleGrid>
-          </Stack>
-        )}
-
-        {/* Sortable Collections */}
+        {/* All Containers - treated uniformly */}
         <SortableContext
-          items={collections.map(c => c.id)}
+          items={containerIds}
           strategy={verticalListSortingStrategy}
         >
-          {collections.map((collection) => (
-            <SortableItem
-              key={collection.id}
-              id={collection.id}
-              data={{ type: "container", containerId: collection.id }}
-              restrictDirection="vertical"
-              disabled={!editMode}
+          {containers.map((container) => {
+            const isUncollected = container.id === "uncollected";
+
+            return (
+              <SortableItem
+                key={container.id}
+                id={container.id}
+                data={{ type: "container", containerId: container.id }}
+                restrictDirection="vertical"
+                disabled={!editMode || (isUncollected && activeType === "container")} // Disable sorting for uncollected
               >
                 <Stack
                   style={{
-                    border: `2px solid ${
-                      activeContainerId === collection.id && itemSourceContainerId !== collection.id
-                        ? '#40c057' // Green when drop target
-                        : '#ddd' // Gray default
+                    border: `${isUncollected ? "3px" : "2px"} solid ${
+                      activeContainerId === container.id &&
+                      itemSourceContainerId !== container.id
+                        ? "#40c057" // Green when drop target
+                        : isUncollected
+                        ? "#228be6"
+                        : "#ddd" // Blue for uncollected, gray for others
                     }`,
                     borderRadius: "8px",
                     padding: "16px",
-                    backgroundColor: 
-                      activeContainerId === collection.id && itemSourceContainerId !== collection.id
-                        ? '#d3f9d8' // Light green when drop target
-                        : '#f9f9f9', // Gray default
-                    cursor: editMode ? "grab" : "default",
+                    backgroundColor:
+                      activeContainerId === container.id &&
+                      itemSourceContainerId !== container.id
+                        ? "#d3f9d8" // Light green when drop target
+                        : isUncollected
+                        ? "#e7f5ff"
+                        : "#f9f9f9", // Blue for uncollected, gray for others
+                    cursor: editMode && !isUncollected ? "grab" : "default",
                     opacity: editMode ? 1 : 0.7,
-                    transition: 'all 0.2s ease',
+                    transition: "all 0.2s ease",
                   }}
                 >
-                <Text size="lg" fw={600}>
-                  ↕️ {collection.id}
-                </Text>
+                  <Text
+                    size="lg"
+                    fw={600}
+                    c={isUncollected ? "blue" : undefined}
+                  >
+                    {isUncollected ? "📌 " : "↕️ "}
+                    {container.id.toUpperCase()}
+                    {isUncollected && " (Static Container)"}
+                  </Text>
 
-                <SimpleGrid cols={3}>
-                  <SortableContainer
-                    items={collection.items}
-                    renderItem={(item) => (
-                      <Item id={item.id} title={item.title} isDraggable={editMode} />
-                    )}
-                    itemProps={{ disabled: !editMode }}
-                  />
-                </SimpleGrid>
-              </Stack>
-            </SortableItem>
-          ))}
+                  <SimpleGrid cols={12} style={{ minHeight: "80px" }}>
+                    <SortableContext
+                      items={container.items.map((item) => item.id)}
+                      strategy={rectSortingStrategy}
+                    >
+                      {container.items.length === 0 && (
+                        <Text
+                          size="sm"
+                          c="dimmed"
+                          ta="center"
+                          style={{ gridColumn: "1 / -1", paddingTop: "20px" }}
+                        >
+                          Drop items here
+                        </Text>
+                      )}
+                      {container.items.map((item) => (
+                        <SortableItem
+                          key={item.id}
+                          id={item.id}
+                          disabled={!editMode}
+                        >
+                          <Item
+                            id={item.id}
+                            title={item.title}
+                            isDraggable={editMode}
+                          />
+                        </SortableItem>
+                      ))}
+                    </SortableContext>
+                  </SimpleGrid>
+                </Stack>
+              </SortableItem>
+            );
+          })}
         </SortableContext>
       </Stack>
 
       {/* Drag Overlay */}
       <DragOverlay
-        modifiers={activeType === 'container' ? [restrictToVertical] : undefined}
+        modifiers={
+          activeType === "container" ? [restrictToVertical] : undefined
+        }
       >
-        {activeType === 'item' && activeItem ? (
+        {activeType === "item" && activeItem ? (
           <div style={{ opacity: 0.8 }}>
             <Item id={activeItem.id} title={activeItem.title} />
           </div>
-        ) : activeType === 'container' && activeContainer ? (
+        ) : activeType === "container" && activeContainer ? (
           <Stack
             style={{
               border: "2px solid #228be6",

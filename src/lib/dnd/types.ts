@@ -1,4 +1,4 @@
-import { DragStartEvent, DragEndEvent, DragOverEvent } from '@dnd-kit/core';
+import { DragStartEvent, DragEndEvent, DragOverEvent, SensorDescriptor } from '@dnd-kit/core';
 
 /**
  * Generic item that can be dragged
@@ -74,6 +74,14 @@ export interface UseDndCallbacks<T extends DndItem = DndItem> {
  * Props to spread into DndContext
  */
 export interface DndContextProps {
+  /** ID for the DndContext. Required to prevent SSR hydration errors.
+   * See https://github.com/clauderic/dnd-kit/issues/926
+   */
+  id: string;
+  
+  /** Sensors for detecting drag interactions */
+  sensors: SensorDescriptor<any>[];
+  
   /** DragStart handler */
   onDragStart: (event: DragStartEvent) => void;
   

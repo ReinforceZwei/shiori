@@ -6,6 +6,18 @@ import { NotFoundError, ValidationError } from "@/lib/errors";
 export async function getBookmarks({ userId }: { userId?: string } = {}) {
   const bookmarks = await prisma.bookmark.findMany({
     where: userId ? { userId } : undefined,
+    include: { websiteIcon: { select: { id: true }}},
+  });
+  return bookmarks;
+}
+
+export async function getBookmarksUncollected({ userId }: { userId?: string } = {}) {
+  const bookmarks = await prisma.bookmark.findMany({
+    where: {
+      ...(userId ? { userId } : {}),
+      collectionId: null,
+    },
+    include: { websiteIcon: { select: { id: true }}},
   });
   return bookmarks;
 }
@@ -13,6 +25,7 @@ export async function getBookmarks({ userId }: { userId?: string } = {}) {
 export async function getBookmark({ id, userId }: { id: string; userId?: string }) {
   const bookmark = await prisma.bookmark.findUnique({
     where: userId ? { id, userId } : { id },
+    include: { websiteIcon: { select: { id: true }}},
   });
   return bookmark;
 }
@@ -367,55 +380,62 @@ export async function moveBookmark(data: z.infer<typeof moveBookmarkInputSchema>
     throw new ValidationError('Target order must include the bookmark being moved');
   }
 
+  // Check if this is just a reorder within the same collection
+  const isSameCollection = oldCollectionId === newCollectionId;
+
   // Wrap in transaction to ensure atomicity
   const movedBookmark = await prisma.$transaction(async (tx) => {
-    // Step 1: Update the bookmark's collectionId
-    const updated = await tx.bookmark.update({
-      where: { id: validatedData.id },
-      data: {
-        collection: newCollectionId
-          ? { connect: { id: newCollectionId } }
-          : { disconnect: true },
-      },
-    });
+    let updated = bookmark;
 
-    // Step 2: Remove bookmark from old collection's order
-    if (oldCollectionId) {
-      const oldCollectionOrder = await tx.order.findFirst({
-        where: {
-          userId: bookmark.userId,
-          type: 'bookmark',
-          collectionId: oldCollectionId,
-        },
-      });
-      
-      if (oldCollectionOrder) {
-        const currentOrder = (oldCollectionOrder.order as string[]) || [];
-        const updatedOldOrder = currentOrder.filter(id => id !== validatedData.id);
-        
-        await tx.order.update({
-          where: { id: oldCollectionOrder.id },
-          data: { order: updatedOldOrder },
-        });
-      }
-    } else {
-      // Remove from top-level bookmark order
-      const topLevelOrder = await tx.order.findFirst({
-        where: {
-          userId: bookmark.userId,
-          type: 'bookmark',
-          collectionId: null,
+    // Step 1: Update the bookmark's collectionId (only if moving to different collection)
+    if (!isSameCollection) {
+      updated = await tx.bookmark.update({
+        where: { id: validatedData.id },
+        data: {
+          collection: newCollectionId
+            ? { connect: { id: newCollectionId } }
+            : { disconnect: true },
         },
       });
 
-      if (topLevelOrder) {
-        const currentOrder = (topLevelOrder.order as string[]) || [];
-        const updatedOrder = currentOrder.filter(id => id !== validatedData.id);
-        
-        await tx.order.update({
-          where: { id: topLevelOrder.id },
-          data: { order: updatedOrder },
+      // Step 2: Remove bookmark from old collection's order (only if moving to different collection)
+      if (oldCollectionId) {
+        const oldCollectionOrder = await tx.order.findFirst({
+          where: {
+            userId: bookmark.userId,
+            type: 'bookmark',
+            collectionId: oldCollectionId,
+          },
         });
+        
+        if (oldCollectionOrder) {
+          const currentOrder = (oldCollectionOrder.order as string[]) || [];
+          const updatedOldOrder = currentOrder.filter(id => id !== validatedData.id);
+          
+          await tx.order.update({
+            where: { id: oldCollectionOrder.id },
+            data: { order: updatedOldOrder },
+          });
+        }
+      } else {
+        // Remove from top-level bookmark order
+        const topLevelOrder = await tx.order.findFirst({
+          where: {
+            userId: bookmark.userId,
+            type: 'bookmark',
+            collectionId: null,
+          },
+        });
+
+        if (topLevelOrder) {
+          const currentOrder = (topLevelOrder.order as string[]) || [];
+          const updatedOrder = currentOrder.filter(id => id !== validatedData.id);
+          
+          await tx.order.update({
+            where: { id: topLevelOrder.id },
+            data: { order: updatedOrder },
+          });
+        }
       }
     }
     
