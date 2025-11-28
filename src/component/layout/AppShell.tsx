@@ -1,66 +1,85 @@
 "use client";
 
-import { AppShell as MantineAppShell, Burger, Title, Group, NavLink, Button } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { AppShell as MantineAppShell, Burger, Title, Group, Menu, ActionIcon } from '@mantine/core';
 import { modals } from '@mantine/modals';
-import Link from 'next/link';
+import { IconPlus, IconBookmark, IconFolder, IconHome, IconFolderOpen, IconSettings } from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
 
 export default function AppShell({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [opened, { toggle }] = useDisclosure();
+  const router = useRouter();
+  
   return (
     <MantineAppShell
       header={{ height: 60 }}
-      navbar={{
-        width: 300,
-        breakpoint: 'sm',
-        collapsed: { mobile: !opened, desktop: !opened },
-      }}
       padding="md"
     >
       <MantineAppShell.Header>
         <Group h='100%' px="md" justify='space-between'>
           <Group>
-          <Burger
-            opened={opened}
-            onClick={toggle}
-            //hiddenFrom="sm"
-            //size="sm"
-          />
-          <Title order={2}>Shiori</Title>
+            <Menu>
+              <Menu.Target>
+                <Burger />
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item 
+                  leftSection={<IconHome size={16} />}
+                  onClick={() => router.push('/')}
+                >
+                  Home
+                </Menu.Item>
+                <Menu.Item 
+                  leftSection={<IconFolderOpen size={16} />}
+                  onClick={() => router.push('/collection')}
+                >
+                  Collection
+                </Menu.Item>
+                <Menu.Item 
+                  leftSection={<IconSettings size={16} />}
+                  onClick={() => router.push('/settings')}
+                >
+                  Settings
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+            <Title order={2}>Shiori</Title>
           </Group>
           <Group>
-            <Button 
-              variant="light" 
-              onClick={() => modals.openContextModal({
-                modal: 'newBookmark',
-                title: 'Create New Bookmark',
-                innerProps: {}
-              })}
-            >
-              New Bookmark
-            </Button>
-            <Button 
-              variant="light"
-              onClick={() => modals.openContextModal({
-                modal: 'newCollection',
-                title: 'Create New Collection',
-                innerProps: {}
-              })}
-            >
-              New Collection
-            </Button>
+            <Menu>
+              <Menu.Target>
+                <ActionIcon variant="light" size="lg">
+                  <IconPlus size={20} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item 
+                  leftSection={<IconBookmark size={16} />}
+                  onClick={() => modals.openContextModal({
+                    modal: 'newBookmark',
+                    title: 'Create New Bookmark',
+                    innerProps: {}
+                  })}
+                >
+                  Bookmark
+                </Menu.Item>
+                <Menu.Item 
+                  leftSection={<IconFolder size={16} />}
+                  onClick={() => modals.openContextModal({
+                    modal: 'newCollection',
+                    title: 'Create New Collection',
+                    innerProps: {}
+                  })}
+                >
+                  Collection
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
           </Group>
         </Group>
       </MantineAppShell.Header>
-
-      <MantineAppShell.Navbar p="md">
-      <NavLink component={Link} href='/' label="Home" leftSection={<span>📁</span>} />
-        <NavLink component={Link} href='/collection' label="Collection" leftSection={<span>📁</span>} />
-      </MantineAppShell.Navbar>
 
       <MantineAppShell.Main h='100dvh'>{children}</MantineAppShell.Main>
     </MantineAppShell>
