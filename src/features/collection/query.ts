@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Collection } from "@/generated/prisma";
+import { Collection } from "@/generated/prisma/browser";
 
 // Type definitions that match the backend service schema
 export interface CreateCollectionInput {

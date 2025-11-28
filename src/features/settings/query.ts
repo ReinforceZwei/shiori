@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Settings, Collection } from "@/generated/prisma";
+import type { Settings, Collection } from "@/generated/prisma/browser";
 
 // Type for settings with included relations
 export type SettingsWithRelations = Settings & {

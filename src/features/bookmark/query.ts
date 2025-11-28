@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bookmark } from "@/generated/prisma";
+import { Bookmark } from "@/generated/prisma/browser";
 import type { BookmarkMetadataResponse } from "@/app/api/bookmark/metadata/types";
 
 // Extended bookmark type with website icon data

@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Text, Group, alpha, darken } from "@mantine/core";
-import { Collection } from "@/generated/prisma";
+import { Collection } from "@/generated/prisma/browser";
 
 interface CollectionDragOverlayProps {
   collection: Collection;

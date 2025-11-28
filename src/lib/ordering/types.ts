@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@/generated/prisma';
+import type { PrismaClient } from '@/generated/prisma/client';
 
 // Matches Prisma OrderType enum
 export type OrderType = 'collection' | 'bookmark';

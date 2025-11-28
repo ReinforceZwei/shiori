@@ -23,7 +23,7 @@ import {
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { IconRefresh, IconAlertCircle } from '@tabler/icons-react';
-import type { Collection } from '@/generated/prisma';
+import type { Collection } from '@/generated/prisma/browser';
 import { useFetchBookmarkMetadataMutation } from '@/features/bookmark/query';
 import { BookmarkIcon, createIconDataUrl } from '@/app/api/bookmark/metadata/types';
 import CollectionSelect from '@/features/collection/component/CollectionSelect';

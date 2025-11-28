@@ -24,6 +24,12 @@ enum OrderType {
   bookmark
 }
 
+enum DeviceType {
+  desktop
+  mobile
+  all
+}
+
 model User {
   id            String    @id
   name          String
@@ -35,10 +41,11 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  bookmark   Bookmark[]
-  collection Collection[]
-  order      Order[]
-  settings   Settings?
+  bookmark         Bookmark[]
+  collection       Collection[]
+  order            Order[]
+  settings         Settings?
+  backgroundImages BackgroundImage[]
 
   @@unique([email])
   @@map("user")
@@ -97,6 +104,24 @@ model WebsiteIcon {
   updatedAt  DateTime @updatedAt
   bookmarkId String   @unique
   bookmark   Bookmark @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+}
+
+model BackgroundImage {
+  id              String     @id @default(uuid())
+  data            Bytes
+  mimeType        String
+  filename        String?
+  deviceType      DeviceType @default(all)
+  isActive        Boolean    @default(false)
+  displaySize     String     @default("cover")
+  displayPosition String     @default("center")
+  displayRepeat   String     @default("no-repeat")
+  displayOpacity  Float      @default(1.0)
+  displayBlur     Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Bookmark {

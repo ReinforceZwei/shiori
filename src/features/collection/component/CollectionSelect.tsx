@@ -2,7 +2,7 @@
 
 import { Select, Group, Box } from '@mantine/core';
 import { forwardRef } from 'react';
-import type { Collection } from '@/generated/prisma';
+import type { Collection } from '@/generated/prisma/browser';
 
 interface ItemProps extends Omit<React.ComponentPropsWithoutRef<'div'>, 'color'> {
   label: string;

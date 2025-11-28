@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Order } from "@/generated/prisma";
+import type { Order } from "@/generated/prisma/browser";
 
 // API fetch functions
 
