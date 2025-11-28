@@ -1,17 +1,16 @@
 "use client";
 
 import { Box, Text, SimpleGrid, ActionIcon, Group, alpha, darken, useMantineTheme } from "@mantine/core";
-import { useState } from "react";
 import { IconChevronDown, IconChevronUp, IconEdit, IconGripVertical } from "@tabler/icons-react";
 import { BookmarkLauncherItem, LauncherItemSize } from "./BookmarkLauncherItem";
 import { AddBookmarkLauncherItem } from "./AddBookmarkLauncherItem";
-import { Bookmark, Collection } from "@/generated/prisma";
 import { SortableItem } from "@/lib/dnd";
 import { type DragHandleProps } from "@/lib/dnd/components/SortableItem";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
+import { BookmarkWithIcon, CollectionWithBookmarks } from "../types";
 
 interface CollectionLauncherSectionProps {
-  collection: Collection & { bookmark: Bookmark[] };
+  collection: CollectionWithBookmarks;
   size: LauncherItemSize;
   spacing: "xl" | "md";
   cols: {
@@ -23,10 +22,12 @@ interface CollectionLauncherSectionProps {
     xl: number;
   };
   editMode: boolean;
-  onEditBookmark: (bookmark: Bookmark) => void;
-  onEditCollection: (collection: Collection) => void;
+  onEditBookmark: (bookmark: BookmarkWithIcon) => void;
+  onEditCollection: (collection: CollectionWithBookmarks) => void;
   isDropTarget?: boolean;
   dragHandleProps?: DragHandleProps;
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
 }
 
 export function CollectionLauncherSection({
@@ -39,8 +40,9 @@ export function CollectionLauncherSection({
   onEditCollection,
   isDropTarget = false,
   dragHandleProps = undefined,
+  isExpanded,
+  onToggleExpanded,
 }: CollectionLauncherSectionProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
   const theme = useMantineTheme();
   
   const backgroundColor = isDropTarget 
@@ -80,7 +82,7 @@ export function CollectionLauncherSection({
           )}
           <ActionIcon
             variant="subtle"
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={onToggleExpanded}
             size="lg"
             color={iconColor}
             style={{
@@ -132,6 +134,7 @@ export function CollectionLauncherSection({
                   id={bookmark.id}
                   title={bookmark.title}
                   url={bookmark.url}
+                  hasIcon={bookmark.websiteIcon !== null}
                   size={size}
                   editMode={editMode}
                   onEdit={() => onEditBookmark(bookmark)}

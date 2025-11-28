@@ -3,6 +3,7 @@ import { getCollectionsWithBookmarks } from "@/features/collection/service";
 import { requireUser } from "@/lib/auth";
 import { BookmarkLauncherGrid } from "./layouts/launcher/BookmarkLauncherGrid";
 import { getOrder } from "@/features/order/service";
+import { BookmarkWithIcon, CollectionWithBookmarks } from "./layouts/types";
 
 // Helper function to sort items based on order array
 function sortByOrder<T extends { id: string }>(items: T[], orderArray: string[] | null | undefined): T[] {
@@ -44,7 +45,7 @@ export default async function IndexPage() {
   });
   
   // Sort uncollected bookmarks based on order
-  const sortedUncollectedBookmarks = sortByOrder(
+  const sortedUncollectedBookmarks: BookmarkWithIcon[] = sortByOrder(
     uncollectedBookmarks, 
     uncollectedBookmarksOrder?.order as string[] | null
   );
@@ -63,7 +64,7 @@ export default async function IndexPage() {
   );
   
   // Sort bookmarks within each collection
-  const sortedCollectionsWithBookmarks = await Promise.all(
+  const sortedCollectionsWithBookmarks: CollectionWithBookmarks[] = await Promise.all(
     sortedCollections.map(async (collection) => {
       // Get order for this collection's bookmarks
       const collectionBookmarksOrder = await getOrder({

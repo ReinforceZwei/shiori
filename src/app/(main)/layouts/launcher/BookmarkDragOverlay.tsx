@@ -1,11 +1,13 @@
 "use client";
 
 import { Box, Text, Image } from "@mantine/core";
+import { IconWorld } from "@tabler/icons-react";
 import { LauncherItemSize } from "./BookmarkLauncherItem";
 
 interface BookmarkDragOverlayProps {
   id: string;
   title: string;
+  hasIcon?: boolean;
   size?: LauncherItemSize;
 }
 
@@ -30,7 +32,8 @@ const SIZE_CONFIG = {
 
 export function BookmarkDragOverlay({ 
   id, 
-  title, 
+  title,
+  hasIcon = false,
   size = "medium",
 }: BookmarkDragOverlayProps) {
   const config = SIZE_CONFIG[size];
@@ -61,13 +64,17 @@ export function BookmarkDragOverlay({
           opacity: 0.95,
         }}
       >
-        <Image
-          src={`/api/bookmark/${id}/websiteicon?fallback=true`}
-          width={config.imageSize}
-          height={config.imageSize}
-          fit="contain"
-          fallbackSrc="/assets/world-wide-web.png"
-        />
+        {!hasIcon ? (
+          <IconWorld size={size === "medium" ? 32 : 24} opacity={0.3} />
+        ) : (
+          <Image
+            src={`/api/bookmark/${id}/websiteicon?fallback=true`}
+            width={config.imageSize}
+            height={config.imageSize}
+            fit="contain"
+            fallbackSrc="/assets/world-wide-web.png"
+          />
+        )}
       </Box>
 
       {/* Title */}

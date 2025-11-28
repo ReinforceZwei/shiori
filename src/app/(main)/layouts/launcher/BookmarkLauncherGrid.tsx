@@ -11,12 +11,12 @@ import {
   useMantineTheme,
   alpha,
 } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import { BookmarkLauncherItem } from "./BookmarkLauncherItem";
 import { AddBookmarkLauncherItem } from "./AddBookmarkLauncherItem";
 import { CollectionLauncherSection } from "./CollectionLauncherSection";
 import { useState, useMemo } from "react";
 import { modals } from "@mantine/modals";
-import { Bookmark, Collection } from "@/generated/prisma";
 import {
   DndContainer,
   restrictToVertical,
@@ -36,13 +36,11 @@ import {
   saveBookmarkOrderAction,
   saveCollectionOrderAction,
 } from "@/app/actions/order";
+import { BookmarkLayoutProps, BookmarkWithIcon, CollectionWithBookmarks } from "../types";
 
 export type DensityMode = "default" | "compact";
 
-interface BookmarkLauncherGridProps {
-  uncollectedBookmarks: Bookmark[];
-  collections: (Collection & { bookmark: Bookmark[] })[];
-}
+interface BookmarkLauncherGridProps extends BookmarkLayoutProps {}
 
 const DENSITY_CONFIG = {
   default: {
@@ -66,15 +64,29 @@ export function BookmarkLauncherGrid({
   const config = DENSITY_CONFIG[density];
   const theme = useMantineTheme();
 
+  // Store expanded state for all collections in localStorage
+  const [expandedStates, setExpandedStates] = useLocalStorage<Record<string, boolean>>({
+    key: "launcher-collection-expanded-states",
+    defaultValue: {},
+  });
+
+  // Helper to toggle a specific collection's expanded state
+  const toggleCollectionExpanded = (collectionId: string) => {
+    setExpandedStates((prev) => ({
+      ...prev,
+      [collectionId]: prev[collectionId] === undefined ? false : !prev[collectionId],
+    }));
+  };
+
   const collectionMap = useMemo(
     () =>
       collectionsProps.reduce((acc, collection) => {
         acc[collection.id] = collection;
         return acc;
-      }, {} as Record<string, Collection>),
+      }, {} as Record<string, CollectionWithBookmarks>),
     [collectionsProps]
   );
-  const launcherState = useMemo<DndContainer<Bookmark>[]>(() => {
+  const launcherState = useMemo<DndContainer<BookmarkWithIcon>[]>(() => {
     return [
       {
         id: "uncollected",
@@ -95,7 +107,7 @@ export function BookmarkLauncherGrid({
     itemSourceContainerId,
     activeContainerId,
     containerIds,
-  } = useMultiContainerDnd<Bookmark>(launcherState, {
+  } = useMultiContainerDnd<BookmarkWithIcon>(launcherState, {
     onItemReorder: async (containerId, oldIndex, newIndex, items) => {
       // Item reordered within the same collection
       const collectionId = containerId === "uncollected" ? null : containerId;
@@ -155,7 +167,7 @@ export function BookmarkLauncherGrid({
     return containers.find((c) => c.id === activeId);
   }, [activeId, activeType, containers]);
 
-  const handleEditBookmark = (bookmark: Bookmark) => {
+  const handleEditBookmark = (bookmark: BookmarkWithIcon) => {
     modals.openContextModal({
       modal: "editBookmark",
       title: "Edit Bookmark",
@@ -165,7 +177,7 @@ export function BookmarkLauncherGrid({
     });
   };
 
-  const handleEditCollection = (collection: Collection) => {
+  const handleEditCollection = (collection: CollectionWithBookmarks) => {
     modals.openContextModal({
       modal: "editCollection",
       title: "Edit Collection",
@@ -286,6 +298,7 @@ export function BookmarkLauncherGrid({
                         id={bookmark.id}
                         title={bookmark.title}
                         url={bookmark.url}
+                        hasIcon={bookmark.websiteIcon !== null}
                         size={config.size}
                         editMode={editMode}
                         onEdit={() => handleEditBookmark(bookmark)}
@@ -324,6 +337,8 @@ export function BookmarkLauncherGrid({
                       itemSourceContainerId !== collection.id
                     }
                     dragHandleProps={dragHandleProps}
+                    isExpanded={expandedStates[collection.id] ?? true}
+                    onToggleExpanded={() => toggleCollectionExpanded(collection.id)}
                   />
                 )}
               </SortableItem>
@@ -339,6 +354,7 @@ export function BookmarkLauncherGrid({
           <BookmarkDragOverlay
             id={activeItem.id}
             title={activeItem.title}
+            hasIcon={activeItem.websiteIcon !== null}
             size={config.size}
           />
         ) : activeType === "container" && activeContainer ? (

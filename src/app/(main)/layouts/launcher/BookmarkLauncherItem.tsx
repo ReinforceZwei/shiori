@@ -10,6 +10,7 @@ interface BookmarkLauncherItemProps {
   id: string;
   title: string;
   url: string;
+  hasIcon?: boolean;
   size?: LauncherItemSize;
   editMode?: boolean;
   onEdit?: () => void;
@@ -37,7 +38,8 @@ const SIZE_CONFIG = {
 export function BookmarkLauncherItem({ 
   id, 
   title, 
-  url, 
+  url,
+  hasIcon = false,
   size = "medium", 
   editMode = false,
   onEdit 
@@ -88,11 +90,9 @@ export function BookmarkLauncherItem({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* TODO: Add has icon props and use this as fallback */}
-        {false && (
+        {!hasIcon ? (
           <Box
             style={{
-              position: "absolute",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -102,14 +102,15 @@ export function BookmarkLauncherItem({
           >
             <IconWorld size={size === "medium" ? 32 : 24} opacity={0.3} />
           </Box>
+        ) : (
+          <Image
+            src={`/api/bookmark/${id}/websiteicon`}
+            width={config.imageSize}
+            height={config.imageSize}
+            fit="contain"
+            fallbackSrc="/assets/world-wide-web.png"
+          />
         )}
-        <Image
-          src={`/api/bookmark/${id}/websiteicon?fallback=true`}
-          width={config.imageSize}
-          height={config.imageSize}
-          fit="contain"
-          fallbackSrc="/assets/world-wide-web.png"
-        />
         
         {/* Edit Icon Overlay */}
         {editMode && isHovered && (
