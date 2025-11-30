@@ -237,6 +237,25 @@ export async function getImageDimensions(
 }
 
 /**
+ * Converts a File to a base64 string
+ * @param file - The file to convert
+ * @returns Promise with the base64 encoded string (without the data URL prefix)
+ */
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Remove data URL prefix (e.g., "data:image/png;base64,")
+      const base64Data = result.split(',')[1];
+      resolve(base64Data);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
  * Converts an SVG string to a PNG base64 string
  * @param svgString - The SVG string to convert
  * @param width - The width of the resulting PNG

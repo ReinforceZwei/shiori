@@ -4,6 +4,8 @@ import { requireUser } from "@/lib/auth";
 import { BookmarkLauncherGrid } from "./layouts/launcher/BookmarkLauncherGrid";
 import { getOrder } from "@/features/order/service";
 import { BookmarkWithIcon, CollectionWithBookmarks } from "./layouts/types";
+import { getActiveBackgroundImagesMetadata } from "@/features/wallpaper/service";
+import { Wallpaper } from "@/component/layout/Wallpaper";
 
 // Helper function to sort items based on order array
 function sortByOrder<T extends { id: string }>(items: T[], orderArray: string[] | null | undefined): T[] {
@@ -36,6 +38,9 @@ export default async function IndexPage() {
   const user = await requireUser();
   const uncollectedBookmarks = await getBookmarksUncollected({ userId: user.id });
   const collections = await getCollectionsWithBookmarks({ userId: user.id });
+  const wallpapers = await getActiveBackgroundImagesMetadata({ userId: user.id });
+  const activeWallpaper = wallpapers && wallpapers.length > 0 ? wallpapers[0] : null;
+  const wallpaperUrl = activeWallpaper ? `/api/wallpaper/${activeWallpaper.id}` : null;
 
   // Get order for uncollected bookmarks
   const uncollectedBookmarksOrder = await getOrder({
@@ -87,9 +92,19 @@ export default async function IndexPage() {
   );
   
   return (
-    <BookmarkLauncherGrid 
-      uncollectedBookmarks={sortedUncollectedBookmarks}
-      collections={sortedCollectionsWithBookmarks}
-    />
+    <>
+      <Wallpaper
+        imageUrl={wallpaperUrl}
+        displaySize={activeWallpaper?.displaySize}
+        displayPosition={activeWallpaper?.displayPosition}
+        displayRepeat={activeWallpaper?.displayRepeat}
+        displayOpacity={activeWallpaper?.displayOpacity}
+        displayBlur={activeWallpaper?.displayBlur}
+      />
+      <BookmarkLauncherGrid 
+        uncollectedBookmarks={sortedUncollectedBookmarks}
+        collections={sortedCollectionsWithBookmarks}
+      />
+    </>
   );
 }

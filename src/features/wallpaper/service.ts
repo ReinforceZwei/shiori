@@ -3,6 +3,9 @@ import { z } from "zod";
 import { validateAndDetectImageType } from "@/lib/utils/image";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 
+// Maximum number of background images per user
+const MAX_BACKGROUND_IMAGES_PER_USER = 5;
+
 // Allowed image MIME types for wallpapers
 const ALLOWED_IMAGE_TYPES = [
   'image/jpeg',
@@ -20,6 +23,29 @@ export async function getBackgroundImages({
   deviceType?: 'desktop' | 'mobile' | 'all';
 }) {
   const backgroundImages = await prisma.backgroundImage.findMany({
+    where: {
+      userId,
+      ...(deviceType ? { deviceType } : {}),
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+  return backgroundImages;
+}
+
+// Get all background images metadata for a user (excludes binary data at DB level)
+export async function getBackgroundImagesMetadata({ 
+  userId, 
+  deviceType 
+}: { 
+  userId: string; 
+  deviceType?: 'desktop' | 'mobile' | 'all';
+}) {
+  const backgroundImages = await prisma.backgroundImage.findMany({
+    omit: {
+      data: true,
+    },
     where: {
       userId,
       ...(deviceType ? { deviceType } : {}),
@@ -66,6 +92,30 @@ export async function getActiveBackgroundImages({
   return backgroundImages;
 }
 
+// Get active background images metadata (excludes binary data at DB level)
+export async function getActiveBackgroundImagesMetadata({ 
+  userId, 
+  deviceType 
+}: { 
+  userId: string; 
+  deviceType?: 'desktop' | 'mobile' | 'all';
+}) {
+  const backgroundImages = await prisma.backgroundImage.findMany({
+    omit: {
+      data: true,
+    },
+    where: {
+      userId,
+      isActive: true,
+      ...(deviceType ? { deviceType } : {}),
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+  return backgroundImages;
+}
+
 const createBackgroundImageInputSchema = z.object({
   userId: z.string(),
   data: z.base64(), // base64 encoded string
@@ -83,6 +133,17 @@ export async function createBackgroundImage(
   data: z.infer<typeof createBackgroundImageInputSchema>
 ) {
   const validatedData = createBackgroundImageInputSchema.parse(data);
+  
+  // Check if user has reached the maximum number of background images
+  const existingCount = await prisma.backgroundImage.count({
+    where: { userId: validatedData.userId },
+  });
+  
+  if (existingCount >= MAX_BACKGROUND_IMAGES_PER_USER) {
+    throw new ValidationError(
+      `Maximum number of background images (${MAX_BACKGROUND_IMAGES_PER_USER}) reached. Please delete an existing wallpaper before uploading a new one.`
+    );
+  }
   
   // Validate image and detect actual MIME type from binary data
   const detectedMimeType = await validateAndDetectImageType(

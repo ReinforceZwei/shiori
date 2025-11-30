@@ -1,44 +1,38 @@
-"use client";
-
 import { 
   Container, 
-  Title, 
   Paper, 
   Stack, 
   Group, 
-  Button,
   Text,
   Divider,
-  ActionIcon,
-  Box
+  Box,
+  Title
 } from '@mantine/core';
-import { IconArrowLeft, IconLayout } from '@tabler/icons-react';
-import { useRouter } from 'next/navigation';
+import { IconLayout } from '@tabler/icons-react';
+import WallpaperSettings from './WallpaperSettings';
+import SettingsHeader from './SettingsHeader';
+import { getBackgroundImagesMetadata } from '@/features/wallpaper/service';
+import { requireUser } from '@/lib/auth';
 
-export default function SettingsPage() {
-  const router = useRouter();
+export default async function SettingsPage() {
+  // Fetch wallpaper metadata on the server (excludes binary data at DB level)
+  const user = await requireUser();
+  const wallpapersMetadata = await getBackgroundImagesMetadata({ userId: user.id });
 
   return (
-    <Container size="md" py="xl">
+    <Container size="lg" py="xl">
       <Stack gap="lg">
         {/* Header with back button */}
-        <Group gap="md">
-          <ActionIcon 
-            variant="subtle" 
-            size="lg"
-            onClick={() => router.push('/')}
-            aria-label="Back to home"
-          >
-            <IconArrowLeft size={20} />
-          </ActionIcon>
-          <Title order={1}>Settings</Title>
-        </Group>
+        <SettingsHeader />
 
         <Text c="dimmed" size="sm">
           Manage your preferences and configure your application settings.
         </Text>
 
         <Divider my="sm" />
+
+        {/* Wallpaper Section */}
+        <WallpaperSettings initialWallpapers={wallpapersMetadata} />
 
         {/* Layout Section */}
         <Paper 

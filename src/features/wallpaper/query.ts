@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { BackgroundImage } from "@/generated/prisma/browser";
 
+// Type for BackgroundImage without the binary data (as returned by API)
+export type BackgroundImageMetadata = Omit<BackgroundImage, 'data'>;
+
 // Type definitions that match the backend service schema
 export interface CreateBackgroundImageInput {
   data: string; // base64 encoded string
@@ -33,7 +36,7 @@ export interface SetActiveBackgroundImageInput {
 // API fetch functions
 async function getBackgroundImages(params?: {
   deviceType?: 'desktop' | 'mobile' | 'all';
-}): Promise<BackgroundImage[]> {
+}): Promise<BackgroundImageMetadata[]> {
   const searchParams = new URLSearchParams();
   if (params?.deviceType) {
     searchParams.append('deviceType', params.deviceType);
@@ -48,7 +51,7 @@ async function getBackgroundImages(params?: {
   return response.json();
 }
 
-async function getBackgroundImage(id: string): Promise<BackgroundImage> {
+async function getBackgroundImage(id: string): Promise<BackgroundImageMetadata> {
   const response = await fetch(`/api/wallpaper/${id}`);
   if (!response.ok) {
     throw new Error(`Failed to fetch background image: ${response.statusText}`);
@@ -58,7 +61,7 @@ async function getBackgroundImage(id: string): Promise<BackgroundImage> {
 
 async function getActiveBackgroundImages(params?: {
   deviceType?: 'desktop' | 'mobile' | 'all';
-}): Promise<BackgroundImage[]> {
+}): Promise<BackgroundImageMetadata[]> {
   const searchParams = new URLSearchParams({ active: 'true' });
   if (params?.deviceType) {
     searchParams.append('deviceType', params.deviceType);
@@ -72,7 +75,7 @@ async function getActiveBackgroundImages(params?: {
   return response.json();
 }
 
-async function createBackgroundImage(data: CreateBackgroundImageInput): Promise<BackgroundImage> {
+async function createBackgroundImage(data: CreateBackgroundImageInput): Promise<BackgroundImageMetadata> {
   const response = await fetch("/api/wallpaper", {
     method: "POST",
     headers: {
@@ -90,7 +93,7 @@ async function createBackgroundImage(data: CreateBackgroundImageInput): Promise<
 async function updateBackgroundImage(
   id: string, 
   data: UpdateBackgroundImageInput
-): Promise<BackgroundImage> {
+): Promise<BackgroundImageMetadata> {
   const response = await fetch("/api/wallpaper", {
     method: "PUT",
     headers: {
@@ -108,7 +111,7 @@ async function updateBackgroundImage(
 async function setActiveBackgroundImage(
   id: string,
   data: SetActiveBackgroundImageInput
-): Promise<BackgroundImage> {
+): Promise<BackgroundImageMetadata> {
   const response = await fetch(`/api/wallpaper/${id}/active`, {
     method: "PUT",
     headers: {
@@ -143,7 +146,7 @@ async function deleteBackgroundImage(id: string): Promise<{ message: string }> {
 /**
  * Hook to fetch all background images for the current user
  * 
- * @param params - Optional filter parameters
+ * @param params - Optional filter parameters and initial data
  * @returns Query result with background images
  * 
  * @example
@@ -153,14 +156,19 @@ async function deleteBackgroundImage(id: string): Promise<{ message: string }> {
  * 
  * // Get only desktop wallpapers
  * const { data: desktopImages } = useBackgroundImagesQuery({ deviceType: 'desktop' });
+ * 
+ * // With server-side initial data
+ * const { data: images } = useBackgroundImagesQuery({ initialData: serverWallpapers });
  * ```
  */
 export function useBackgroundImagesQuery(params?: {
   deviceType?: 'desktop' | 'mobile' | 'all';
+  initialData?: BackgroundImageMetadata[];
 }) {
   return useQuery({
     queryKey: ["wallpapers", params?.deviceType || "all"],
     queryFn: () => getBackgroundImages(params),
+    initialData: params?.initialData,
   });
 }
 
@@ -223,7 +231,7 @@ export function useActiveBackgroundImagesQuery(params?: {
  */
 export function useCreateBackgroundImageMutation() {
   const queryClient = useQueryClient();
-  return useMutation<BackgroundImage, Error, CreateBackgroundImageInput>({
+  return useMutation<BackgroundImageMetadata, Error, CreateBackgroundImageInput>({
     mutationFn: (data) => createBackgroundImage(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wallpapers"] });
@@ -232,7 +240,10 @@ export function useCreateBackgroundImageMutation() {
 }
 
 /**
- * Hook to update a background image
+ * Hook to update a background image with optimistic updates
+ * 
+ * This hook provides instant UI feedback by optimistically updating the cache
+ * before the server responds. If the update fails, it automatically rolls back.
  * 
  * @returns Mutation object
  * 
@@ -252,12 +263,46 @@ export function useCreateBackgroundImageMutation() {
 export function useUpdateBackgroundImageMutation() {
   const queryClient = useQueryClient();
   return useMutation<
-    BackgroundImage, 
+    BackgroundImageMetadata, 
     Error, 
-    { id: string; data: UpdateBackgroundImageInput }
+    { id: string; data: UpdateBackgroundImageInput },
+    { previousWallpapers?: BackgroundImageMetadata[] }
   >({
     mutationFn: ({ id, data }) => updateBackgroundImage(id, data),
+    onMutate: async (variables) => {
+      const queryKey = ["wallpapers", "all"];
+      
+      // Cancel any outgoing refetches to prevent race conditions
+      await queryClient.cancelQueries({ queryKey });
+      
+      // Snapshot the previous value for potential rollback
+      const previousWallpapers = queryClient.getQueryData<BackgroundImageMetadata[]>(queryKey);
+      
+      // Optimistically update the cache
+      if (previousWallpapers) {
+        queryClient.setQueryData<BackgroundImageMetadata[]>(
+          queryKey,
+          previousWallpapers.map((wallpaper) =>
+            wallpaper.id === variables.id
+              ? { ...wallpaper, ...variables.data }
+              : wallpaper
+          )
+        );
+      }
+      
+      // Return context with previous data for rollback
+      return { previousWallpapers };
+    },
+    onError: (_error, _variables, context) => {
+      const queryKey = ["wallpapers", "all"];
+      
+      // Rollback to previous state on error
+      if (context?.previousWallpapers) {
+        queryClient.setQueryData(queryKey, context.previousWallpapers);
+      }
+    },
     onSuccess: (data) => {
+      // Invalidate queries to sync with server
       queryClient.invalidateQueries({ queryKey: ["wallpapers"] });
       queryClient.invalidateQueries({ queryKey: ["wallpapers", data.id] });
     },
@@ -283,7 +328,7 @@ export function useUpdateBackgroundImageMutation() {
 export function useSetActiveBackgroundImageMutation() {
   const queryClient = useQueryClient();
   return useMutation<
-    BackgroundImage,
+    BackgroundImageMetadata,
     Error,
     { id: string; data: SetActiveBackgroundImageInput }
   >({
