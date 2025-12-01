@@ -31,7 +31,7 @@ import {
 } from "@dnd-kit/sortable";
 import { BookmarkDragOverlay } from "./BookmarkDragOverlay";
 import { CollectionDragOverlay } from "./CollectionDragOverlay";
-import { moveBookmarkAction } from "@/app/actions/bookmark";
+import { moveBookmarkAction, deleteBookmarkAction } from "@/app/actions/bookmark";
 import {
   saveBookmarkOrderAction,
   saveCollectionOrderAction,
@@ -46,12 +46,38 @@ const DENSITY_CONFIG = {
   default: {
     size: "medium" as const,
     spacing: "xl" as const,
-    cols: { base: 4, xs: 5, sm: 6, md: 7, lg: 9, xl: 11 },
+    cols: { 
+      base: 4, 
+      xs: 5, 
+      sm: 6, 
+      md: 7, 
+      lg: 9, 
+      xl: 11,
+      // Additional breakpoints for wider screens
+      xxl: 13,  // 1600px - Wide desktop
+      fhd: 15,  // 1920px - Full HD
+      qhd: 18,  // 2400px - QHD ultrawide
+      uhd: 21,  // 2880px - 4K ultrawide
+      uw: 25,   // 3440px - 21:9 ultrawide
+    },
   },
   compact: {
     size: "small" as const,
     spacing: "md" as const,
-    cols: { base: 5, xs: 6, sm: 8, md: 10, lg: 12, xl: 15 },
+    cols: { 
+      base: 5, 
+      xs: 6, 
+      sm: 8, 
+      md: 10, 
+      lg: 12, 
+      xl: 15,
+      // Additional breakpoints for wider screens
+      xxl: 18,  // 1600px - Wide desktop
+      fhd: 21,  // 1920px - Full HD
+      qhd: 25,  // 2400px - QHD ultrawide
+      uhd: 30,  // 2880px - 4K ultrawide
+      uw: 35,   // 3440px - 21:9 ultrawide
+    },
   },
 };
 
@@ -192,6 +218,25 @@ export function BookmarkLauncherGrid({
     });
   };
 
+  const handleDeleteBookmark = (bookmark: BookmarkWithIcon) => {
+    modals.openConfirmModal({
+      title: "Delete Bookmark",
+      children: (
+        <Text size="sm">
+          Are you sure you want to delete &quot;{bookmark.title}&quot;? This action cannot be undone.
+        </Text>
+      ),
+      labels: { confirm: "Delete", cancel: "Cancel" },
+      confirmProps: { color: "red" },
+      onConfirm: async () => {
+        const result = await deleteBookmarkAction(bookmark.id);
+        if (!result.success) {
+          console.error("Failed to delete bookmark:", result.error);
+        }
+      },
+    });
+  };
+
   const hasNoContent =
     uncollectedBookmarks.length === 0 && collections.length === 0;
 
@@ -252,43 +297,42 @@ export function BookmarkLauncherGrid({
           strategy={verticalListSortingStrategy}
         >
           {/* Uncollected Bookmarks Section */}
-          {uncollected?.items && uncollected.items.length > 0 && (
-            <SortableItem
-              key={"uncollected"}
-              id={"uncollected"}
-              data={{ type: "container", containerId: "uncollected" }}
-              restrictDirection="vertical"
-              disabled={activeType === "container"} // Disable sorting for uncollected
+          <SortableItem
+            key={"uncollected"}
+            id={"uncollected"}
+            data={{ type: "container", containerId: "uncollected" }}
+            restrictDirection="vertical"
+            disabled={activeType === "container"} // Disable sorting for uncollected
+          >
+            <SortableContext
+              items={uncollected?.items ? uncollected.items.map((item) => item.id) : []}
+              strategy={rectSortingStrategy}
             >
-              <SortableContext
-                items={uncollected.items.map((item) => item.id)}
-                strategy={rectSortingStrategy}
+              <SimpleGrid
+                cols={config.cols}
+                spacing={config.spacing}
+                verticalSpacing={config.spacing}
+                mb={collections.length > 0 ? "xl" : undefined}
+                py={8}
+                style={{
+                  border: `2px solid ${
+                    activeContainerId === "uncollected" &&
+                    itemSourceContainerId !== "uncollected"
+                      ? theme.colors.green[6]
+                      : "transparent"
+                  }`,
+                  borderRadius: "16px",
+                  backgroundColor:
+                    activeContainerId === "uncollected" &&
+                    itemSourceContainerId !== "uncollected"
+                      ? alpha(theme.colors.green[0], 0.5)
+                      : "transparent",
+                  transition: "all 0.2s ease",
+                }}
               >
-                <SimpleGrid
-                  cols={config.cols}
-                  spacing={config.spacing}
-                  verticalSpacing={config.spacing}
-                  mb={collections.length > 0 ? "xl" : undefined}
-                  py={8}
-                  style={{
-                    border: `2px solid ${
-                      activeContainerId === "uncollected" &&
-                      itemSourceContainerId !== "uncollected"
-                        ? theme.colors.green[6]
-                        : "transparent"
-                    }`,
-                    borderRadius: "16px",
-                    backgroundColor:
-                      activeContainerId === "uncollected" &&
-                      itemSourceContainerId !== "uncollected"
-                        ? alpha(theme.colors.green[0], 0.5)
-                        : "transparent",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  <AddBookmarkLauncherItem size={config.size} />
-
-                  {uncollected.items.map((bookmark) => (
+                <AddBookmarkLauncherItem size={config.size} />
+                {uncollected?.items && uncollected.items.length > 0 &&
+                  uncollected.items.map((bookmark) => (
                     <SortableItem
                       key={bookmark.id}
                       id={bookmark.id}
@@ -302,13 +346,13 @@ export function BookmarkLauncherGrid({
                         size={config.size}
                         editMode={editMode}
                         onEdit={() => handleEditBookmark(bookmark)}
+                        onDelete={() => handleDeleteBookmark(bookmark)}
                       />
                     </SortableItem>
                   ))}
-                </SimpleGrid>
-              </SortableContext>
-            </SortableItem>
-          )}
+              </SimpleGrid>
+            </SortableContext>
+          </SortableItem>
 
           {/* Collections Section */}
           {collections.length > 0 &&
@@ -331,6 +375,7 @@ export function BookmarkLauncherGrid({
                     cols={config.cols}
                     editMode={editMode}
                     onEditBookmark={handleEditBookmark}
+                    onDeleteBookmark={handleDeleteBookmark}
                     onEditCollection={handleEditCollection}
                     isDropTarget={
                       activeContainerId === collection.id &&

@@ -68,7 +68,7 @@ export function BookmarkDragOverlay({
           <IconWorld size={size === "medium" ? 32 : 24} opacity={0.3} />
         ) : (
           <Image
-            src={`/api/bookmark/${id}/websiteicon?fallback=true`}
+            src={`/api/bookmark/${id}/websiteicon`}
             width={config.imageSize}
             height={config.imageSize}
             fit="contain"

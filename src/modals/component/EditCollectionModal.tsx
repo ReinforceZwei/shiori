@@ -1,22 +1,39 @@
-import { Box } from '@mantine/core';
+'use client';
+import { useState } from 'react';
+import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
 import CollectionForm, { CollectionFormValues } from '../../features/collection/component/CollectionForm';
-import { useUpdateCollectionMutation, UpdateCollectionInput } from '../../features/collection/query';
+import { updateCollectionAction } from '@/app/actions/collection';
 
 const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ collectionId: string; initialValues: CollectionFormValues }>) => {
-  const { mutateAsync: updateCollection } = useUpdateCollectionMutation();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleSubmit = async (values: CollectionFormValues) => {
+    setIsUpdating(true);
     try {
-      const data: UpdateCollectionInput = {
+      const result = await updateCollectionAction(innerProps.collectionId, {
         name: values.name,
         description: values.description || undefined,
         color: values.color || undefined,
-      };
-      await updateCollection({ id: innerProps.collectionId, data });
-      context.closeModal(id);
+      });
+
+      if (result.success) {
+        context.closeModal(id);
+        notifications.show({
+          title: 'Collection updated',
+          message: 'Your collection has been updated successfully.',
+          color: 'green',
+        });
+      } else {
+        notifications.show({
+          title: 'Cannot update collection',
+          message: result.error || 'An error occurred while updating the collection. Please try again.',
+          color: 'red',
+          icon: <IconAlertSquareRounded />,
+        });
+      }
     } catch (error) {
       console.error('Error updating collection:', error);
       notifications.show({
@@ -25,15 +42,19 @@ const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ co
         color: 'red',
         icon: <IconAlertSquareRounded />,
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   return (
     <Box pos="relative">
+      <LoadingOverlay visible={isUpdating} />
       <CollectionForm
         onSubmit={handleSubmit}
         initialValues={innerProps.initialValues}
         submitLabel="Save Changes"
+        isSubmitting={isUpdating}
       />
     </Box>
   );

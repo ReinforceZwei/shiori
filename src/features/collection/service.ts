@@ -159,13 +159,49 @@ export async function deleteCollection(data: z.infer<typeof deleteCollectionInpu
     where: validatedData.userId 
       ? { id: validatedData.id, userId: validatedData.userId }
       : { id: validatedData.id },
+    include: {
+      bookmark: { select: { id: true } }, // Get bookmark IDs that will become uncollected
+    },
   });
   if (!collection) {
     throw new NotFoundError(`Collection(id: ${validatedData.id}) not found`);
   }
 
   await prisma.$transaction(async (tx) => {
-    // Remove collection from the ordering record
+    // Get the bookmark IDs that will become uncollected
+    const bookmarkIds = collection.bookmark.map(b => b.id);
+
+    // If there are bookmarks, add them to the uncollected bookmarks order
+    if (bookmarkIds.length > 0) {
+      const uncollectedOrder = await tx.order.findFirst({
+        where: {
+          userId: collection.userId,
+          type: 'bookmark',
+          collectionId: null,
+        },
+      });
+
+      if (uncollectedOrder) {
+        const currentOrder = (uncollectedOrder.order as string[]) || [];
+        // Add the newly uncollected bookmarks to the end of the uncollected order
+        await tx.order.update({
+          where: { id: uncollectedOrder.id },
+          data: { order: [...currentOrder, ...bookmarkIds] },
+        });
+      } else {
+        // Create the uncollected order record if it doesn't exist
+        await tx.order.create({
+          data: {
+            userId: collection.userId,
+            type: 'bookmark',
+            collectionId: null,
+            order: bookmarkIds,
+          },
+        });
+      }
+    }
+
+    // Remove collection from the collection ordering record
     const collectionOrder = await tx.order.findFirst({
       where: {
         userId: collection.userId,
@@ -184,7 +220,7 @@ export async function deleteCollection(data: z.infer<typeof deleteCollectionInpu
       });
     }
 
-    // Delete the collection (bookmarks will be cascade deleted or set to null based on schema)
+    // Delete the collection (bookmarks will have collectionId set to null)
     await tx.collection.delete({
       where: { id: validatedData.id },
     });

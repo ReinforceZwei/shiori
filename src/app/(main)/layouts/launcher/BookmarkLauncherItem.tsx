@@ -2,7 +2,7 @@
 
 import { Box, Text, Image, ActionIcon, Loader } from "@mantine/core";
 import { useState } from "react";
-import { IconEdit, IconWorld } from "@tabler/icons-react";
+import { IconEdit, IconWorld, IconX } from "@tabler/icons-react";
 
 export type LauncherItemSize = "medium" | "small";
 
@@ -14,6 +14,7 @@ interface BookmarkLauncherItemProps {
   size?: LauncherItemSize;
   editMode?: boolean;
   onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 const SIZE_CONFIG = {
@@ -42,7 +43,8 @@ export function BookmarkLauncherItem({
   hasIcon = false,
   size = "medium", 
   editMode = false,
-  onEdit 
+  onEdit,
+  onDelete 
 }: BookmarkLauncherItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const config = SIZE_CONFIG[size];
@@ -63,78 +65,116 @@ export function BookmarkLauncherItem({
         gap: config.gap,
       }}
     >
-      {/* Icon Container */}
-      <Box
-        component={editMode ? "div" : "a"}
-        href={editMode ? undefined : url}
-        target={editMode ? undefined : "_blank"}
-        rel={editMode ? undefined : "noopener noreferrer"}
-        onClick={handleClick}
-        style={{
-          textDecoration: "none",
-          cursor: "pointer",
-          width: `${config.iconSize}px`,
-          height: `${config.iconSize}px`,
-          borderRadius: config.borderRadius,
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "var(--mantine-color-default-hover)",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-          border: "1px solid var(--mantine-color-default-border)",
-          transition: "transform 0.2s ease",
-          transform: isHovered ? "scale(1.1)" : "scale(1)",
-          position: "relative",
-        }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {!hasIcon ? (
+      {/* Icon Container with Delete Badge */}
+      <Box style={{ position: "relative" }}>
+        <Box
+          component={editMode ? "div" : "a"}
+          href={editMode ? undefined : url}
+          target={editMode ? undefined : "_blank"}
+          rel={editMode ? undefined : "noopener noreferrer"}
+          onClick={handleClick}
+          style={{
+            textDecoration: "none",
+            cursor: "pointer",
+            width: `${config.iconSize}px`,
+            height: `${config.iconSize}px`,
+            borderRadius: config.borderRadius,
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "var(--mantine-color-default-hover)",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            border: "1px solid var(--mantine-color-default-border)",
+            transition: "transform 0.2s ease",
+            transform: isHovered ? "scale(1.1)" : "scale(1)",
+            position: "relative",
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          {!hasIcon ? (
+            <Box
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                height: "100%",
+              }}
+            >
+              <IconWorld size={size === "medium" ? 32 : 24} opacity={0.3} />
+            </Box>
+          ) : (
+            <Image
+              src={`/api/bookmark/${id}/websiteicon`}
+              width={config.imageSize}
+              height={config.imageSize}
+              fit="contain"
+              fallbackSrc="/assets/world-wide-web.png"
+            />
+          )}
+          
+          {/* Edit Icon Overlay */}
+          {editMode && isHovered && (
+            <Box
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(0, 0, 0, 0.6)",
+                borderRadius: config.borderRadius,
+              }}
+            >
+              <ActionIcon
+                variant="transparent"
+                size="lg"
+                style={{ color: "white" }}
+              >
+                <IconEdit size={size === "medium" ? 32 : 24} />
+              </ActionIcon>
+            </Box>
+          )}
+        </Box>
+
+        {/* Delete Badge (iOS-style X) */}
+        {editMode && onDelete && (
           <Box
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              height: "100%",
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete();
             }}
-          >
-            <IconWorld size={size === "medium" ? 32 : 24} opacity={0.3} />
-          </Box>
-        ) : (
-          <Image
-            src={`/api/bookmark/${id}/websiteicon`}
-            width={config.imageSize}
-            height={config.imageSize}
-            fit="contain"
-            fallbackSrc="/assets/world-wide-web.png"
-          />
-        )}
-        
-        {/* Edit Icon Overlay */}
-        {editMode && isHovered && (
-          <Box
             style={{
               position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+              top: "-6px",
+              right: "-6px",
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(255, 59, 48, 0.95)", // iOS red
+              border: "2px solid white",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: "rgba(0, 0, 0, 0.6)",
-              borderRadius: config.borderRadius,
+              cursor: "pointer",
+              zIndex: 10,
+              transition: "transform 0.2s ease",
+              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.15)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
             }}
           >
-            <ActionIcon
-              variant="transparent"
-              size="lg"
-              style={{ color: "white" }}
-            >
-              <IconEdit size={size === "medium" ? 32 : 24} />
-            </ActionIcon>
+            <IconX size={14} color="white" stroke={3} />
           </Box>
         )}
       </Box>
