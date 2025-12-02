@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/with-auth';
-import { getSettings, upsertSettings } from '@/features/settings/service';
+import { SettingsService } from '@/features/settings/service';
 
 // Get user settings
 export const GET = withAuth(async (request, { user }) => {
-  const settings = await getSettings({ userId: user.id });
+  const settingsService = new SettingsService();
+  const settings = await settingsService.get({ userId: user.id });
   return NextResponse.json(settings);
 });
 
@@ -12,8 +13,9 @@ export const GET = withAuth(async (request, { user }) => {
 export const POST = withAuth(async (request, { user }) => {
   const data = await request.json();
 
+  const settingsService = new SettingsService();
   // Service handles validation and transaction
-  const settings = await upsertSettings({
+  const settings = await settingsService.upsert({
     userId: user.id,
     ...data,
   });

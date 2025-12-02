@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/with-auth';
-import { getBackgroundImage } from '@/features/wallpaper/service';
+import { WallpaperService } from '@/features/wallpaper/service';
 import { BadRequestError, NotFoundError } from '@/lib/errors';
 
 // Get a single background image's metadata (without binary data)
@@ -11,7 +11,8 @@ export const GET = withAuth(async (request, { params, user }) => {
     throw new BadRequestError('Background image ID is required');
   }
 
-  const backgroundImage = await getBackgroundImage({ 
+  const wallpaperService = new WallpaperService();
+  const backgroundImage = await wallpaperService.get({ 
     id, 
     userId: user.id 
   });

@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { withAuth } from '@/lib/with-auth';
-import {
-  createCollection,
-  getCollections,
-  updateCollection,
-  deleteCollection,
-} from '@/features/collection/service';
+import { CollectionService } from '@/features/collection/service';
 
 // Create a new collection
 export const POST = withAuth(async (request, { user }) => {
   const data = await request.json();
-  const collection = await createCollection({
+  const collectionService = new CollectionService();
+  const collection = await collectionService.create({
     userId: user.id,
     ...data,
   });
@@ -24,14 +20,16 @@ export const POST = withAuth(async (request, { user }) => {
 
 // Get all collections
 export const GET = withAuth(async (request, { user }) => {
-  const collections = await getCollections({ userId: user.id });
+  const collectionService = new CollectionService();
+  const collections = await collectionService.getAll({ userId: user.id });
   return NextResponse.json(collections);
 });
 
 // Update a collection
 export const PUT = withAuth(async (request, { user }) => {
   const data = await request.json();
-  const collection = await updateCollection({
+  const collectionService = new CollectionService();
+  const collection = await collectionService.update({
     userId: user.id,
     ...data,
   });
@@ -45,7 +43,8 @@ export const PUT = withAuth(async (request, { user }) => {
 // Delete a collection
 export const DELETE = withAuth(async (request, { user }) => {
   const { id } = await request.json();
-  await deleteCollection({
+  const collectionService = new CollectionService();
+  await collectionService.delete({
     id,
     userId: user.id,
   });

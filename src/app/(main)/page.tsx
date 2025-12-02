@@ -1,10 +1,10 @@
-import { getBookmarksUncollected } from "@/features/bookmark/service";
-import { getCollectionsWithBookmarks } from "@/features/collection/service";
+import { BookmarkService } from "@/features/bookmark/service";
+import { CollectionService } from "@/features/collection/service";
 import { requireUser } from "@/lib/auth";
 import { BookmarkLauncherGrid } from "./layouts/launcher/BookmarkLauncherGrid";
-import { getOrder } from "@/features/order/service";
+import { OrderService } from "@/features/order/service";
 import { BookmarkWithIcon, CollectionWithBookmarks } from "./layouts/types";
-import { getActiveBackgroundImagesMetadata } from "@/features/wallpaper/service";
+import { WallpaperService } from "@/features/wallpaper/service";
 import { Wallpaper } from "@/component/layout/Wallpaper";
 
 // Helper function to sort items based on order array
@@ -36,14 +36,19 @@ function sortByOrder<T extends { id: string }>(items: T[], orderArray: string[] 
 
 export default async function IndexPage() {
   const user = await requireUser();
-  const uncollectedBookmarks = await getBookmarksUncollected({ userId: user.id });
-  const collections = await getCollectionsWithBookmarks({ userId: user.id });
-  const wallpapers = await getActiveBackgroundImagesMetadata({ userId: user.id });
+  const bookmarkService = new BookmarkService();
+  const collectionService = new CollectionService();
+  const wallpaperService = new WallpaperService();
+  const uncollectedBookmarks = await bookmarkService.getAllUncollected({ userId: user.id });
+  const collections = await collectionService.getAllWithBookmarks({ userId: user.id });
+  const wallpapers = await wallpaperService.getAllActiveMetadata({ userId: user.id });
   const activeWallpaper = wallpapers && wallpapers.length > 0 ? wallpapers[0] : null;
   const wallpaperUrl = activeWallpaper ? `/api/wallpaper/${activeWallpaper.id}` : null;
 
+  const orderService = new OrderService();
+
   // Get order for uncollected bookmarks
-  const uncollectedBookmarksOrder = await getOrder({
+  const uncollectedBookmarksOrder = await orderService.get({
     userId: user.id, 
     type: 'bookmark', 
     collectionId: null,
@@ -56,7 +61,7 @@ export default async function IndexPage() {
   );
   
   // Get order for collections
-  const collectionsOrder = await getOrder({
+  const collectionsOrder = await orderService.get({
     userId: user.id,
     type: 'collection',
     collectionId: null,
@@ -72,7 +77,7 @@ export default async function IndexPage() {
   const sortedCollectionsWithBookmarks: CollectionWithBookmarks[] = await Promise.all(
     sortedCollections.map(async (collection) => {
       // Get order for this collection's bookmarks
-      const collectionBookmarksOrder = await getOrder({
+      const collectionBookmarksOrder = await orderService.get({
         userId: user.id,
         type: 'bookmark',
         collectionId: collection.id,

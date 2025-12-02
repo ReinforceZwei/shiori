@@ -1,12 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import {
-  createBookmark as createBookmarkService,
-  updateBookmark as updateBookmarkService,
-  moveBookmark as moveBookmarkService,
-  deleteBookmark as deleteBookmarkService,
-} from '@/features/bookmark/service';
+import { BookmarkService } from '@/features/bookmark/service';
 import { requireUser } from '@/lib/auth';
 
 /**
@@ -23,7 +18,8 @@ export async function createBookmarkAction(formData: {
   try {
     const user = await requireUser();
     
-    const bookmark = await createBookmarkService({
+    const bookmarkService = new BookmarkService();
+    const bookmark = await bookmarkService.create({
       userId: user.id,
       ...formData,
     });
@@ -58,7 +54,8 @@ export async function updateBookmarkAction(
   try {
     const user = await requireUser();
     
-    const bookmark = await updateBookmarkService({
+    const bookmarkService = new BookmarkService();
+    const bookmark = await bookmarkService.update({
       id,
       userId: user.id,
       ...formData,
@@ -89,7 +86,8 @@ export async function moveBookmarkAction(
   try {
     const user = await requireUser();
     
-    const bookmark = await moveBookmarkService({
+    const bookmarkService = new BookmarkService();
+    const bookmark = await bookmarkService.move({
       id,
       userId: user.id,
       targetCollectionId,
@@ -117,7 +115,8 @@ export async function deleteBookmarkAction(id: string) {
   try {
     const user = await requireUser();
     
-    await deleteBookmarkService({
+    const bookmarkService = new BookmarkService();
+    await bookmarkService.delete({
       id,
       userId: user.id,
     });

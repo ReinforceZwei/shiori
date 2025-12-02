@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { withAuth } from '@/lib/with-auth';
-import {
-  createBackgroundImage,
-  getBackgroundImagesMetadata,
-  updateBackgroundImage,
-  deleteBackgroundImage,
-} from '@/features/wallpaper/service';
+import { WallpaperService } from '@/features/wallpaper/service';
 
 // Get all background images (metadata only, without binary data)
 export const GET = withAuth(async (request, { user }) => {
@@ -14,8 +9,9 @@ export const GET = withAuth(async (request, { user }) => {
   const deviceType = searchParams.get('deviceType') as 'desktop' | 'mobile' | 'all' | null;
   const activeOnly = searchParams.get('active') === 'true';
 
+  const wallpaperService = new WallpaperService();
   // Get background images metadata (excludes binary data at DB level)
-  const backgroundImages = await getBackgroundImagesMetadata({
+  const backgroundImages = await wallpaperService.getAllMetadata({
     userId: user.id,
     ...(deviceType ? { deviceType } : {}),
   });
@@ -31,7 +27,8 @@ export const GET = withAuth(async (request, { user }) => {
 // Create a new background image
 export const POST = withAuth(async (request, { user }) => {
   const data = await request.json();
-  const backgroundImage = await createBackgroundImage({
+  const wallpaperService = new WallpaperService();
+  const backgroundImage = await wallpaperService.create({
     userId: user.id,
     ...data,
   });
@@ -48,7 +45,8 @@ export const POST = withAuth(async (request, { user }) => {
 // Update a background image
 export const PUT = withAuth(async (request, { user }) => {
   const data = await request.json();
-  const backgroundImage = await updateBackgroundImage({
+  const wallpaperService = new WallpaperService();
+  const backgroundImage = await wallpaperService.update({
     userId: user.id,
     ...data,
   });
@@ -65,7 +63,8 @@ export const PUT = withAuth(async (request, { user }) => {
 // Delete a background image
 export const DELETE = withAuth(async (request, { user }) => {
   const { id } = await request.json();
-  await deleteBackgroundImage({
+  const wallpaperService = new WallpaperService();
+  await wallpaperService.delete({
     id,
     userId: user.id,
   });

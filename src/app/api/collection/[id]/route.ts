@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/with-auth';
-import { getCollection } from '@/features/collection/service';
+import { CollectionService } from '@/features/collection/service';
 import { BadRequestError, NotFoundError } from '@/lib/errors';
 
 // Get a single collection by ID
@@ -11,7 +11,8 @@ export const GET = withAuth(async (request, { params, user }) => {
     throw new BadRequestError('Collection ID is required');
   }
 
-  const collection = await getCollection({ id, userId: user.id });
+  const collectionService = new CollectionService();
+  const collection = await collectionService.get({ id, userId: user.id });
 
   if (!collection) {
     throw new NotFoundError(`Collection(id: ${id}) not found`);

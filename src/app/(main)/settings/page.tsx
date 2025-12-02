@@ -11,13 +11,14 @@ import {
 import { IconLayout } from '@tabler/icons-react';
 import WallpaperSettings from './WallpaperSettings';
 import SettingsHeader from './SettingsHeader';
-import { getBackgroundImagesMetadata } from '@/features/wallpaper/service';
+import { WallpaperService } from '@/features/wallpaper/service';
 import { requireUser } from '@/lib/auth';
 
 export default async function SettingsPage() {
   // Fetch wallpaper metadata on the server (excludes binary data at DB level)
   const user = await requireUser();
-  const wallpapersMetadata = await getBackgroundImagesMetadata({ userId: user.id });
+  const wallpaperService = new WallpaperService();
+  const wallpapersMetadata = await wallpaperService.getAllMetadata({ userId: user.id });
 
   return (
     <Container size="lg" py="xl">

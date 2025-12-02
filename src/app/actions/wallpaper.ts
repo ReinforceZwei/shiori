@@ -1,12 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import {
-  createBackgroundImage as createBackgroundImageService,
-  updateBackgroundImage as updateBackgroundImageService,
-  setActiveBackgroundImage as setActiveBackgroundImageService,
-  deleteBackgroundImage as deleteBackgroundImageService,
-} from '@/features/wallpaper/service';
+import { WallpaperService } from '@/features/wallpaper/service';
 import { requireUser } from '@/lib/auth';
 
 /**
@@ -27,7 +22,8 @@ export async function createBackgroundImageAction(formData: {
   try {
     const user = await requireUser();
     
-    const backgroundImage = await createBackgroundImageService({
+    const wallpaperService = new WallpaperService();
+    const backgroundImage = await wallpaperService.create({
       userId: user.id,
       data: formData.data,
       filename: formData.filename,
@@ -75,7 +71,8 @@ export async function updateBackgroundImageAction(
   try {
     const user = await requireUser();
     
-    const backgroundImage = await updateBackgroundImageService({
+    const wallpaperService = new WallpaperService();
+    const backgroundImage = await wallpaperService.update({
       id,
       userId: user.id,
       ...formData,
@@ -106,7 +103,8 @@ export async function setActiveBackgroundImageAction(
   try {
     const user = await requireUser();
     
-    const backgroundImage = await setActiveBackgroundImageService({
+    const wallpaperService = new WallpaperService();
+    const backgroundImage = await wallpaperService.setActive({
       id,
       userId: user.id,
       isActive,
@@ -134,7 +132,8 @@ export async function deleteBackgroundImageAction(id: string) {
   try {
     const user = await requireUser();
     
-    await deleteBackgroundImageService({
+    const wallpaperService = new WallpaperService();
+    await wallpaperService.delete({
       id,
       userId: user.id,
     });

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { requireUser } from '@/lib/auth';
-import { upsertOrder } from '@/features/order/service';
+import { OrderService } from '@/features/order/service';
 
 const bookmarkOrderSchema = z.object({
   collectionId: z.string().optional().nullable(),
@@ -15,7 +15,8 @@ export async function saveBookmarkOrderAction(input: z.infer<typeof bookmarkOrde
     const user = await requireUser();
     const data = bookmarkOrderSchema.parse(input);
 
-    await upsertOrder({
+    const orderService = new OrderService();
+    await orderService.upsert({
       userId: user.id,
       type: 'bookmark',
       collectionId: data.collectionId ?? null,
@@ -42,7 +43,8 @@ export async function saveCollectionOrderAction(input: z.infer<typeof collection
     const user = await requireUser();
     const data = collectionOrderSchema.parse(input);
 
-    await upsertOrder({
+    const orderService = new OrderService();
+    await orderService.upsert({
       userId: user.id,
       type: 'collection',
       collectionId: null,

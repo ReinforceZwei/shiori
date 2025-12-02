@@ -1,11 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import {
-  createCollection as createCollectionService,
-  updateCollection as updateCollectionService,
-  deleteCollection as deleteCollectionService,
-} from '@/features/collection/service';
+import { CollectionService } from '@/features/collection/service';
 import { requireUser } from '@/lib/auth';
 
 /**
@@ -20,7 +16,8 @@ export async function createCollectionAction(formData: {
   try {
     const user = await requireUser();
     
-    const collection = await createCollectionService({
+    const collectionService = new CollectionService();
+    const collection = await collectionService.create({
       userId: user.id,
       ...formData,
     });
@@ -53,7 +50,8 @@ export async function updateCollectionAction(
   try {
     const user = await requireUser();
     
-    const collection = await updateCollectionService({
+    const collectionService = new CollectionService();
+    const collection = await collectionService.update({
       id,
       userId: user.id,
       ...formData,
@@ -80,7 +78,8 @@ export async function deleteCollectionAction(id: string) {
   try {
     const user = await requireUser();
     
-    await deleteCollectionService({
+    const collectionService = new CollectionService();
+    await collectionService.delete({
       id,
       userId: user.id,
     });

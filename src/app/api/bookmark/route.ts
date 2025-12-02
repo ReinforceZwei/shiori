@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { withAuth } from '@/lib/with-auth';
-import {
-  createBookmark,
-  getBookmarks,
-  updateBookmark,
-  deleteBookmark,
-} from '@/features/bookmark/service';
+import { BookmarkService } from '@/features/bookmark/service';
 
 // Create a new bookmark
 export const POST = withAuth(async (request, { user }) => {
   const data = await request.json();
-  const bookmark = await createBookmark({
+  const bookmarkService = new BookmarkService();
+  const bookmark = await bookmarkService.create({
     userId: user.id,
     ...data,
   });
@@ -24,14 +20,16 @@ export const POST = withAuth(async (request, { user }) => {
 
 // Get all bookmarks
 export const GET = withAuth(async (request, { user }) => {
-  const bookmarks = await getBookmarks({ userId: user.id });
+  const bookmarkService = new BookmarkService();
+  const bookmarks = await bookmarkService.getAll({ userId: user.id });
   return NextResponse.json(bookmarks);
 });
 
 // Update a bookmark
 export const PUT = withAuth(async (request, { user }) => {
   const data = await request.json();
-  const bookmark = await updateBookmark({
+  const bookmarkService = new BookmarkService();
+  const bookmark = await bookmarkService.update({
     userId: user.id,
     ...data,
   });
@@ -45,7 +43,8 @@ export const PUT = withAuth(async (request, { user }) => {
 // Delete a bookmark
 export const DELETE = withAuth(async (request, { user }) => {
   const { id } = await request.json();
-  await deleteBookmark({
+  const bookmarkService = new BookmarkService();
+  await bookmarkService.delete({
     id,
     userId: user.id,
   });

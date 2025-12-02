@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/with-auth';
-import { getOrder, upsertOrder } from '@/features/order/service';
+import { OrderService } from '@/features/order/service';
 
 /**
  * Get an order record
@@ -20,7 +20,8 @@ export const GET = withAuth(async (request, { user }) => {
     );
   }
 
-  const order = await getOrder({
+  const orderService = new OrderService();
+  const order = await orderService.get({
     userId: user.id,
     type: type as 'collection' | 'bookmark',
     collectionId: collectionId === 'null' ? null : collectionId,
@@ -39,7 +40,8 @@ export const GET = withAuth(async (request, { user }) => {
 export const POST = withAuth(async (request, { user }) => {
   const data = await request.json();
 
-  const order = await upsertOrder({
+  const orderService = new OrderService();
+  const order = await orderService.upsert({
     userId: user.id,
     ...data,
   });

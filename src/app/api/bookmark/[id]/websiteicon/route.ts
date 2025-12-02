@@ -1,5 +1,5 @@
 import { withAuth } from '@/lib/with-auth';
-import { getBookmarkWithWebsiteIcon } from '@/features/bookmark/service';
+import { BookmarkService } from '@/features/bookmark/service';
 import { NotFoundError } from '@/lib/errors';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
@@ -9,7 +9,8 @@ export const GET = withAuth(async (request, { params, user }) => {
   const { searchParams } = new URL(request.url);
   const useFallback = searchParams.get('fallback') === 'true';
 
-  const bookmark = await getBookmarkWithWebsiteIcon({ 
+  const bookmarkService = new BookmarkService();
+  const bookmark = await bookmarkService.getWithIcon({ 
     id, 
     userId: user.id 
   });
