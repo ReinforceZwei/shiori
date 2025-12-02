@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { NotFoundError } from "@/lib/errors";
 import { ServiceBase } from "@/lib/service-base.class";
+import { CollectionService } from "@/features/collection/service";
 
 const upsertSettingsInputSchema = z.object({
   userId: z.string(),
@@ -38,6 +39,8 @@ export class SettingsService extends ServiceBase {
     
     // Perform validation and upsert in a transaction for consistency
     const settings = await this.withTransaction(async (tx) => {
+      const collectionService = new CollectionService(tx);
+
       // Build the data object for create/update
       const settingsData: {
         layoutMode?: typeof validatedData.layoutMode;
@@ -51,8 +54,9 @@ export class SettingsService extends ServiceBase {
       // Validate pinned collection if provided
       if (validatedData.pinnedCollectionId !== undefined) {
         if (validatedData.pinnedCollectionId !== null) {
-          const collection = await tx.collection.findUnique({
-            where: { id: validatedData.pinnedCollectionId, userId: validatedData.userId },
+          const collection = await collectionService.get({
+            id: validatedData.pinnedCollectionId,
+            userId: validatedData.userId,
           });
           if (!collection) {
             throw new NotFoundError(`Collection(id: ${validatedData.pinnedCollectionId}) not found`);

@@ -2,6 +2,7 @@ import { Prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { NotFoundError } from "@/lib/errors";
 import { ServiceBase } from "@/lib/service-base.class";
+import { OrderService } from "@/features/order/service";
 
 const createCollectionInputSchema = z.object({
   userId: z.string(),
@@ -73,16 +74,9 @@ export class CollectionService extends ServiceBase {
     
     // Create collection with its associated order record in a transaction
     const collection = await this.withTransaction(async (tx) => {
-      // 1. Create the order record first (for bookmarks within this collection)
-      const order = await tx.order.create({
-        data: {
-          userId: validatedData.userId,
-          type: 'bookmark',
-          order: [], // Empty initially
-        },
-      });
+      const orderService = new OrderService(tx);
 
-      // 2. Create collection linked to order
+      // Create collection with nested order creation in a single operation
       const newCollection = await tx.collection.create({
         data: {
           name: validatedData.name,
@@ -92,42 +86,30 @@ export class CollectionService extends ServiceBase {
             connect: { id: validatedData.userId },
           },
           order: {
-            connect: { id: order.id },
+            create: {
+              userId: validatedData.userId,
+              type: 'bookmark',
+              order: [], // Empty initially
+            },
           },
         },
-      });
-
-      // 3. Update order with collectionId
-      await tx.order.update({
-        where: { id: order.id },
-        data: { collectionId: newCollection.id },
       });
 
       // 4. Ensure the collection appears in the user's collection order
-      const collectionOrder = await tx.order.findFirst({
-        where: {
-          userId: validatedData.userId,
-          type: 'collection',
-          collectionId: null,
-        },
+      const currentOrderRecord = await orderService.get({
+        userId: validatedData.userId,
+        type: 'collection',
+        collectionId: null,
       });
+      const currentOrder = currentOrderRecord ? (currentOrderRecord.order as string[]) : [];
+      const updatedOrder = [...currentOrder, newCollection.id];
 
-      if (collectionOrder) {
-        const currentOrder = (collectionOrder.order as string[]) || [];
-        await tx.order.update({
-          where: { id: collectionOrder.id },
-          data: { order: [...currentOrder, newCollection.id] },
-        });
-      } else {
-        await tx.order.create({
-          data: {
-            userId: validatedData.userId,
-            type: 'collection',
-            collectionId: null,
-            order: [newCollection.id],
-          },
-        });
-      }
+      await orderService.upsert({
+        userId: validatedData.userId,
+        type: 'collection',
+        collectionId: null,
+        order: updatedOrder,
+      });
 
       return newCollection;
     });
@@ -198,55 +180,45 @@ export class CollectionService extends ServiceBase {
     }
 
     await this.withTransaction(async (tx) => {
+      const orderService = new OrderService(tx);
+
       // Get the bookmark IDs that will become uncollected
       const bookmarkIds = collection.bookmark.map(b => b.id);
 
       // If there are bookmarks, add them to the uncollected bookmarks order
       if (bookmarkIds.length > 0) {
-        const uncollectedOrder = await tx.order.findFirst({
-          where: {
-            userId: collection.userId,
-            type: 'bookmark',
-            collectionId: null,
-          },
+        const currentUncollectedOrderRecord = await orderService.get({
+          userId: collection.userId,
+          type: 'bookmark',
+          collectionId: null,
         });
+        const currentUncollectedOrder = currentUncollectedOrderRecord ? (currentUncollectedOrderRecord.order as string[]) : [];
+        const updatedUncollectedOrder = [...currentUncollectedOrder, ...bookmarkIds];
 
-        if (uncollectedOrder) {
-          const currentOrder = (uncollectedOrder.order as string[]) || [];
-          // Add the newly uncollected bookmarks to the end of the uncollected order
-          await tx.order.update({
-            where: { id: uncollectedOrder.id },
-            data: { order: [...currentOrder, ...bookmarkIds] },
-          });
-        } else {
-          // Create the uncollected order record if it doesn't exist
-          await tx.order.create({
-            data: {
-              userId: collection.userId,
-              type: 'bookmark',
-              collectionId: null,
-              order: bookmarkIds,
-            },
-          });
-        }
+        await orderService.upsert({
+          userId: collection.userId,
+          type: 'bookmark',
+          collectionId: null,
+          order: updatedUncollectedOrder,
+        });
       }
 
       // Remove collection from the collection ordering record
-      const collectionOrder = await tx.order.findFirst({
-        where: {
+      const currentCollectionOrderRecord = await orderService.get({
+        userId: collection.userId,
+        type: 'collection',
+        collectionId: null,
+      });
+
+      if (currentCollectionOrderRecord) {
+        const currentOrder = (currentCollectionOrderRecord.order as string[]) || [];
+        const updatedOrder = currentOrder.filter(id => id !== collection.id);
+
+        await orderService.upsert({
           userId: collection.userId,
           type: 'collection',
           collectionId: null,
-        },
-      });
-
-      if (collectionOrder) {
-        const currentOrder = (collectionOrder.order as string[]) || [];
-        const updatedOrder = currentOrder.filter(id => id !== collection.id);
-
-        await tx.order.update({
-          where: { id: collectionOrder.id },
-          data: { order: updatedOrder },
+          order: updatedOrder,
         });
       }
 
