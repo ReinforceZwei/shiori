@@ -32,6 +32,7 @@ import { PrismaClient } from "@/generated/prisma/client";
  */
 export class ServiceBase {
   private readonly _tx?: TransactionClient;
+  private _myOwnTx?: TransactionClient;
   private readonly _prisma: PrismaClient;
 
   /**
@@ -40,13 +41,14 @@ export class ServiceBase {
   constructor(tx?: TransactionClient) {
     this._tx = tx;
     this._prisma = prisma;
+    this._myOwnTx = undefined;
   }
 
   /**
    * Returns either the transaction client (if this service is within a $transaction), or the global Prisma client.
    */
   protected get prisma(): TransactionClient {
-    return this._tx ?? this._prisma;
+    return this._myOwnTx ?? this._tx ?? this._prisma;
   }
 
   /**
@@ -58,6 +60,17 @@ export class ServiceBase {
    * @returns Promise<T> Result of the callback
    */
   protected withTransaction<T>(callback: (tx: TransactionClient) => Promise<T>): Promise<T> {
-    return this._tx ? callback(this._tx) : this._prisma.$transaction(callback);
+    if (this._myOwnTx || this._tx) {
+      return callback(this._myOwnTx ?? this._tx!);
+    } else {
+      return this._prisma.$transaction(async (tx) => {
+        this._myOwnTx = tx;
+        try {
+          return callback(tx);
+        } finally {
+          this._myOwnTx = undefined;
+        }
+      });
+    }
   }
 }

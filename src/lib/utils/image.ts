@@ -237,6 +237,25 @@ export async function getImageDimensions(
 }
 
 /**
+ * Extracts base64 string from either a data URI or plain base64 string
+ * @param data - Either a data URI (e.g., "data:image/png;base64,iVBORw0KG...") or plain base64 string
+ * @returns The base64 string without the data URI prefix
+ */
+export function extractBase64(data: string): string {
+  // Check if it's a data URI (starts with "data:")
+  if (data.startsWith('data:')) {
+    // Extract the base64 part after the comma
+    const commaIndex = data.indexOf(',');
+    if (commaIndex === -1) {
+      throw new Error('Invalid data URI format: missing comma');
+    }
+    return data.substring(commaIndex + 1);
+  }
+  // Already a plain base64 string
+  return data;
+}
+
+/**
  * Converts a File to a base64 string
  * @param file - The file to convert
  * @returns Promise with the base64 encoded string (without the data URL prefix)
