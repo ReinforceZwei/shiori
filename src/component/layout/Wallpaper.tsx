@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 
-interface WallpaperProps {
+export interface WallpaperProps {
   imageUrl: string | null;
   displaySize?: string;
   displayPosition?: string;
