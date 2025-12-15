@@ -8,6 +8,7 @@ import { authClient } from '@/lib/auth-client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 // Zod schema for sign-in form validation
 const signinFormSchema = z.object({
@@ -20,6 +21,7 @@ type SigninFormValues = z.infer<typeof signinFormSchema>;
 
 export default function SigninPage() {
   const router = useRouter();
+  const t = useTranslations('Signin');
   const form = useForm<SigninFormValues>({
     initialValues: {
       email: '',
@@ -41,10 +43,6 @@ export default function SigninPage() {
       }
 
       console.log('Sign-in successful:', response);
-      notifications.show({
-        title: 'Sign-in successful',
-        message: 'You have successfully signed in.',
-      });
       // Redirect to home
       router.push('/');
     } catch (error) {
@@ -59,47 +57,47 @@ export default function SigninPage() {
         Shiori
       </Title>
       <Text ta="center" size="sm" c="dimmed" mb="xl">
-        Sign in to your account
+        {t('subtitle')}
       </Text>
 
       {errorMessage && (
-        <Alert title="Sign-in failed" color="red" mb="md">
+        <Alert title={t('sign_in_failed')} color="red" mb="md">
           {errorMessage}
         </Alert>
       )}
 
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <TextInput
-          label="Email"
-          placeholder="Enter your email"
+          label={t('email')}
+          placeholder={t('email_input_placeholder')}
           {...form.getInputProps('email')}
           required
           mt="md"
         />
 
         <PasswordInput
-          label="Password"
-          placeholder="Enter your password"
+          label={t('password')}
+          placeholder={t('password_input_placeholder')}
           {...form.getInputProps('password')}
           required
           mt="md"
         />
 
         <Checkbox
-          label="Remember me"
+          label={t('remember_me')}
           mt="md"
           {...form.getInputProps('rememberMe', { type: 'checkbox' })}
         />
 
         <Button type="submit" fullWidth mt="xl" loading={form.submitting}>
-          Sign In
+          {t('sign_in')}
         </Button>
       </form>
 
       <Text ta="center" mt="lg" size="sm">
-        Don't have an account?{' '}
+        {t('dont_have_an_account')}{' '}
         <Text component={Link} href="/signup" c="blue" style={{ textDecoration: 'none', fontWeight: 500 }}>
-          Sign up
+          {t('sign_up')}
         </Text>
       </Text>
     </Box>

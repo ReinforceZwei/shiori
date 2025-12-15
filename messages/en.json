@@ -1,0 +1,15 @@
+{
+  "Signin": {
+    "subtitle": "Sign in to your account",
+    "sign_in_failed": "Sign-in failed",
+    "email": "Email",
+    "email_input_placeholder": "Enter your email",
+    "password_input_placeholder": "Enter your password",
+    "remember_me": "Remember me",
+    "sign_in": "Sign In",
+    "dont_have_an_account": "Don't have an account?",
+    "sign_up": "Sign up",
+    "password": "Password"
+  },
+  "password": "Password"
+}

@@ -2,24 +2,15 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 
 import type { Metadata } from "next";
-import { Noto_Sans_Mono, Noto_Sans_TC } from "next/font/google";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
+import { NextIntlClientProvider } from 'next-intl';
 import ShioriModalProvider from '@/modals/modal.provider'
 import QueryProvider from '@/component/provider/QueryProvider';
 import theme from '@/lib/theme';
+import { notoSansMono, notoSansTC } from '@/lib/font';
 import "./globals.css";
-
-
-const notoSansMono = Noto_Sans_Mono({
-  variable: "--font-noto-sans-mono",
-  subsets: ["latin"],
-});
-
-const notoSansTC = Noto_Sans_TC({
-  variable: "--font-noto-sans-tc",
-  preload: false,
-});
+import { IntlClientProvider } from '@/i18n/provider';
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -37,14 +28,18 @@ export default function RootLayout({
         <ColorSchemeScript />
       </head>
       <body className={`${notoSansMono.variable} ${notoSansTC.variable}`}>
-        <MantineProvider theme={theme}>
-          <QueryProvider>
-            <ShioriModalProvider>
-              <Notifications position='top-right' />
-              {children}
-            </ShioriModalProvider>
-          </QueryProvider>
-        </MantineProvider>
+        <NextIntlClientProvider>
+          <IntlClientProvider>
+            <MantineProvider theme={theme}>
+              <QueryProvider>
+                <ShioriModalProvider>
+                  <Notifications position='top-right' />
+                  {children}
+                </ShioriModalProvider>
+              </QueryProvider>
+            </MantineProvider>
+          </IntlClientProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
