@@ -3,6 +3,8 @@ import { createTheme } from "@mantine/core";
 
 const theme: MantineThemeOverride = createTheme({
   primaryColor: 'pink',
+  fontFamily: 'var(--font-noto-sans-tc), sans-serif',
+  fontFamilyMonospace: 'var(--font-noto-sans-mono), monospace',
   breakpoints: {
     xs: '36em',    // 576px
     sm: '48em',    // 768px
