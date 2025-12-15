@@ -15,8 +15,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  APP_IMAGE_NAME: ${{ github.repository }}
-  MIGRATE_IMAGE_NAME: ${{ github.repository }}-migrate
 
 jobs:
   build-and-push:
@@ -27,6 +25,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch all history for git diff and tag comparison
+      
+      # Convert repository name to lowercase (Docker registry requirement)
+      - name: Set image names
+        id: image_names
+        run: |
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "app_image=${{ env.REGISTRY }}/${REPO_LOWER}" >> $GITHUB_OUTPUT
+          echo "migrate_image=${{ env.REGISTRY }}/${REPO_LOWER}-migrate" >> $GITHUB_OUTPUT
+          echo "App image: ${{ env.REGISTRY }}/${REPO_LOWER}"
+          echo "Migrate image: ${{ env.REGISTRY }}/${REPO_LOWER}-migrate"
       
       # =============================================================================
       # STEP 1: Determine Version/Tag
@@ -120,7 +128,7 @@ jobs:
         id: meta_migrate
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}
+          images: ${{ steps.image_names.outputs.migrate_image }}
           tags: |
             type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=latest,enable=${{ steps.version.outputs.push_latest }}
@@ -134,8 +142,8 @@ jobs:
           push: true
           tags: ${{ steps.meta_migrate.outputs.tags }}
           labels: ${{ steps.meta_migrate.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ steps.image_names.outputs.migrate_image }}:buildcache
+          cache-to: type=registry,ref=${{ steps.image_names.outputs.migrate_image }}:buildcache,mode=max
       
       - name: Reuse existing migrate image
         if: steps.db_changes.outputs.db_changed == 'false'
@@ -149,27 +157,27 @@ jobs:
           echo "New migrate tag: $NEW_VERSION"
           
           # Try to create a new tag pointing to the existing image
-          if docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${PREVIOUS_VERSION} > /dev/null 2>&1; then
+          if docker buildx imagetools inspect ${{ steps.image_names.outputs.migrate_image }}:${PREVIOUS_VERSION} > /dev/null 2>&1; then
             echo "Found existing migrate image, creating new tag..."
             docker buildx imagetools create \
-              ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${PREVIOUS_VERSION} \
-              --tag ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${NEW_VERSION}
+              ${{ steps.image_names.outputs.migrate_image }}:${PREVIOUS_VERSION} \
+              --tag ${{ steps.image_names.outputs.migrate_image }}:${NEW_VERSION}
             
             # Also update latest tag if this is a version release
             if [[ "$PUSH_LATEST" == "true" ]]; then
               echo "Updating latest tag for migrate image..."
               docker buildx imagetools create \
-                ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${PREVIOUS_VERSION} \
-                --tag ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:latest
+                ${{ steps.image_names.outputs.migrate_image }}:${PREVIOUS_VERSION} \
+                --tag ${{ steps.image_names.outputs.migrate_image }}:latest
             fi
             
             echo "Successfully reused migrate image with new tag: $NEW_VERSION"
           else
             echo "::warning::Previous migrate image not found, will build new one"
             # Build new migrate image as fallback
-            TAG_ARGS="--tag ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${NEW_VERSION}"
+            TAG_ARGS="--tag ${{ steps.image_names.outputs.migrate_image }}:${NEW_VERSION}"
             if [[ "$PUSH_LATEST" == "true" ]]; then
-              TAG_ARGS="$TAG_ARGS --tag ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:latest"
+              TAG_ARGS="$TAG_ARGS --tag ${{ steps.image_names.outputs.migrate_image }}:latest"
             fi
             
             docker buildx build \
@@ -188,7 +196,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}
+          images: ${{ steps.image_names.outputs.app_image }}
           tags: |
             type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=latest,enable=${{ steps.version.outputs.push_latest }}
@@ -201,8 +209,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ steps.image_names.outputs.app_image }}:buildcache
+          cache-to: type=registry,ref=${{ steps.image_names.outputs.app_image }}:buildcache,mode=max
       
       # =============================================================================
       # STEP 6: Summary
@@ -224,18 +232,18 @@ jobs:
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Published Images" >> $GITHUB_STEP_SUMMARY
-          echo "- **App Image:** \`${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Image:** \`${{ steps.image_names.outputs.app_image }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ steps.version.outputs.push_latest }}" == "true" ]]; then
-            echo "- **App Image (latest):** \`${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **App Image (latest):** \`${{ steps.image_names.outputs.app_image }}:latest\`" >> $GITHUB_STEP_SUMMARY
           fi
-          echo "- **Migrate Image:** \`${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Migrate Image:** \`${{ steps.image_names.outputs.migrate_image }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ steps.version.outputs.push_latest }}" == "true" ]]; then
-            echo "- **Migrate Image (latest):** \`${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Migrate Image (latest):** \`${{ steps.image_names.outputs.migrate_image }}:latest\`" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Commands" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ steps.image_names.outputs.app_image }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ steps.image_names.outputs.migrate_image }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
