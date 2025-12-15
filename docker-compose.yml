@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: shiori
+      POSTGRES_PASSWORD: shiori_password
+      POSTGRES_DB: shiori
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shiori"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    environment:
+      DATABASE_URL: postgresql://shiori:shiori_password@db:5432/shiori
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"  # Run once and exit
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Database connection
+      DATABASE_URL: postgresql://shiori:shiori_password@db:5432/shiori
+      
+      # Better Auth configuration (generate your own secret!)
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-secret-key-change-this-in-production}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      
+      # Node environment
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      # Optional: mount for development
+      # - .:/app
+      # - /app/node_modules
+      # - /app/.next
+      - app_data:/app/data
+
+volumes:
+  postgres_data:
+  app_data:
+

@@ -1,0 +1,241 @@
+name: Build and Push Docker Images
+
+on:
+  # Trigger on version tags (e.g., v1.0.0, v2.1.3)
+  push:
+    tags:
+      - 'v*'
+  
+  # Manual trigger for testing
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  APP_IMAGE_NAME: ${{ github.repository }}
+  MIGRATE_IMAGE_NAME: ${{ github.repository }}-migrate
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for git diff and tag comparison
+      
+      # =============================================================================
+      # STEP 1: Determine Version/Tag
+      # =============================================================================
+      
+      - name: Determine version tag
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/v* ]]; then
+            # Version tag push (e.g., v1.2.3)
+            VERSION=${GITHUB_REF#refs/tags/v}
+            TAG_PREFIX=""
+            PUSH_LATEST="true"
+            echo "Version tag detected: $VERSION"
+          else
+            # Manual dispatch - use branch-sha format
+            BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed 's/[^a-zA-Z0-9._-]/-/g')
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            VERSION="${BRANCH_NAME}-${SHORT_SHA}"
+            TAG_PREFIX=""
+            PUSH_LATEST="false"
+            echo "Manual dispatch detected: $VERSION"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "push_latest=$PUSH_LATEST" >> $GITHUB_OUTPUT
+          echo "Final version tag: $VERSION"
+          echo "Push latest: $PUSH_LATEST"
+      
+      # =============================================================================
+      # STEP 2: Setup Docker
+      # =============================================================================
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      # =============================================================================
+      # STEP 3: Detect Database Changes
+      # =============================================================================
+      
+      - name: Detect database changes
+        id: db_changes
+        run: |
+          # Fetch all tags
+          git fetch --tags
+          
+          # Find the previous version tag
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/v* ]]; then
+            CURRENT_TAG=${GITHUB_REF#refs/tags/}
+            PREVIOUS_TAG=$(git tag -l 'v*' --sort=-version:refname | grep -v "^${CURRENT_TAG}$" | head -n1)
+          else
+            # For manual dispatch, compare against the latest version tag
+            PREVIOUS_TAG=$(git tag -l 'v*' --sort=-version:refname | head -n1)
+          fi
+          
+          echo "Current ref: ${GITHUB_REF}"
+          echo "Previous tag: ${PREVIOUS_TAG:-none}"
+          
+          # Check if database files have changed
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found, will build new migrate image"
+            DB_CHANGED="true"
+          else
+            # Check for changes in Prisma schema and migrations
+            if git diff --quiet $PREVIOUS_TAG HEAD -- prisma/schema.prisma prisma/migrations/; then
+              echo "No database changes detected"
+              DB_CHANGED="false"
+              PREVIOUS_VERSION=${PREVIOUS_TAG#v}
+              echo "previous_version=$PREVIOUS_VERSION" >> $GITHUB_OUTPUT
+            else
+              echo "Database changes detected"
+              DB_CHANGED="true"
+            fi
+          fi
+          
+          echo "db_changed=$DB_CHANGED" >> $GITHUB_OUTPUT
+          echo "Database changed: $DB_CHANGED"
+      
+      # =============================================================================
+      # STEP 4: Handle Migrate Image (Build or Reuse)
+      # =============================================================================
+      
+      - name: Extract metadata for migrate image
+        id: meta_migrate
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=latest,enable=${{ steps.version.outputs.push_latest }}
+      
+      - name: Build and push migrate image
+        if: steps.db_changes.outputs.db_changed == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.migrate
+          push: true
+          tags: ${{ steps.meta_migrate.outputs.tags }}
+          labels: ${{ steps.meta_migrate.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:buildcache,mode=max
+      
+      - name: Reuse existing migrate image
+        if: steps.db_changes.outputs.db_changed == 'false'
+        run: |
+          PREVIOUS_VERSION="${{ steps.db_changes.outputs.previous_version }}"
+          NEW_VERSION="${{ steps.version.outputs.version }}"
+          PUSH_LATEST="${{ steps.version.outputs.push_latest }}"
+          
+          echo "Attempting to reuse migrate image from version: $PREVIOUS_VERSION"
+          echo "Previous migrate tag: $PREVIOUS_VERSION"
+          echo "New migrate tag: $NEW_VERSION"
+          
+          # Try to create a new tag pointing to the existing image
+          if docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${PREVIOUS_VERSION} > /dev/null 2>&1; then
+            echo "Found existing migrate image, creating new tag..."
+            docker buildx imagetools create \
+              ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${PREVIOUS_VERSION} \
+              --tag ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${NEW_VERSION}
+            
+            # Also update latest tag if this is a version release
+            if [[ "$PUSH_LATEST" == "true" ]]; then
+              echo "Updating latest tag for migrate image..."
+              docker buildx imagetools create \
+                ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${PREVIOUS_VERSION} \
+                --tag ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:latest
+            fi
+            
+            echo "Successfully reused migrate image with new tag: $NEW_VERSION"
+          else
+            echo "::warning::Previous migrate image not found, will build new one"
+            # Build new migrate image as fallback
+            TAG_ARGS="--tag ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${NEW_VERSION}"
+            if [[ "$PUSH_LATEST" == "true" ]]; then
+              TAG_ARGS="$TAG_ARGS --tag ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:latest"
+            fi
+            
+            docker buildx build \
+              --file ./Dockerfile.migrate \
+              --push \
+              $TAG_ARGS \
+              .
+            echo "Built new migrate image: $NEW_VERSION"
+          fi
+      
+      # =============================================================================
+      # STEP 5: Build and Push App Image
+      # =============================================================================
+      
+      - name: Extract metadata for app image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=latest,enable=${{ steps.version.outputs.push_latest }}
+      
+      - name: Build and push app image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:buildcache,mode=max
+      
+      # =============================================================================
+      # STEP 6: Summary
+      # =============================================================================
+      
+      - name: Output summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Version Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Push Latest:** \`${{ steps.version.outputs.push_latest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Database Changes" >> $GITHUB_STEP_SUMMARY
+          echo "- **DB Changed:** \`${{ steps.db_changes.outputs.db_changed }}\`" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.db_changes.outputs.db_changed }}" == "false" ]]; then
+            echo "- **Reused from:** \`${{ steps.db_changes.outputs.previous_version }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Published Images" >> $GITHUB_STEP_SUMMARY
+          echo "- **App Image:** \`${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.version.outputs.push_latest }}" == "true" ]]; then
+            echo "- **App Image (latest):** \`${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Migrate Image:** \`${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.version.outputs.push_latest }}" == "true" ]]; then
+            echo "- **Migrate Image (latest):** \`${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull Commands" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.APP_IMAGE_NAME }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.REGISTRY }}/${{ env.MIGRATE_IMAGE_NAME }}:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+

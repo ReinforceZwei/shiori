@@ -119,31 +119,39 @@ function selectBestDescription(descriptions: FetchResult['descriptions']): strin
 /**
  * Process items with concurrency control to avoid overwhelming the server
  * Similar to p-limit pattern
+ * Handles errors gracefully to ensure all results are populated
  */
 async function processConcurrently<T, R>(
   items: T[],
   concurrency: number,
   processor: (item: T) => Promise<R>
 ): Promise<R[]> {
-  const results: R[] = [];
-  const executing: Promise<void>[] = [];
+  const results: R[] = new Array(items.length);
+  const executing: Set<Promise<void>> = new Set();
   
   for (const [index, item] of items.entries()) {
-    const promise = processor(item).then(result => {
-      results[index] = result;
-    });
+    // Wrap processor in error handling to ensure result is always set
+    const promise = (async () => {
+      try {
+        results[index] = await processor(item);
+      } catch (error) {
+        console.error(`Error processing item at index ${index}:`, error);
+        // Set a null/undefined result on error - this will be handled downstream
+        results[index] = undefined as any;
+      }
+    })();
     
-    executing.push(promise);
+    executing.add(promise);
+    promise.finally(() => executing.delete(promise));
     
-    if (executing.length >= concurrency) {
+    // Wait for at least one promise to complete when we hit concurrency limit
+    if (executing.size >= concurrency) {
       await Promise.race(executing);
-      // Remove completed promises
-      executing.splice(0, executing.findIndex(p => p === promise) + 1);
     }
   }
   
-  // Wait for remaining promises
-  await Promise.all(executing);
+  // Wait for all remaining promises
+  await Promise.all(Array.from(executing));
   return results;
 }
 
@@ -185,6 +193,12 @@ async function fetchBookmarkMetadata(url: string): Promise<{
   description?: string;
 } | null> {
   try {
+    // Validate URL before fetching
+    if (!url || typeof url !== 'string') {
+      console.warn(`Invalid URL provided: ${url}`);
+      return null;
+    }
+
     // Retry up to 2 times with exponential backoff
     const result: FetchResult = await retryWithBackoff(
       () => fetchFavicon(url, {
@@ -195,26 +209,37 @@ async function fetchBookmarkMetadata(url: string): Promise<{
       1000 // Start with 1s delay
     );
     
+    // Defensive check: ensure result has expected structure
+    if (!result || !result.icons) {
+      console.warn(`Invalid result structure for ${url}`);
+      return null;
+    }
+    
     // Select best icon
     const bestIcon = selectBestIcon(result.icons);
     let websiteIcon: { data: string; mimeType: string } | undefined;
     
     if (bestIcon?.metadata?.buffer) {
-      const buffer = bestIcon.metadata.buffer;
-      
-      // Detect MIME type from buffer
-      const fileType = await fileTypeFromBuffer(buffer);
-      let mimeType = fileType?.mime || `image/${bestIcon.metadata.format}`;
-      
-      // Special handling for SVG
-      if (mimeType === 'application/xml' && bestIcon.metadata.format.toLowerCase() === 'svg') {
-        mimeType = 'image/svg+xml';
+      try {
+        const buffer = bestIcon.metadata.buffer;
+        
+        // Detect MIME type from buffer
+        const fileType = await fileTypeFromBuffer(buffer);
+        let mimeType = fileType?.mime || `image/${bestIcon.metadata.format}`;
+        
+        // Special handling for SVG
+        if (mimeType === 'application/xml' && bestIcon.metadata.format.toLowerCase() === 'svg') {
+          mimeType = 'image/svg+xml';
+        }
+        
+        websiteIcon = {
+          data: buffer.toString('base64'),
+          mimeType,
+        };
+      } catch (iconError) {
+        console.warn(`Failed to process icon for ${url}:`, iconError);
+        // Continue without icon rather than failing completely
       }
-      
-      websiteIcon = {
-        data: buffer.toString('base64'),
-        mimeType,
-      };
     }
     
     // Select best description
@@ -281,24 +306,34 @@ export async function bulkImportBookmarksAction(data: {
       allBookmarks,
       8, // Concurrency limit
       async (item) => {
-        const metadata = await fetchBookmarkMetadata(item.bookmark.url);
-        return {
-          ...item,
-          metadata,
-        };
+        try {
+          const metadata = await fetchBookmarkMetadata(item.bookmark.url);
+          return {
+            ...item,
+            metadata,
+          };
+        } catch (error) {
+          console.error(`Failed to process metadata for bookmark at collection ${item.collectionIndex}, bookmark ${item.bookmarkIndex}:`, error);
+          // Return item with null metadata instead of throwing
+          return {
+            ...item,
+            metadata: null,
+          };
+        }
       }
     );
     
     const fetchDuration = ((Date.now() - startTime) / 1000).toFixed(2);
-    const successCount = metadataResults.filter(r => r.metadata !== null).length;
+    const successCount = metadataResults.filter(r => r && r.metadata !== null).length;
     console.log(`Metadata fetch completed in ${fetchDuration}s. Success: ${successCount}/${allBookmarks.length}`);
     
     // Reconstruct collections with enriched metadata
     const collectionsWithMetadata = data.collections.map((collection, collectionIndex) => {
       const bookmarksWithMetadata = collection.bookmarks.map((bookmark, bookmarkIndex) => {
         // Find the metadata result for this bookmark
+        // Use defensive check to handle undefined results from failed fetches
         const result = metadataResults.find(
-          r => r.collectionIndex === collectionIndex && r.bookmarkIndex === bookmarkIndex
+          r => r && r.collectionIndex === collectionIndex && r.bookmarkIndex === bookmarkIndex
         );
         const metadata = result?.metadata;
         

@@ -1,0 +1,25 @@
+# syntax=docker.io/docker/dockerfile:1
+
+# Minimal Alpine-based image for Prisma migrations only
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy Prisma schema, migrations, and CLI config (required for Prisma 7)
+COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
+
+# Create a minimal package.json
+RUN echo '{"name":"prisma-migrate","version":"1.0.0","private":true}' > package.json
+
+# Install Prisma CLI and dotenv (required by prisma.config.ts)
+RUN npm install --production --no-package-lock \
+    prisma@7.1.0 \
+    dotenv@17.2.3 \
+    && npm cache clean --force
+
+# Run migrations when container starts
+# Requires DATABASE_URL environment variable
+# Prisma 7 uses prisma.config.ts to locate schema and migrations
+CMD ["node_modules/.bin/prisma", "migrate", "deploy"]
+
