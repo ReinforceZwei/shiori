@@ -1,10 +1,11 @@
 import type { MantineThemeOverride } from "@mantine/core"
-import { createTheme } from "@mantine/core";
+import { createTheme, DEFAULT_THEME } from "@mantine/core";
+import { notoSansMono, notoSansTC } from "./font";
 
 const theme: MantineThemeOverride = createTheme({
   primaryColor: 'pink',
-  fontFamily: 'var(--font-noto-sans-tc), sans-serif',
-  fontFamilyMonospace: 'var(--font-noto-sans-mono), monospace',
+  fontFamily: `${notoSansTC.style.fontFamily}, ${DEFAULT_THEME.fontFamily}`,
+  fontFamilyMonospace: `${notoSansMono.style.fontFamily}, ${DEFAULT_THEME.fontFamilyMonospace}`,
   breakpoints: {
     xs: '36em',    // 576px
     sm: '48em',    // 768px
