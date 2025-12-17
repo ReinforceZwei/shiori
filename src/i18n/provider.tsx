@@ -1,5 +1,5 @@
 "use client";
-import { NextIntlClientProvider } from "next-intl";
+import { NextIntlClientProvider, useLocale } from "next-intl";
 import { getMessageFallback, onError } from "./fallback";
 
 export const IntlClientProvider = ({
@@ -7,7 +7,7 @@ export const IntlClientProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const locale = "zh-tw";
+  const locale = useLocale();
   return (
     <NextIntlClientProvider
       locale={locale}

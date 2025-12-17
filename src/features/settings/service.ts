@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { locales } from "@/i18n/locale";
 import { NotFoundError } from "@/lib/errors";
 import { ServiceBase } from "@/lib/service-base.class";
 import { CollectionService } from "@/features/collection/service";
 
 const upsertSettingsInputSchema = z.object({
   userId: z.string(),
+  locale: z.enum(locales).optional(),
   layoutMode: z.enum(["launcher", "grid", "list"]).optional(),
   pinnedCollectionId: z.string().nullable().optional(),
 });
@@ -29,6 +31,18 @@ export class SettingsService extends ServiceBase {
   }
 
   /**
+   * Get only the user's locale setting
+   * @param params - userId
+   */
+  async getLocale({ userId }: { userId: string }) {
+    const settings = await this.prisma.settings.findUnique({
+      where: { userId },
+      select: { locale: true },
+    });
+    return settings?.locale || null;
+  }
+
+  /**
    * Upsert settings - creates if not exists, updates if exists
    * This is the recommended way to interact with settings
    * Note: Ordering is now managed through the Order table, not Settings
@@ -45,6 +59,7 @@ export class SettingsService extends ServiceBase {
       const settingsData: {
         layoutMode?: typeof validatedData.layoutMode;
         pinnedCollectionId?: string | null;
+        locale?: (typeof locales)[number];
       } = {};
 
       if (validatedData.layoutMode !== undefined) {
@@ -63,6 +78,10 @@ export class SettingsService extends ServiceBase {
           }
         }
         settingsData.pinnedCollectionId = validatedData.pinnedCollectionId;
+      }
+
+      if (validatedData.locale !== undefined) {
+        settingsData.locale = validatedData.locale;
       }
 
       // Upsert settings

@@ -10,15 +10,25 @@ import {
 } from '@mantine/core';
 import { IconLayout } from '@tabler/icons-react';
 import WallpaperSettings from './WallpaperSettings';
+import GeneralSettings from './GeneralSettings';
 import SettingsHeader from './SettingsHeader';
 import { WallpaperService } from '@/features/wallpaper/service';
+import { SettingsService } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
 
 export default async function SettingsPage() {
-  // Fetch wallpaper metadata on the server (excludes binary data at DB level)
+  // Fetch user settings and wallpaper metadata on the server
   const user = await requireUser();
+  const settingsService = new SettingsService();
   const wallpaperService = new WallpaperService();
-  const wallpapersMetadata = await wallpaperService.getAllMetadata({ userId: user.id });
+  
+  const [settings, wallpapersMetadata] = await Promise.all([
+    settingsService.get({ userId: user.id }),
+    wallpaperService.getAllMetadata({ userId: user.id }),
+  ]);
+
+  // Default to 'en-US' if no settings exist
+  const currentLocale = (settings?.locale || 'en-US') as 'en-US' | 'zh-Hant';
 
   return (
     <Container size="lg" py="xl">
@@ -31,6 +41,9 @@ export default async function SettingsPage() {
         </Text>
 
         <Divider my="sm" />
+
+        {/* General Section */}
+        <GeneralSettings locale={currentLocale} />
 
         {/* Wallpaper Section */}
         <WallpaperSettings initialWallpapers={wallpapersMetadata} />

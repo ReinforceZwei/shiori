@@ -1,6 +1,6 @@
 import { IntlErrorCode } from "next-intl";
 import type { RequestConfig } from "next-intl/server"
-import enMessages from '../../messages/en.json';
+import enMessages from '../../messages/en-US.json';
 
 export const getMessageFallback: NonNullable<RequestConfig['getMessageFallback']> = ({ namespace, key, error }) => {
   const messages = enMessages;

@@ -9,12 +9,16 @@ import { authClient } from '@/lib/auth-client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { LocaleSwitcher } from '@/component/LocaleSwitcher';
+import { locales } from '@/i18n/locale';
+import { initSettingsAction } from '@/app/actions/settings';
 
 // Zod schema for sign-up form validation
 const signupFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.email('Invalid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  locale: z.enum(locales),
 });
 
 type SignupFormValues = z.infer<typeof signupFormSchema>;
@@ -26,6 +30,7 @@ export default function SignupPage() {
       name: '',
       email: '',
       password: '',
+      locale: 'en-US' as const,
     },
     validate: zodResolver(signupFormSchema),
   });
@@ -40,7 +45,13 @@ export default function SignupPage() {
         setErrorMessage(response.error?.message || 'An error occurred during sign-up.');
         return;
       }
-      
+      try {
+        await initSettingsAction({
+          locale: values.locale,
+        });
+      } catch (error) {
+        console.error('Failed to initialize settings:', error);
+      }
       console.log('Sign-up successful:', response);
       notifications.show({
         title: 'Sign-up successful',
@@ -105,6 +116,18 @@ export default function SignupPage() {
           required
           mt="md"
         />
+
+        <Box mt="md">
+          <Text size="sm" fw={500} mb={4}>
+            Language
+          </Text>
+          <LocaleSwitcher
+            value={form.values.locale}
+            onChange={(locale) => form.setFieldValue('locale', locale)}
+            size="sm"
+            width="100%"
+          />
+        </Box>
 
         <Button type="submit" fullWidth mt="xl" loading={form.submitting}>
           Sign Up

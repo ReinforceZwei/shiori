@@ -172,6 +172,7 @@ model Settings {
   id                 String      @id @default(uuid())
   userId             String      @unique
   user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locale             String      @default("en-US")
   layoutMode         LayoutMode  @default(launcher)
   pinnedCollectionId String?     @unique
   pinnedCollection   Collection? @relation(fields: [pinnedCollectionId], references: [id], onDelete: SetNull)
