@@ -4,10 +4,12 @@ import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import CollectionForm, { CollectionFormValues } from '../../features/collection/component/CollectionForm';
 import { updateCollectionAction } from '@/app/actions/collection';
 
 const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ collectionId: string; initialValues: CollectionFormValues }>) => {
+  const t = useTranslations('EditCollectionModal');
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleSubmit = async (values: CollectionFormValues) => {
@@ -22,14 +24,14 @@ const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ co
       if (result.success) {
         context.closeModal(id);
         notifications.show({
-          title: 'Collection updated',
-          message: 'Your collection has been updated successfully.',
+          title: t('success_title'),
+          message: t('success_message'),
           color: 'green',
         });
       } else {
         notifications.show({
-          title: 'Cannot update collection',
-          message: result.error || 'An error occurred while updating the collection. Please try again.',
+          title: t('error_title'),
+          message: result.error || t('error_message'),
           color: 'red',
           icon: <IconAlertSquareRounded />,
         });
@@ -37,8 +39,8 @@ const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ co
     } catch (error) {
       console.error('Error updating collection:', error);
       notifications.show({
-        title: 'Cannot update collection',
-        message: 'An error occurred while updating the collection. Please try again.',
+        title: t('error_title'),
+        message: t('error_message'),
         color: 'red',
         icon: <IconAlertSquareRounded />,
       });
@@ -53,7 +55,7 @@ const EditCollectionModal = ({ context, id, innerProps }: ContextModalProps<{ co
       <CollectionForm
         onSubmit={handleSubmit}
         initialValues={innerProps.initialValues}
-        submitLabel="Save Changes"
+        submitLabel={t('submit_label')}
         isSubmitting={isUpdating}
       />
     </Box>

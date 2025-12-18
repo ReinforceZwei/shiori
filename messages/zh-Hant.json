@@ -3,7 +3,99 @@
     "subtitle": "登入您的帳戶",
     "sign_in_failed": "登入失敗",
     "email": "電子郵件",
-    "email_input_placeholder": "輸入您的電子郵件"
+    "email_input_placeholder": "輸入您的電子郵件",
+    "password_input_placeholder": "輸入您的密碼",
+    "remember_me": "記住我",
+    "sign_in": "登入",
+    "dont_have_an_account": "還沒有帳戶？",
+    "sign_up": "註冊",
+    "password": "密碼",
+    "sign_in_error_message": "登入時發生錯誤。",
+    "sign_in_failed_message": "登入失敗。請再試一次。"
+  },
+  "Signup": {
+    "subtitle": "建立您的帳戶",
+    "sign_up_failed": "註冊失敗",
+    "name": "名稱",
+    "name_input_placeholder": "輸入您的名稱",
+    "email": "電子郵件",
+    "email_input_placeholder": "輸入您的電子郵件",
+    "email_info_popover": "在此輸入任何電子郵件。我們不會寄任何東西給您。歡迎使用假信箱（別忘記它就好，天才）。",
+    "password": "密碼",
+    "password_input_placeholder": "輸入您的密碼",
+    "language": "語言",
+    "sign_up": "註冊",
+    "already_have_an_account": "已經有帳戶了嗎？",
+    "sign_in": "登入",
+    "sign_up_successful": "註冊成功",
+    "sign_up_success_message": "您已成功註冊。",
+    "sign_up_failed_message": "註冊失敗。請再試一次。",
+    "sign_up_error_message": "註冊時發生錯誤。"
+  },
+  "AppShell": {
+    "home": "首頁",
+    "collection": "收藏集",
+    "import_bookmarks": "匯入書籤",
+    "settings": "設定",
+    "sign_out": "登出",
+    "bookmark": "書籤",
+    "create_new_bookmark": "新增書籤",
+    "create_new_collection": "新增收藏集"
+  },
+  "BookmarkForm": {
+    "url_label": "網址",
+    "url_placeholder": "https://example.com",
+    "metadata_fetch_failed": "擷取詮釋資料失敗",
+    "metadata_fetch_failed_message": "無法從網址擷取詮釋資料。您仍可手動輸入詳細資訊。",
+    "title_label": "標題",
+    "title_placeholder": "選擇或輸入書籤標題",
+    "title_source": "來源：{source} ({property})",
+    "icon_label": "圖示",
+    "icon_alt": "網站圖示",
+    "icon_current": "目前",
+    "icon_size": "{width}×{height}",
+    "description_label": "描述（選填）",
+    "description_suggestions_label": "建議（點擊使用）：",
+    "description_placeholder": "輸入描述",
+    "description_placeholder_with_suggestions": "輸入描述或從上方建議中選擇",
+    "collection_label": "收藏集",
+    "collection_placeholder": "選擇收藏集（選填）",
+    "submit_default": "建立書籤"
+  },
+  "CollectionForm": {
+    "name_label": "名稱",
+    "name_placeholder": "輸入收藏集名稱",
+    "description_label": "描述",
+    "description_placeholder": "輸入收藏集描述（選填）",
+    "color_label": "顏色",
+    "color_placeholder": "選擇顏色（選填）",
+    "submit_default": "建立收藏集"
+  },
+  "EditBookmarkModal": {
+    "success_title": "書籤已更新",
+    "success_message": "您的書籤已成功更新。",
+    "error_title": "無法更新書籤",
+    "error_message": "更新書籤時發生錯誤。請再試一次。",
+    "submit_label": "儲存變更"
+  },
+  "NewBookmarkModal": {
+    "success_title": "書籤已建立",
+    "success_message": "您的書籤已成功建立。",
+    "error_title": "無法建立書籤",
+    "error_message": "建立書籤時發生錯誤。請再試一次。"
+  },
+  "EditCollectionModal": {
+    "success_title": "收藏集已更新",
+    "success_message": "您的收藏集已成功更新。",
+    "error_title": "無法更新收藏集",
+    "error_message": "更新收藏集時發生錯誤。請再試一次。",
+    "submit_label": "儲存變更"
+  },
+  "NewCollectionModal": {
+    "success_title": "收藏集已建立",
+    "success_message": "您的收藏集已成功建立。",
+    "error_title": "無法建立收藏集",
+    "error_message": "建立收藏集時發生錯誤。請再試一次。",
+    "submit_label": "建立收藏集"
   }
 }
-

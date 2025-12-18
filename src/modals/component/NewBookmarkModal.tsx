@@ -1,13 +1,17 @@
+'use client';
+
 import { useState } from 'react';
 import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import BookmarkForm, { BookmarkFormValues } from '../../features/bookmark/component/BookmarkForm';
 import { useAllCollectionsQuery } from '@/features/collection/query';
 import { createBookmarkAction } from '@/app/actions/bookmark';
 
 const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initialValues?: { collectionId?: string }}>) => {
+  const t = useTranslations('NewBookmarkModal');
   const { data: collections, isPending } = useAllCollectionsQuery();
   const [isCreating, setIsCreating] = useState(false);
 
@@ -25,14 +29,14 @@ const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initi
       if (result.success) {
         context.closeModal(id);
         notifications.show({
-          title: 'Bookmark created',
-          message: 'Your bookmark has been created successfully.',
+          title: t('success_title'),
+          message: t('success_message'),
           color: 'green',
         });
       } else {
         notifications.show({
-          title: 'Cannot create bookmark',
-          message: result.error || 'An error occurred while creating the bookmark. Please try again.',
+          title: t('error_title'),
+          message: result.error || t('error_message'),
           color: 'red',
           icon: <IconAlertSquareRounded />,
         });
@@ -40,8 +44,8 @@ const NewBookmarkModal = ({ context, id, innerProps }: ContextModalProps<{ initi
     } catch (error) {
       console.error('Error creating bookmark:', error);
       notifications.show({
-        title: 'Cannot create bookmark',
-        message: 'An error occurred while creating the bookmark. Please try again.',
+        title: t('error_title'),
+        message: t('error_message'),
         color: 'red',
         icon: <IconAlertSquareRounded />,
       });

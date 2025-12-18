@@ -15,7 +15,7 @@ export const getMessageFallback: NonNullable<RequestConfig['getMessageFallback']
   
   // Fallback to top-level key if namespace lookup failed or no namespace provided
   if (key && key in messages) {
-    return messages[key as keyof typeof messages] as string;
+    return messages[key as keyof typeof messages] as unknown as string;
   }
   
   // Return raw key if message not found

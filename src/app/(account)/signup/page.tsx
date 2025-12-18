@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { LocaleSwitcher } from '@/component/LocaleSwitcher';
 import { locales } from '@/i18n/locale';
 import { initSettingsAction } from '@/app/actions/settings';
+import { useTranslations } from 'next-intl';
 
 // Zod schema for sign-up form validation
 const signupFormSchema = z.object({
@@ -25,6 +26,7 @@ type SignupFormValues = z.infer<typeof signupFormSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
+  const t = useTranslations('Signup');
   const form = useForm<SignupFormValues>({
     initialValues: {
       name: '',
@@ -42,7 +44,7 @@ export default function SignupPage() {
     try {
       const response = await authClient.signUp.email(values);
       if (response.error) {
-        setErrorMessage(response.error?.message || 'An error occurred during sign-up.');
+        setErrorMessage(response.error?.message || t('sign_up_error_message'));
         return;
       }
       try {
@@ -54,14 +56,14 @@ export default function SignupPage() {
       }
       console.log('Sign-up successful:', response);
       notifications.show({
-        title: 'Sign-up successful',
-        message: 'You have successfully signed up.',
+        title: t('sign_up_successful'),
+        message: t('sign_up_success_message'),
       });
       // Redirect to home
       router.push('/');
     } catch (error) {
       console.error('Sign-up failed:', error);
-      setErrorMessage('Sign-up failed. Please try again.');
+      setErrorMessage(t('sign_up_failed_message'));
     }
   };
 
@@ -71,27 +73,27 @@ export default function SignupPage() {
         Shiori
       </Title>
       <Text ta="center" size="sm" c="dimmed" mb="xl">
-        Create your account
+        {t('subtitle')}
       </Text>
 
       {errorMessage && (
-        <Alert title="Sign-up failed" color="red" mb="md" icon={<IconInfoCircle />}>
+        <Alert title={t('sign_up_failed')} color="red" mb="md" icon={<IconInfoCircle />}>
           {errorMessage}
         </Alert>
       )}
 
       <form onSubmit={form.onSubmit(handleSubmit)}>
         <TextInput
-          label="Name"
-          placeholder="Enter your name"
+          label={t('name')}
+          placeholder={t('name_input_placeholder')}
           {...form.getInputProps('name')}
           required
           mt="md"
         />
 
         <TextInput
-          label="Email"
-          placeholder="Enter your email"
+          label={t('email')}
+          placeholder={t('email_input_placeholder')}
           {...form.getInputProps('email')}
           required
           mt="md"
@@ -102,7 +104,7 @@ export default function SignupPage() {
               </Popover.Target>
               <Popover.Dropdown>
                 <Text size="sm">
-                Drop any email here. We won’t send you jack. Fake emails welcome (just don’t forget it, genius).
+                  {t('email_info_popover')}
                 </Text>
               </Popover.Dropdown>
             </Popover>
@@ -110,8 +112,8 @@ export default function SignupPage() {
         />
 
         <PasswordInput
-          label="Password"
-          placeholder="Enter your password"
+          label={t('password')}
+          placeholder={t('password_input_placeholder')}
           {...form.getInputProps('password')}
           required
           mt="md"
@@ -119,7 +121,7 @@ export default function SignupPage() {
 
         <Box mt="md">
           <Text size="sm" fw={500} mb={4}>
-            Language
+            {t('language')}
           </Text>
           <LocaleSwitcher
             value={form.values.locale}
@@ -130,14 +132,14 @@ export default function SignupPage() {
         </Box>
 
         <Button type="submit" fullWidth mt="xl" loading={form.submitting}>
-          Sign Up
+          {t('sign_up')}
         </Button>
       </form>
 
       <Text ta="center" mt="lg" size="sm">
-        Already have an account?{' '}
+        {t('already_have_an_account')}{' '}
         <Text component={Link} href="/signin" c="blue" style={{ textDecoration: 'none', fontWeight: 500 }}>
-          Sign in
+          {t('sign_in')}
         </Text>
       </Text>
     </Box>

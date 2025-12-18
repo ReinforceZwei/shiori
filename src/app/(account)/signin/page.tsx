@@ -38,7 +38,7 @@ export default function SigninPage() {
     try {
       const response = await authClient.signIn.email(values);
       if (response.error) {
-        setErrorMessage(response.error?.message || 'An error occurred during sign-in.');
+        setErrorMessage(response.error?.message || t('sign_in_error_message'));
         return;
       }
 
@@ -47,7 +47,7 @@ export default function SigninPage() {
       router.push('/');
     } catch (error) {
       console.error('Sign-in failed:', error);
-      setErrorMessage('Sign-in failed. Please try again.');
+      setErrorMessage(t('sign_in_failed_message'));
     }
   };
 

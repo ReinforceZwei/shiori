@@ -10,8 +10,10 @@ import {
   Stack,
   useMantineTheme,
   alpha,
+  Anchor,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
+import Link from "next/link";
 import { BookmarkLauncherItem } from "./BookmarkLauncherItem";
 import { AddBookmarkLauncherItem } from "./AddBookmarkLauncherItem";
 import { CollectionLauncherSection } from "./CollectionLauncherSection";
@@ -269,6 +271,13 @@ export function BookmarkLauncherGrid({
             </Text>
           </Box>
           <AddBookmarkLauncherItem size={config.size} />
+          <Text size="sm" c="dimmed" ta="center">
+            Or{" "}
+            <Anchor component={Link} href="/import" c="blue">
+              import your bookmarks
+            </Anchor>{" "}
+            from a file
+          </Text>
         </Box>
       </Container>
     );

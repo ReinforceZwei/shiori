@@ -1,8 +1,11 @@
+'use client';
+
 import { useState } from 'react';
 import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import BookmarkForm, { BookmarkFormValues } from '@/features/bookmark/component/BookmarkForm';
 import { useAllCollectionsQuery } from '@/features/collection/query';
 import { useBookmarkQuery } from '@/features/bookmark/query';
@@ -13,6 +16,7 @@ interface EditBookmarkModalProps extends ContextModalProps<{
 }> {}
 
 const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) => {
+  const t = useTranslations('EditBookmarkModal');
   const { bookmarkId } = innerProps;
   const { data: collections, isPending: isLoadingCollections } = useAllCollectionsQuery();
   const { data: bookmark, isPending: isLoadingBookmark } = useBookmarkQuery({ id: bookmarkId });
@@ -58,14 +62,14 @@ const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) 
       if (result.success) {
         context.closeModal(id);
         notifications.show({
-          title: 'Bookmark updated',
-          message: 'Your bookmark has been updated successfully.',
+          title: t('success_title'),
+          message: t('success_message'),
           color: 'green',
         });
       } else {
         notifications.show({
-          title: 'Cannot update bookmark',
-          message: result.error || 'An error occurred while updating the bookmark. Please try again.',
+          title: t('error_title'),
+          message: result.error || t('error_message'),
           color: 'red',
           icon: <IconAlertSquareRounded />,
         });
@@ -73,8 +77,8 @@ const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) 
     } catch (error) {
       console.error('Error updating bookmark:', error);
       notifications.show({
-        title: 'Cannot update bookmark',
-        message: 'An error occurred while updating the bookmark. Please try again.',
+        title: t('error_title'),
+        message: t('error_message'),
         color: 'red',
         icon: <IconAlertSquareRounded />,
       });
@@ -98,7 +102,7 @@ const EditBookmarkModal = ({ context, id, innerProps }: EditBookmarkModalProps) 
               websiteIconMimeType: bookmark.websiteIconMimeType || '',
               collectionId: bookmark.collectionId || '',
             }}
-            submitLabel="Save Changes"
+            submitLabel={t('submit_label')}
             isSubmitting={isUpdating}
           />
         )}

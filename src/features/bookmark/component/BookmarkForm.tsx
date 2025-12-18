@@ -23,6 +23,7 @@ import {
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import { IconRefresh, IconAlertCircle } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import type { Collection } from '@/generated/prisma/browser';
 import { useFetchBookmarkMetadataMutation } from '@/features/bookmark/query';
 import { BookmarkIcon, createIconDataUrl } from '@/app/api/bookmark/metadata/types';
@@ -85,9 +86,10 @@ export default function BookmarkForm({
   collections,
   initialValues,
   onSubmit,
-  submitLabel = 'Create Bookmark',
+  submitLabel,
   isSubmitting = false,
 }: BookmarkFormProps) {
+  const t = useTranslations('BookmarkForm');
   const form = useForm<BookmarkFormValues>({
     initialValues: {
       url: '',
@@ -230,8 +232,8 @@ export default function BookmarkForm({
         <Stack gap="md">
           {/* URL Input */}
           <TextInput
-            label="URL"
-            placeholder="https://example.com"
+            label={t('url_label')}
+            placeholder={t('url_placeholder')}
             required
             {...form.getInputProps('url')}
             rightSection={
@@ -251,15 +253,15 @@ export default function BookmarkForm({
 
           {/* Metadata Error */}
           {metadataError && (
-            <Alert icon={<IconAlertCircle size={16} />} color="yellow" title="Metadata fetch failed">
-              Could not fetch metadata from URL. You can still enter details manually.
+            <Alert icon={<IconAlertCircle size={16} />} color="yellow" title={t('metadata_fetch_failed')}>
+              {t('metadata_fetch_failed_message')}
             </Alert>
           )}
 
           {/* Title Autocomplete */}
           <Autocomplete
-            label="Title"
-            placeholder="Select or enter bookmark title"
+            label={t('title_label')}
+            placeholder={t('title_placeholder')}
             required
             data={titleAutocompleteData}
             filter={optionsFilter}
@@ -275,7 +277,7 @@ export default function BookmarkForm({
                   <Text size="sm">{label}</Text>
                   {customOption.source && customOption.property && (
                     <Text size="xs" c="dimmed">
-                      Source: {customOption.source} ({customOption.property})
+                      {t('title_source', { source: customOption.source, property: customOption.property })}
                     </Text>
                   )}
                 </Box>
@@ -287,7 +289,7 @@ export default function BookmarkForm({
           {uniqueIcons.length > 0 && (
             <Box>
               <Text size="sm" fw={500} mb="xs">
-                Icon
+                {t('icon_label')}
               </Text>
               <Group gap="xs">
                 {uniqueIcons.map((icon, index) => (
@@ -308,14 +310,14 @@ export default function BookmarkForm({
           {/* Description with Suggestions */}
           <Box>
             <Text size="sm" fw={500} mb="xs">
-              Description (optional)
+              {t('description_label')}
             </Text>
 
             {/* Suggestion chips - only show if we have fetched descriptions */}
             {uniqueDescriptions.length > 0 && (
               <Box mb="xs">
                 <Text size="xs" c="dimmed" mb={4}>
-                  Suggestions (click to use):
+                  {t('description_suggestions_label')}
                 </Text>
                 <Group gap="xs">
                   {uniqueDescriptions.map((desc, index) => (
@@ -352,8 +354,8 @@ export default function BookmarkForm({
             <Textarea
               placeholder={
                 uniqueDescriptions.length > 0
-                  ? 'Enter description or select from suggestions above'
-                  : 'Enter description'
+                  ? t('description_placeholder_with_suggestions')
+                  : t('description_placeholder')
               }
               minRows={3}
               autosize
@@ -363,15 +365,15 @@ export default function BookmarkForm({
 
           {/* Collection Selection */}
           <CollectionSelect
-            label="Collection"
-            placeholder="Select a collection (optional)"
+            label={t('collection_label')}
+            placeholder={t('collection_placeholder')}
             data={collections}
             {...form.getInputProps('collectionId')}
           />
 
           {/* Submit Button */}
           <Button type="submit" fullWidth loading={isSubmitting} mt="md">
-            {submitLabel}
+            {submitLabel || t('submit_default')}
           </Button>
         </Stack>
       </form>
@@ -387,6 +389,7 @@ interface IconOptionProps {
 }
 
 function IconOption({ icon, selected, onClick }: IconOptionProps) {
+  const t = useTranslations('BookmarkForm');
   const hasMetadata = icon.metadata && icon.metadata.width > 0 && icon.metadata.height > 0;
   
   return (
@@ -403,13 +406,13 @@ function IconOption({ icon, selected, onClick }: IconOptionProps) {
     >
       <Image
         src={createIconDataUrl(icon)}
-        alt="Website icon"
+        alt={t('icon_alt')}
         w={48}
         h={48}
         fit="contain"
       />
       <Text size="xs" c="dimmed" ta="center" mt={4}>
-        {hasMetadata ? `${icon.metadata.width}×${icon.metadata.height}` : 'Current'}
+        {hasMetadata ? t('icon_size', { width: icon.metadata.width, height: icon.metadata.height }) : t('icon_current')}
       </Text>
     </Paper>
   );

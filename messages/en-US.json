@@ -9,7 +9,93 @@
     "sign_in": "Sign In",
     "dont_have_an_account": "Don't have an account?",
     "sign_up": "Sign up",
-    "password": "Password"
+    "password": "Password",
+    "sign_in_error_message": "An error occurred during sign-in.",
+    "sign_in_failed_message": "Sign-in failed. Please try again."
   },
-  "password": "Password"
+  "Signup": {
+    "subtitle": "Create your account",
+    "sign_up_failed": "Sign-up failed",
+    "name": "Name",
+    "name_input_placeholder": "Enter your name",
+    "email": "Email",
+    "email_input_placeholder": "Enter your email",
+    "email_info_popover": "Drop any email here. We won't send you jack. Fake emails welcome (just don't forget it, genius).",
+    "password": "Password",
+    "password_input_placeholder": "Enter your password",
+    "language": "Language",
+    "sign_up": "Sign Up",
+    "already_have_an_account": "Already have an account?",
+    "sign_in": "Sign in",
+    "sign_up_successful": "Sign-up successful",
+    "sign_up_success_message": "You have successfully signed up.",
+    "sign_up_failed_message": "Sign-up failed. Please try again.",
+    "sign_up_error_message": "An error occurred during sign-up."
+  },
+  "AppShell": {
+    "home": "Home",
+    "collection": "Collection",
+    "import_bookmarks": "Import Bookmarks",
+    "settings": "Settings",
+    "sign_out": "Sign Out",
+    "bookmark": "Bookmark",
+    "create_new_bookmark": "Create New Bookmark",
+    "create_new_collection": "Create New Collection"
+  },
+  "BookmarkForm": {
+    "url_label": "URL",
+    "url_placeholder": "https://example.com",
+    "metadata_fetch_failed": "Metadata fetch failed",
+    "metadata_fetch_failed_message": "Could not fetch metadata from URL. You can still enter details manually.",
+    "title_label": "Title",
+    "title_placeholder": "Select or enter bookmark title",
+    "title_source": "Source: {source} ({property})",
+    "icon_label": "Icon",
+    "icon_alt": "Website icon",
+    "icon_current": "Current",
+    "icon_size": "{width}×{height}",
+    "description_label": "Description (optional)",
+    "description_suggestions_label": "Suggestions (click to use):",
+    "description_placeholder": "Enter description",
+    "description_placeholder_with_suggestions": "Enter description or select from suggestions above",
+    "collection_label": "Collection",
+    "collection_placeholder": "Select a collection (optional)",
+    "submit_default": "Create Bookmark"
+  },
+  "CollectionForm": {
+    "name_label": "Name",
+    "name_placeholder": "Enter collection name",
+    "description_label": "Description",
+    "description_placeholder": "Enter collection description (optional)",
+    "color_label": "Color",
+    "color_placeholder": "Pick a color (optional)",
+    "submit_default": "Create Collection"
+  },
+  "EditBookmarkModal": {
+    "success_title": "Bookmark updated",
+    "success_message": "Your bookmark has been updated successfully.",
+    "error_title": "Cannot update bookmark",
+    "error_message": "An error occurred while updating the bookmark. Please try again.",
+    "submit_label": "Save Changes"
+  },
+  "NewBookmarkModal": {
+    "success_title": "Bookmark created",
+    "success_message": "Your bookmark has been created successfully.",
+    "error_title": "Cannot create bookmark",
+    "error_message": "An error occurred while creating the bookmark. Please try again."
+  },
+  "EditCollectionModal": {
+    "success_title": "Collection updated",
+    "success_message": "Your collection has been updated successfully.",
+    "error_title": "Cannot update collection",
+    "error_message": "An error occurred while updating the collection. Please try again.",
+    "submit_label": "Save Changes"
+  },
+  "NewCollectionModal": {
+    "success_title": "Collection created",
+    "success_message": "Your collection has been created successfully.",
+    "error_title": "Cannot create collection",
+    "error_message": "An error occurred while creating the collection. Please try again.",
+    "submit_label": "Create Collection"
+  }
 }

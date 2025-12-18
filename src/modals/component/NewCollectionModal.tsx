@@ -4,10 +4,12 @@ import { LoadingOverlay, Box } from '@mantine/core';
 import { ContextModalProps } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
 import { IconAlertSquareRounded } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import CollectionForm, { CollectionFormValues } from '../../features/collection/component/CollectionForm';
 import { createCollectionAction } from '@/app/actions/collection';
 
 const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
+  const t = useTranslations('NewCollectionModal');
   const [isCreating, setIsCreating] = useState(false);
 
   const handleSubmit = async (values: CollectionFormValues) => {
@@ -22,14 +24,14 @@ const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
       if (result.success) {
         context.closeModal(id);
         notifications.show({
-          title: 'Collection created',
-          message: 'Your collection has been created successfully.',
+          title: t('success_title'),
+          message: t('success_message'),
           color: 'green',
         });
       } else {
         notifications.show({
-          title: 'Cannot create collection',
-          message: result.error || 'An error occurred while creating the collection. Please try again.',
+          title: t('error_title'),
+          message: result.error || t('error_message'),
           color: 'red',
           icon: <IconAlertSquareRounded />,
         });
@@ -37,8 +39,8 @@ const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
     } catch (error) {
       console.error('Error creating collection:', error);
       notifications.show({
-        title: 'Cannot create collection',
-        message: 'An error occurred while creating the collection. Please try again.',
+        title: t('error_title'),
+        message: t('error_message'),
         color: 'red',
         icon: <IconAlertSquareRounded />,
       });
@@ -52,7 +54,7 @@ const NewCollectionModal = ({ context, id, innerProps }: ContextModalProps) => {
       <LoadingOverlay visible={isCreating} />
       <CollectionForm
         onSubmit={handleSubmit}
-        submitLabel="Create Collection"
+        submitLabel={t('submit_label')}
         isSubmitting={isCreating}
       />
     </Box>

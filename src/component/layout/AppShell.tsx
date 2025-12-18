@@ -20,6 +20,7 @@ import {
   IconLogout,
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export default function AppShell({
   children,
@@ -27,6 +28,7 @@ export default function AppShell({
   children: React.ReactNode;
 }>) {
   const router = useRouter();
+  const t = useTranslations("AppShell");
 
   return (
     <MantineAppShell header={{ height: 60 }} padding="md">
@@ -42,31 +44,31 @@ export default function AppShell({
                   leftSection={<IconHome size={16} />}
                   onClick={() => router.push("/")}
                 >
-                  Home
+                  {t("home")}
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<IconFolderOpen size={16} />}
                   onClick={() => router.push("/collection")}
                 >
-                  Collection
+                  {t("collection")}
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<IconFileImport size={16} />}
                   onClick={() => router.push("/import")}
                 >
-                  Import Bookmarks
+                  {t("import_bookmarks")}
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<IconSettings size={16} />}
                   onClick={() => router.push("/settings")}
                 >
-                  Settings
+                  {t("settings")}
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<IconLogout size={16} />}
                   onClick={() => router.push("/signout")}
                 >
-                  Sign Out
+                  {t("sign_out")}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
@@ -85,24 +87,24 @@ export default function AppShell({
                   onClick={() =>
                     modals.openContextModal({
                       modal: "newBookmark",
-                      title: "Create New Bookmark",
+                      title: t("create_new_bookmark"),
                       innerProps: {},
                     })
                   }
                 >
-                  Bookmark
+                  {t("bookmark")}
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<IconFolder size={16} />}
                   onClick={() =>
                     modals.openContextModal({
                       modal: "newCollection",
-                      title: "Create New Collection",
+                      title: t("create_new_collection"),
                       innerProps: {},
                     })
                   }
                 >
-                  Collection
+                  {t("collection")}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>

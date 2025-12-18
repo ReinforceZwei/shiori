@@ -1,7 +1,10 @@
+'use client';
+
 import { useForm } from '@mantine/form';
 import { zodResolver } from 'mantine-form-zod-resolver';
 import { z } from 'zod';
 import { TextInput, Button, Box, ColorInput, Stack } from '@mantine/core';
+import { useTranslations } from 'next-intl';
 
 // Predefined color swatches for collections
 const COLOR_SWATCHES = [
@@ -44,9 +47,10 @@ interface CollectionFormProps {
 export default function CollectionForm({
   onSubmit,
   initialValues,
-  submitLabel = 'Create Collection',
+  submitLabel,
   isSubmitting = false,
 }: CollectionFormProps) {
+  const t = useTranslations('CollectionForm');
   const form = useForm<CollectionFormValues>({
     initialValues: {
       name: '',
@@ -62,28 +66,28 @@ export default function CollectionForm({
       <form onSubmit={form.onSubmit(onSubmit)}>
         <Stack gap="md">
           <TextInput
-            label="Name"
-            placeholder="Enter collection name"
+            label={t('name_label')}
+            placeholder={t('name_placeholder')}
             {...form.getInputProps('name')}
             required
           />
 
           <TextInput
-            label="Description"
-            placeholder="Enter collection description (optional)"
+            label={t('description_label')}
+            placeholder={t('description_placeholder')}
             {...form.getInputProps('description')}
           />
 
           <ColorInput
-            label="Color"
-            placeholder="Pick a color (optional)"
+            label={t('color_label')}
+            placeholder={t('color_placeholder')}
             {...form.getInputProps('color')}
             swatches={COLOR_SWATCHES}
             swatchesPerRow={9}
           />
 
           <Button type="submit" fullWidth mt="xl" loading={isSubmitting}>
-            {submitLabel}
+            {submitLabel || t('submit_default')}
           </Button>
         </Stack>
       </form>

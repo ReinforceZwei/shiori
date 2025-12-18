@@ -42,3 +42,10 @@ export async function updateLocaleAction(data: {
   revalidatePath('/(main)', 'layout');
   return settings;
 }
+
+export async function getLocaleAction() {
+  const user = await requireUser();
+  const settingsService = new SettingsService();
+  const locale = await settingsService.getLocale({ userId: user.id });
+  return locale;
+}
