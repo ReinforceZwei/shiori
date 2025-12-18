@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Shiori Chan",
+    "description": "Shiori Chan is a bookmark manager that allows you to save and organize your bookmarks."
+  },
   "Signin": {
     "subtitle": "Sign in to your account",
     "sign_in_failed": "Sign-in failed",

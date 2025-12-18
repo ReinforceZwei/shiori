@@ -27,6 +27,7 @@ type SignupFormValues = z.infer<typeof signupFormSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const t = useTranslations('Signup');
+  const tMetadata = useTranslations('metadata');
   const form = useForm<SignupFormValues>({
     initialValues: {
       name: '',
@@ -70,7 +71,7 @@ export default function SignupPage() {
   return (
     <Box maw={400} mx="auto" mt="xl" p="sm">
       <Title ta="center" order={1} mb="sm">
-        Shiori
+        {tMetadata('title')}
       </Title>
       <Text ta="center" size="sm" c="dimmed" mb="xl">
         {t('subtitle')}

@@ -22,6 +22,7 @@ type SigninFormValues = z.infer<typeof signinFormSchema>;
 export default function SigninPage() {
   const router = useRouter();
   const t = useTranslations('Signin');
+  const tMetadata = useTranslations('metadata');
   const form = useForm<SigninFormValues>({
     initialValues: {
       email: '',
@@ -54,7 +55,7 @@ export default function SigninPage() {
   return (
     <Box maw={400} mx="auto" mt="xl" p="sm">
       <Title ta="center" order={1} mb="sm">
-        Shiori
+        {tMetadata('title')}
       </Title>
       <Text ta="center" size="sm" c="dimmed" mb="xl">
         {t('subtitle')}

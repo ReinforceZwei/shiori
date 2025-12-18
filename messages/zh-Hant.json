@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Shiori Chan",
+    "description": "Shiori Chan 是一個書籤管理器，允許您保存和組織您的書籤。"
+  },
   "Signin": {
     "subtitle": "登入您的帳戶",
     "sign_in_failed": "登入失敗",
