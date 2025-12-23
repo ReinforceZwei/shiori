@@ -11,9 +11,13 @@ import {
   useMantineTheme,
   alpha,
   Anchor,
+  ActionIcon,
+  Button,
+  Transition,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import Link from "next/link";
+import { IconEdit, IconX } from "@tabler/icons-react";
 import { BookmarkLauncherItem } from "./BookmarkLauncherItem";
 import { AddBookmarkLauncherItem } from "./AddBookmarkLauncherItem";
 import { CollectionLauncherSection } from "./CollectionLauncherSection";
@@ -33,12 +37,19 @@ import {
 } from "@dnd-kit/sortable";
 import { BookmarkDragOverlay } from "./BookmarkDragOverlay";
 import { CollectionDragOverlay } from "./CollectionDragOverlay";
-import { moveBookmarkAction, deleteBookmarkAction } from "@/app/actions/bookmark";
+import {
+  moveBookmarkAction,
+  deleteBookmarkAction,
+} from "@/app/actions/bookmark";
 import {
   saveBookmarkOrderAction,
   saveCollectionOrderAction,
 } from "@/app/actions/order";
-import { BookmarkLayoutProps, BookmarkWithIcon, CollectionWithBookmarks } from "../types";
+import {
+  BookmarkLayoutProps,
+  BookmarkWithIcon,
+  CollectionWithBookmarks,
+} from "../types";
 
 export type DensityMode = "default" | "compact";
 
@@ -48,37 +59,37 @@ const DENSITY_CONFIG = {
   default: {
     size: "medium" as const,
     spacing: "xl" as const,
-    cols: { 
-      base: 4, 
-      xs: 5, 
-      sm: 6, 
-      md: 7, 
-      lg: 9, 
+    cols: {
+      base: 4,
+      xs: 5,
+      sm: 6,
+      md: 7,
+      lg: 9,
       xl: 11,
       // Additional breakpoints for wider screens
-      xxl: 13,  // 1600px - Wide desktop
-      fhd: 15,  // 1920px - Full HD
-      qhd: 18,  // 2400px - QHD ultrawide
-      uhd: 21,  // 2880px - 4K ultrawide
-      uw: 25,   // 3440px - 21:9 ultrawide
+      xxl: 13, // 1600px - Wide desktop
+      fhd: 15, // 1920px - Full HD
+      qhd: 18, // 2400px - QHD ultrawide
+      uhd: 21, // 2880px - 4K ultrawide
+      uw: 25, // 3440px - 21:9 ultrawide
     },
   },
   compact: {
     size: "small" as const,
     spacing: "md" as const,
-    cols: { 
-      base: 5, 
-      xs: 6, 
-      sm: 8, 
-      md: 10, 
-      lg: 12, 
+    cols: {
+      base: 5,
+      xs: 6,
+      sm: 8,
+      md: 10,
+      lg: 12,
       xl: 15,
       // Additional breakpoints for wider screens
-      xxl: 18,  // 1600px - Wide desktop
-      fhd: 21,  // 1920px - Full HD
-      qhd: 25,  // 2400px - QHD ultrawide
-      uhd: 30,  // 2880px - 4K ultrawide
-      uw: 35,   // 3440px - 21:9 ultrawide
+      xxl: 18, // 1600px - Wide desktop
+      fhd: 21, // 1920px - Full HD
+      qhd: 25, // 2400px - QHD ultrawide
+      uhd: 30, // 2880px - 4K ultrawide
+      uw: 35, // 3440px - 21:9 ultrawide
     },
   },
 };
@@ -93,7 +104,9 @@ export function BookmarkLauncherGrid({
   const theme = useMantineTheme();
 
   // Store expanded state for all collections in localStorage
-  const [expandedStates, setExpandedStates] = useLocalStorage<Record<string, boolean>>({
+  const [expandedStates, setExpandedStates] = useLocalStorage<
+    Record<string, boolean>
+  >({
     key: "launcher-collection-expanded-states",
     defaultValue: {},
   });
@@ -102,7 +115,8 @@ export function BookmarkLauncherGrid({
   const toggleCollectionExpanded = (collectionId: string) => {
     setExpandedStates((prev) => ({
       ...prev,
-      [collectionId]: prev[collectionId] === undefined ? false : !prev[collectionId],
+      [collectionId]:
+        prev[collectionId] === undefined ? false : !prev[collectionId],
     }));
   };
 
@@ -150,7 +164,13 @@ export function BookmarkLauncherGrid({
         console.error("Failed to save bookmark order:", result.error);
       }
     },
-    onItemMove: async (itemId, fromContainerId, toContainerId, toIndex, items) => {
+    onItemMove: async (
+      itemId,
+      fromContainerId,
+      toContainerId,
+      toIndex,
+      items
+    ) => {
       // Item moved to a different collection
       const targetCollectionId =
         toContainerId === "uncollected" ? null : toContainerId;
@@ -225,7 +245,8 @@ export function BookmarkLauncherGrid({
       title: "Delete Bookmark",
       children: (
         <Text size="sm">
-          Are you sure you want to delete &quot;{bookmark.title}&quot;? This action cannot be undone.
+          Are you sure you want to delete &quot;{bookmark.title}&quot;? This
+          action cannot be undone.
         </Text>
       ),
       labels: { confirm: "Delete", cancel: "Cancel" },
@@ -288,11 +309,6 @@ export function BookmarkLauncherGrid({
       <Container fluid py="xl">
         <Group justify="flex-end" mb="lg" gap="md">
           <Switch
-            label="Edit mode"
-            checked={editMode}
-            onChange={(event) => setEditMode(event.currentTarget.checked)}
-          />
-          <Switch
             label="Compact mode"
             checked={density === "compact"}
             onChange={(event) =>
@@ -314,7 +330,11 @@ export function BookmarkLauncherGrid({
             disabled={activeType === "container"} // Disable sorting for uncollected
           >
             <SortableContext
-              items={uncollected?.items ? uncollected.items.map((item) => item.id) : []}
+              items={
+                uncollected?.items
+                  ? uncollected.items.map((item) => item.id)
+                  : []
+              }
               strategy={rectSortingStrategy}
             >
               <SimpleGrid
@@ -340,7 +360,8 @@ export function BookmarkLauncherGrid({
                 }}
               >
                 <AddBookmarkLauncherItem size={config.size} />
-                {uncollected?.items && uncollected.items.length > 0 &&
+                {uncollected?.items &&
+                  uncollected.items.length > 0 &&
                   uncollected.items.map((bookmark) => (
                     <SortableItem
                       key={bookmark.id}
@@ -392,7 +413,9 @@ export function BookmarkLauncherGrid({
                     }
                     dragHandleProps={dragHandleProps}
                     isExpanded={expandedStates[collection.id] ?? true}
-                    onToggleExpanded={() => toggleCollectionExpanded(collection.id)}
+                    onToggleExpanded={() =>
+                      toggleCollectionExpanded(collection.id)
+                    }
                   />
                 )}
               </SortableItem>
@@ -418,6 +441,63 @@ export function BookmarkLauncherGrid({
           />
         ) : null}
       </DragOverlay>
+
+      {/* Floating Edit Mode Button */}
+      <Box
+        style={{
+          position: "fixed",
+          bottom: "1rem",
+          right: "1rem",
+          zIndex: 1000,
+        }}
+      >
+        <Transition
+          mounted={!editMode}
+          transition="fade-up"
+          duration={150}
+          enterDelay={150}
+          timingFunction="ease"
+        >
+          {(styles) => (
+            <ActionIcon
+              size="xl"
+              radius="xl"
+              variant="filled"
+              color="blue"
+              onClick={() => setEditMode(true)}
+              style={{
+                ...styles,
+                boxShadow: theme.shadows.lg,
+              }}
+            >
+              <IconEdit size={24} />
+            </ActionIcon>
+          )}
+        </Transition>
+        <Transition
+          mounted={editMode}
+          transition="fade-up"
+          duration={150}
+          enterDelay={150}
+          timingFunction="ease"
+        >
+          {(styles) => (
+            <Button
+              leftSection={<IconX size={20} />}
+              // size="md"
+              radius="xl"
+              variant="filled"
+              onClick={() => setEditMode(false)}
+              style={{
+                ...styles,
+                boxShadow: theme.shadows.lg,
+              }}
+            >
+              Exit edit mode
+            </Button>
+          )}
+        </Transition>
+      </Box>
     </DndContext>
   );
 }
