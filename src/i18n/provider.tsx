@@ -17,7 +17,7 @@ export const IntlClientProvider = ({
   const [messages, setMessages] = useState<Record<string, any>>(initialMessages);
   const { data: session } = authClient.useSession();
 
-  // Update locale and messages when user signs in
+  // Update locale and messages when user signs in or locale changes on the server
   useEffect(() => {
     const fetchLocale = async () => {
       try {
@@ -40,6 +40,14 @@ export const IntlClientProvider = ({
       fetchLocale();
     }
   }, [session, localeState]);
+
+  // Sync with server-side locale changes (e.g., after router.refresh())
+  useEffect(() => {
+    if (initialLocale !== localeState) {
+      setLocaleState(initialLocale);
+      setMessages(initialMessages);
+    }
+  }, [initialLocale, initialMessages]);
 
   return (
     <NextIntlClientProvider

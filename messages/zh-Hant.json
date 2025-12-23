@@ -101,5 +101,13 @@
     "error_title": "無法建立收藏集",
     "error_message": "建立收藏集時發生錯誤。請再試一次。",
     "submit_label": "建立收藏集"
+  },
+  "Settings_General": {
+    "title": "一般",
+    "description": "設定您的基本應用程式偏好設定。",
+    "language_label": "語言",
+    "language_description": "選擇您偏好的應用程式語言",
+    "error_title": "錯誤",
+    "error_message": "更新語言失敗"
   }
 }

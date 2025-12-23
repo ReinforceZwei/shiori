@@ -29,6 +29,7 @@ export default function AppShell({
 }>) {
   const router = useRouter();
   const t = useTranslations("AppShell");
+  const tMetadata = useTranslations("metadata");
 
   return (
     <MantineAppShell header={{ height: 60 }} padding="md">
@@ -72,7 +73,7 @@ export default function AppShell({
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
-            <Title order={2}>Shiori</Title>
+            <Title order={2}>{tMetadata("title")}</Title>
           </Group>
           <Group>
             <Menu>

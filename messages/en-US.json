@@ -101,5 +101,13 @@
     "error_title": "Cannot create collection",
     "error_message": "An error occurred while creating the collection. Please try again.",
     "submit_label": "Create Collection"
+  },
+  "Settings_General": {
+    "title": "General",
+    "description": "Configure your basic application preferences.",
+    "language_label": "Language",
+    "language_description": "Select your preferred language for the application",
+    "error_title": "Error",
+    "error_message": "Failed to update language"
   }
 }

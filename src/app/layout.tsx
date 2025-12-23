@@ -11,12 +11,18 @@ import theme from '@/lib/theme';
 import { notoSansMono, notoSansTC } from '@/lib/font';
 import { IntlClientProvider } from '@/i18n/provider';
 import { headers } from 'next/headers';
-import { getLocaleFromHeader } from '@/i18n/locale';
+import { getLocaleFromHeader, locales } from '@/i18n/locale';
 import { getTranslations } from 'next-intl/server';
+import { getLocaleAction } from './actions/settings';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const headersList = await headers();
-  const locale = getLocaleFromHeader(headersList);
+  let locale: (typeof locales)[number] = "en-US";
+  try {
+    locale = await getLocaleAction() as (typeof locales)[number];
+  } catch {
+    const headersList = await headers();
+    locale = getLocaleFromHeader(headersList);
+  }
   const t = await getTranslations({ locale , namespace: 'metadata' });
   return {
     title: {

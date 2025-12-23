@@ -87,13 +87,21 @@ export default function WallpaperCard({
     }
   };
 
+  const handleActiveToggle = (checked: boolean) => {
+    // Update form value
+    form.setFieldValue('isActive', checked);
+    form.setInitialValues({ ...form.values, isActive: checked });
+    // Immediately save the active status
+    onUpdateProperty(wallpaper.id, { isActive: checked });
+  };
+
   const handleSave = () => {
     const dirtyFields = form.getDirty();
     const updates: Record<string, any> = {};
     
-    // Only send changed fields
+    // Only send changed fields, excluding isActive (auto-saved)
     Object.keys(dirtyFields).forEach((key) => {
-      if (dirtyFields[key as keyof WallpaperFormValues]) {
+      if (key !== 'isActive' && dirtyFields[key as keyof WallpaperFormValues]) {
         updates[key] = form.values[key as keyof WallpaperFormValues];
       }
     });
@@ -108,7 +116,10 @@ export default function WallpaperCard({
     form.reset();
   };
 
-  const hasChanges = form.isDirty();
+  // Check if there are changes excluding isActive
+  const hasChanges = Object.entries(form.getDirty()).some(
+    ([key, isDirty]) => key !== 'isActive' && isDirty
+  );
 
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder>
@@ -127,7 +138,8 @@ export default function WallpaperCard({
           <Switch
             label="Active"
             size="sm"
-            {...form.getInputProps('isActive', { type: 'checkbox' })}
+            checked={form.values.isActive}
+            onChange={(event) => handleActiveToggle(event.currentTarget.checked)}
           />
           <Group gap={4}>
             {getDeviceIcon(form.values.deviceType)}

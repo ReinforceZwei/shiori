@@ -39,7 +39,7 @@ export async function updateLocaleAction(data: {
     locale: data.locale,
   });
   revalidatePath('/settings');
-  revalidatePath('/(main)', 'layout');
+  revalidatePath('/', 'layout');
   return settings;
 }
 
