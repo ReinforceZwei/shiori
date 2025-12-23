@@ -215,6 +215,9 @@ export class BookmarkService extends ServiceBase {
       where: validatedData.userId 
         ? { id: validatedData.id, userId: validatedData.userId }
         : { id: validatedData.id },
+      include: {
+        websiteIcon: { select: { id: true } }, // Get existing icon ID
+      },
     });
     if (!bookmark) {
       throw new NotFoundError(`Bookmark(id: ${validatedData.id}) not found`);
@@ -222,6 +225,19 @@ export class BookmarkService extends ServiceBase {
 
     // Track old collection ID for bookmarkOrder updates
     const oldCollectionId = bookmark.collectionId;
+
+    // Prepare new website icon data if provided
+    let newIconData: { base64Data: string; mimeType: string } | undefined;
+    if (validatedData.websiteIcon) {
+      const detectedMimeType = await validateAndDetectImageType(
+        validatedData.websiteIcon.data,
+        ALLOWED_IMAGE_TYPES
+      );
+      newIconData = {
+        base64Data: validatedData.websiteIcon.data,
+        mimeType: detectedMimeType,
+      };
+    }
 
     // Build update data object with only fields to update
     const updateData: Prisma.BookmarkUpdateInput = {};
@@ -254,29 +270,29 @@ export class BookmarkService extends ServiceBase {
       }
     }
 
-    // Handle website icon if provided
-    if (validatedData.websiteIcon) {
-      const detectedMimeType = await validateAndDetectImageType(
-        validatedData.websiteIcon.data,
-        ALLOWED_IMAGE_TYPES
-      );
-      updateData.websiteIcon = {
-        upsert: {
-          create: {
-            data: Buffer.from(validatedData.websiteIcon.data, 'base64'),
-            mimeType: detectedMimeType,
-          },
-          update: {
-            data: Buffer.from(validatedData.websiteIcon.data, 'base64'),
-            mimeType: detectedMimeType,
-          },
-        },
-      };
-    }
-
     // Wrap in transaction to ensure atomicity
     const updatedBookmark = await this.withTransaction(async (tx) => {
       const orderService = new OrderService(tx);
+      
+      // Handle website icon replacement: delete old, create new with new ID
+      if (newIconData) {
+        // Delete old icon if it exists (cascade will handle the relation)
+        if (bookmark.websiteIcon) {
+          await tx.websiteIcon.delete({
+            where: { id: bookmark.websiteIcon.id },
+          });
+        }
+        
+        // Create new icon with new ID
+        await tx.websiteIcon.create({
+          data: {
+            data: Buffer.from(newIconData.base64Data, 'base64'),
+            mimeType: newIconData.mimeType,
+            bookmarkId: validatedData.id,
+          },
+        });
+      }
+      
       const updated = await tx.bookmark.update({
         where: { id: validatedData.id },
         data: updateData,

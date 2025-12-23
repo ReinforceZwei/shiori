@@ -372,7 +372,7 @@ export function BookmarkLauncherGrid({
                         id={bookmark.id}
                         title={bookmark.title}
                         url={bookmark.url}
-                        hasIcon={bookmark.websiteIcon !== null}
+                        iconId={bookmark.websiteIcon?.id}
                         size={config.size}
                         editMode={editMode}
                         onEdit={() => handleEditBookmark(bookmark)}

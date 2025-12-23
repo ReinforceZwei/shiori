@@ -62,7 +62,7 @@ export async function updateBookmarkAction(
     });
     
     // Revalidate the main layout to update all bookmark-related UI
-    revalidatePath('/(main)', 'layout');
+    revalidatePath('/(main)');
     
     return { success: true, data: bookmark };
   } catch (error) {
@@ -95,7 +95,7 @@ export async function moveBookmarkAction(
     });
     
     // Revalidate the main layout to update all bookmark-related UI
-    revalidatePath('/(main)', 'layout');
+    revalidatePath('/(main)');
     
     return { success: true, data: bookmark };
   } catch (error) {

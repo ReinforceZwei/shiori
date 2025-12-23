@@ -200,7 +200,7 @@ export function CollectionLauncherSection({
                   id={bookmark.id}
                   title={bookmark.title}
                   url={bookmark.url}
-                  hasIcon={bookmark.websiteIcon !== null}
+                  iconId={bookmark.websiteIcon?.id}
                   size={size}
                   editMode={editMode}
                   onEdit={() => onEditBookmark(bookmark)}

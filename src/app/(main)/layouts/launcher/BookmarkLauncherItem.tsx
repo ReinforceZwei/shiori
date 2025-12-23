@@ -10,7 +10,7 @@ interface BookmarkLauncherItemProps {
   id: string;
   title: string;
   url: string;
-  hasIcon?: boolean;
+  iconId?: string;
   size?: LauncherItemSize;
   editMode?: boolean;
   onEdit?: () => void;
@@ -24,7 +24,7 @@ const SIZE_CONFIG = {
     borderRadius: "16px",
     gap: "8px",
     textSize: "xs" as const,
-    textMaxWidth: "80px",
+    textMaxWidth: "100px",
   },
   small: {
     iconSize: 48,
@@ -40,7 +40,7 @@ export function BookmarkLauncherItem({
   id, 
   title, 
   url,
-  hasIcon = false,
+  iconId,
   size = "medium", 
   editMode = false,
   onEdit,
@@ -93,7 +93,7 @@ export function BookmarkLauncherItem({
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          {!hasIcon ? (
+          {!iconId ? (
             <Box
               style={{
                 display: "flex",
@@ -107,11 +107,10 @@ export function BookmarkLauncherItem({
             </Box>
           ) : (
             <Image
-              src={`/api/bookmark/${id}/websiteicon`}
+              src={`/api/icon/${iconId}`}
               width={config.imageSize}
               height={config.imageSize}
               fit="contain"
-              fallbackSrc="/assets/world-wide-web.png"
             />
           )}
           
@@ -182,12 +181,13 @@ export function BookmarkLauncherItem({
       {/* Title */}
       <Text
         size={config.textSize}
-        fw={500}
+        fw={400}
         ta="center"
         lineClamp={2}
         style={{
           maxWidth: config.textMaxWidth,
           color: "var(--mantine-color-text)",
+          padding: "0.2rem", // Noto Sans font a bit bigger, needs some padding
         }}
       >
         {title}

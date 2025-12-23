@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { BackgroundImageMetadata } from '../query';
 import { WallpaperFade } from '@/component/layout/WallpaperFade';
 
@@ -29,6 +29,7 @@ export function WallpaperDisplay({
 }: WallpaperDisplayProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPortrait, setIsPortrait] = useState(false);
+  const isInitialMount = useRef(true);
 
   // Detect screen orientation (portrait vs landscape)
   useEffect(() => {
@@ -77,13 +78,15 @@ export function WallpaperDisplay({
     return () => clearInterval(interval);
   }, [filteredWallpapers.length, cycleIntervalMs]);
 
-  // Set random starting index when filtered wallpapers change
+  // Set random starting index ONLY on initial mount
+  // This prevents wallpaper changes when the page revalidates (e.g., after bookmark updates)
   useEffect(() => {
-    if (filteredWallpapers.length > 0) {
+    if (filteredWallpapers.length > 0 && isInitialMount.current) {
       const randomIndex = Math.floor(Math.random() * filteredWallpapers.length);
       setCurrentIndex(randomIndex);
+      isInitialMount.current = false;
     }
-  }, [filteredWallpapers]);
+  }, [filteredWallpapers.length]);
 
   // Get the current wallpaper to display
   const currentWallpaper = filteredWallpapers[currentIndex];

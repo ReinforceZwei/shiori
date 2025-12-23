@@ -1,13 +1,9 @@
 import { withAuth } from '@/lib/with-auth';
 import { BookmarkService } from '@/features/bookmark/service';
 import { NotFoundError } from '@/lib/errors';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
 
 export const GET = withAuth(async (request, { params, user }) => {
   const { id } = await params;
-  const { searchParams } = new URL(request.url);
-  const useFallback = searchParams.get('fallback') === 'true';
 
   const bookmarkService = new BookmarkService();
   const bookmark = await bookmarkService.getWithIcon({ 
@@ -17,20 +13,6 @@ export const GET = withAuth(async (request, { params, user }) => {
 
   if (!bookmark) {
     throw new NotFoundError(`Bookmark(id: ${id}) not found`);
-  }
-
-  // If no icon exists and fallback is requested, return fallback image
-  if (!bookmark.websiteIcon && useFallback) {
-    const fallbackPath = join(process.cwd(), 'public', 'assets', 'world-wide-web.png');
-    const fallbackImage = await readFile(fallbackPath);
-    
-    return new Response(fallbackImage, {
-      status: 200,
-      headers: {
-        'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=86400', // Cache fallback for 1 day
-      }
-    });
   }
 
   if (!bookmark.websiteIcon) {
