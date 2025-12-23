@@ -13,6 +13,7 @@ import { LocaleSwitcher } from '@/component/LocaleSwitcher';
 import { locales } from '@/i18n/locale';
 import { initSettingsAction } from '@/app/actions/settings';
 import { useTranslations } from 'next-intl';
+import { Wallpaper } from '@/component/layout/Wallpaper';
 
 // Zod schema for sign-up form validation
 const signupFormSchema = z.object({
@@ -70,6 +71,7 @@ export default function SignupPage() {
 
   return (
     <Box maw={400} mx="auto" mt="xl" p="sm">
+      <Wallpaper imageUrl={'/shiori-bg-transparent.webp'} displayPosition='right bottom' />
       <Title ta="center" order={1} mb="sm">
         {tMetadata('title')}
       </Title>

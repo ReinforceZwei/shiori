@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { Wallpaper } from '@/component/layout/Wallpaper';
 
 // Zod schema for sign-in form validation
 const signinFormSchema = z.object({
@@ -54,6 +55,7 @@ export default function SigninPage() {
 
   return (
     <Box maw={400} mx="auto" mt="xl" p="sm">
+      <Wallpaper imageUrl={'/shiori-bg-transparent.webp'} displayPosition='right bottom' />
       <Title ta="center" order={1} mb="sm">
         {tMetadata('title')}
       </Title>
