@@ -463,7 +463,7 @@ export function BookmarkLauncherGrid({
               size="xl"
               radius="xl"
               variant="filled"
-              color="blue"
+              color="roseRed"
               onClick={() => setEditMode(true)}
               style={{
                 ...styles,

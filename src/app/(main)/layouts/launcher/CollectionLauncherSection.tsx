@@ -53,7 +53,7 @@ export function CollectionLauncherSection({
   const backgroundColor = isDropTarget 
     ? alpha(theme.colors.green[0], 0.5)
     : alpha(collection.color || '#808080', 0.5);
-  const iconColor = collection.color ? darken(collection.color, 0.3) : undefined;
+  const iconColor = collection.color ? darken(collection.color, 0.5) : undefined;
   const borderColor = isDropTarget 
     ? theme.colors.green[6]
     : 'transparent';
@@ -114,6 +114,7 @@ export function CollectionLauncherSection({
         marginBottom: spacing === "xl" ? "24px" : "16px",
         border: `2px solid ${borderColor}`,
         transition: "all 0.2s ease",
+        boxShadow: "var(--mantine-shadow-lg)",
       }}
     >
       {/* Collection Header */}

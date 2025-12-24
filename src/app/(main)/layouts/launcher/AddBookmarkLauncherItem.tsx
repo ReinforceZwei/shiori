@@ -66,7 +66,7 @@ export function AddBookmarkLauncherItem({ size = "medium", collectionId }: AddBo
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: "var(--mantine-color-default-hover)",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+          boxShadow: "var(--mantine-shadow-lg)",
           border: "2px dashed var(--mantine-color-default-border)",
           transition: "transform 0.2s ease, border-color 0.2s ease",
           transform: isHovered ? "scale(1.1)" : "scale(1)",

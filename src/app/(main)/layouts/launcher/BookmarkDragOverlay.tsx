@@ -59,7 +59,7 @@ export function BookmarkDragOverlay({
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: "var(--mantine-color-default-hover)",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25)",
+          boxShadow: "var(--mantine-shadow-lg)",
           border: "1px solid var(--mantine-color-default-border)",
           opacity: 0.95,
         }}

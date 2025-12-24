@@ -21,7 +21,7 @@ export function CollectionDragOverlay({
         backgroundColor,
         borderRadius: "16px",
         opacity: 0.95,
-        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25)",
+        boxShadow: "var(--mantine-shadow-lg)",
         minWidth: "300px",
         cursor: "grabbing",
       }}

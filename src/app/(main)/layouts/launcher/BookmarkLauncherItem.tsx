@@ -84,7 +84,7 @@ export function BookmarkLauncherItem({
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: "var(--mantine-color-default-hover)",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            boxShadow: "var(--mantine-shadow-lg)",
             border: "1px solid var(--mantine-color-default-border)",
             transition: "transform 0.2s ease",
             transform: isHovered ? "scale(1.1)" : "scale(1)",
@@ -164,7 +164,7 @@ export function BookmarkLauncherItem({
               cursor: "pointer",
               zIndex: 10,
               transition: "transform 0.2s ease",
-              boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+              boxShadow: "var(--mantine-shadow-lg)",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "scale(1.15)";

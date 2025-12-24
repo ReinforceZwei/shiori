@@ -7,7 +7,7 @@ export function Item({ id, title, isDraggable = true }: { id: string, title: str
       borderRadius: "8px",
       cursor: isDraggable ? "grab" : "default",
       transition: "all 0.2s ease",
-      boxShadow: isDraggable ? "0 2px 4px rgba(0, 0, 0, 0.1)" : "0 1px 2px rgba(0, 0, 0, 0.05)",
+      boxShadow: isDraggable ? "var(--mantine-shadow-lg)" : "var(--mantine-shadow-sm)",
       opacity: isDraggable ? 1 : 0.6,
     }}>
       <div style={{

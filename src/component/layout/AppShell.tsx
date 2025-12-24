@@ -7,6 +7,7 @@ import {
   Group,
   Menu,
   ActionIcon,
+  alpha,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import {
@@ -33,7 +34,13 @@ export default function AppShell({
 
   return (
     <MantineAppShell header={{ height: 60 }} padding="md">
-      <MantineAppShell.Header>
+      <MantineAppShell.Header
+        withBorder={false}
+        style={(theme) => ({
+          backgroundColor: alpha(theme.colors.mintGreen[1], 0.7),
+          backdropFilter: "blur(10px)",
+        })}
+      >
         <Group h="100%" px="md" justify="space-between">
           <Group>
             <Menu>
