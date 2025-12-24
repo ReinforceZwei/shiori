@@ -3,11 +3,13 @@ import { locales } from "@/i18n/locale";
 import { NotFoundError } from "@/lib/errors";
 import { ServiceBase } from "@/lib/service-base.class";
 import { CollectionService } from "@/features/collection/service";
+import { layoutConfigSchema, DEFAULT_LAYOUT_CONFIG } from "./layout-config";
 
 const upsertSettingsInputSchema = z.object({
   userId: z.string(),
   locale: z.enum(locales).optional(),
   layoutMode: z.enum(["launcher", "grid", "list"]).optional(),
+  layoutConfig: layoutConfigSchema.optional(),
   pinnedCollectionId: z.string().nullable().optional(),
 });
 
@@ -19,6 +21,7 @@ export class SettingsService extends ServiceBase {
   /**
    * Get user settings
    * @param params - userId
+   * @returns Settings with validated layoutConfig
    */
   async get({ userId }: { userId: string }) {
     const settings = await this.prisma.settings.findUnique({
@@ -27,6 +30,37 @@ export class SettingsService extends ServiceBase {
         pinnedCollection: true,
       },
     });
+    
+    if (!settings) {
+      return settings;
+    }
+    
+    // Validate layoutConfig
+    if (settings.layoutConfig) {
+      try {
+        const validatedConfig = layoutConfigSchema.parse(settings.layoutConfig);
+        return {
+          ...settings,
+          layoutConfig: validatedConfig,
+        };
+      } catch (error) {
+        console.error("Failed to validate layout config, resetting to defaults:", error);
+        
+        // Reset to default and save
+        await this.prisma.settings.update({
+          where: { userId },
+          data: {
+            layoutConfig: DEFAULT_LAYOUT_CONFIG,
+          },
+        });
+        
+        return {
+          ...settings,
+          layoutConfig: DEFAULT_LAYOUT_CONFIG,
+        };
+      }
+    }
+    
     return settings;
   }
 
@@ -44,8 +78,6 @@ export class SettingsService extends ServiceBase {
 
   /**
    * Upsert settings - creates if not exists, updates if exists
-   * This is the recommended way to interact with settings
-   * Note: Ordering is now managed through the Order table, not Settings
    * @param data - Settings data to upsert
    */
   async upsert(data: z.infer<typeof upsertSettingsInputSchema>) {
@@ -58,12 +90,17 @@ export class SettingsService extends ServiceBase {
       // Build the data object for create/update
       const settingsData: {
         layoutMode?: typeof validatedData.layoutMode;
+        layoutConfig?: z.infer<typeof layoutConfigSchema>;
         pinnedCollectionId?: string | null;
         locale?: (typeof locales)[number];
       } = {};
 
       if (validatedData.layoutMode !== undefined) {
         settingsData.layoutMode = validatedData.layoutMode;
+      }
+
+      if (validatedData.layoutConfig !== undefined) {
+        settingsData.layoutConfig = validatedData.layoutConfig;
       }
 
       // Validate pinned collection if provided

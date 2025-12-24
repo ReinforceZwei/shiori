@@ -5,6 +5,11 @@ import { BookmarkLauncherGrid } from "./layouts/launcher/BookmarkLauncherGrid";
 import { OrderService } from "@/features/order/service";
 import { BookmarkWithIcon, CollectionWithBookmarks } from "./layouts/types";
 import { WallpaperService, WallpaperDisplay } from "@/features/wallpaper";
+import { SettingsService } from "@/features/settings/service";
+import { 
+  DEFAULT_LAUNCHER_LAYOUT_CONFIG, 
+  type LayoutConfig 
+} from "@/features/settings/layout-config";
 
 // Helper function to sort items based on order array
 function sortByOrder<T extends { id: string }>(items: T[], orderArray: string[] | null | undefined): T[] {
@@ -38,9 +43,16 @@ export default async function IndexPage() {
   const bookmarkService = new BookmarkService();
   const collectionService = new CollectionService();
   const wallpaperService = new WallpaperService();
+  const settingsService = new SettingsService();
+  
   const uncollectedBookmarks = await bookmarkService.getAllUncollected({ userId: user.id });
   const collections = await collectionService.getAllWithBookmarks({ userId: user.id });
   const wallpapers = await wallpaperService.getAllActiveMetadata({ userId: user.id });
+  
+  // Get user settings and extract launcher config
+  const settings = await settingsService.get({ userId: user.id });
+  const layoutConfig = settings?.layoutConfig as LayoutConfig | undefined;
+  const launcherConfig = layoutConfig?.launcher ?? DEFAULT_LAUNCHER_LAYOUT_CONFIG;
 
   const orderService = new OrderService();
 
@@ -99,6 +111,7 @@ export default async function IndexPage() {
       <BookmarkLauncherGrid 
         uncollectedBookmarks={sortedUncollectedBookmarks}
         collections={sortedCollectionsWithBookmarks}
+        config={launcherConfig}
       />
     </>
   );

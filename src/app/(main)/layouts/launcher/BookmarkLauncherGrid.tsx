@@ -4,10 +4,7 @@ import {
   SimpleGrid,
   Box,
   Text,
-  Switch,
-  Group,
   Container,
-  Stack,
   useMantineTheme,
   alpha,
   Anchor,
@@ -50,13 +47,16 @@ import {
   BookmarkWithIcon,
   CollectionWithBookmarks,
 } from "../types";
+import { LauncherLayoutConfig } from "@/features/settings/layout-config";
 
-export type DensityMode = "default" | "compact";
+export type DensityMode = "comfortable" | "compact";
 
-interface BookmarkLauncherGridProps extends BookmarkLayoutProps {}
+interface BookmarkLauncherGridProps extends BookmarkLayoutProps {
+  config: LauncherLayoutConfig;
+}
 
 const DENSITY_CONFIG = {
-  default: {
+  comfortable: {
     size: "medium" as const,
     spacing: "xl" as const,
     cols: {
@@ -97,9 +97,10 @@ const DENSITY_CONFIG = {
 export function BookmarkLauncherGrid({
   uncollectedBookmarks,
   collections: collectionsProps,
+  config: launcherConfig,
 }: BookmarkLauncherGridProps) {
-  const [density, setDensity] = useState<DensityMode>("default");
   const [editMode, setEditMode] = useState(false);
+  const density: DensityMode = launcherConfig.density;
   const config = DENSITY_CONFIG[density];
   const theme = useMantineTheme();
 
@@ -307,82 +308,76 @@ export function BookmarkLauncherGrid({
   return (
     <DndContext {...dndContextProps}>
       <Container fluid py="xl">
-        <Group justify="flex-end" mb="lg" gap="md">
-          <Switch
-            label="Compact mode"
-            checked={density === "compact"}
-            onChange={(event) =>
-              setDensity(event.currentTarget.checked ? "compact" : "default")
-            }
-          />
-        </Group>
-
         <SortableContext
           items={["uncollected", ...collections.map((c) => c.id)]}
           strategy={verticalListSortingStrategy}
         >
           {/* Uncollected Bookmarks Section */}
-          <SortableItem
-            key={"uncollected"}
-            id={"uncollected"}
-            data={{ type: "container", containerId: "uncollected" }}
-            restrictDirection="vertical"
-            disabled={activeType === "container"} // Disable sorting for uncollected
-          >
-            <SortableContext
-              items={
-                uncollected?.items
-                  ? uncollected.items.map((item) => item.id)
-                  : []
-              }
-              strategy={rectSortingStrategy}
+          {((uncollected?.items && uncollected.items.length > 0) ||
+            itemSourceContainerId === "uncollected" ||
+            launcherConfig.showEmptyUncollected) && (
+            <SortableItem
+              key={"uncollected"}
+              id={"uncollected"}
+              data={{ type: "container", containerId: "uncollected" }}
+              restrictDirection="vertical"
+              disabled={activeType === "container"} // Disable sorting for uncollected
             >
-              <SimpleGrid
-                cols={config.cols}
-                spacing={config.spacing}
-                verticalSpacing={config.spacing}
-                mb={collections.length > 0 ? "xl" : undefined}
-                py={8}
-                style={{
-                  border: `2px solid ${
-                    activeContainerId === "uncollected" &&
-                    itemSourceContainerId !== "uncollected"
-                      ? theme.colors.green[6]
-                      : "transparent"
-                  }`,
-                  borderRadius: "16px",
-                  backgroundColor:
-                    activeContainerId === "uncollected" &&
-                    itemSourceContainerId !== "uncollected"
-                      ? alpha(theme.colors.green[0], 0.5)
-                      : "transparent",
-                  transition: "all 0.2s ease",
-                }}
+              <SortableContext
+                items={
+                  uncollected?.items
+                    ? uncollected.items.map((item) => item.id)
+                    : []
+                }
+                strategy={rectSortingStrategy}
               >
-                <AddBookmarkLauncherItem size={config.size} />
-                {uncollected?.items &&
-                  uncollected.items.length > 0 &&
-                  uncollected.items.map((bookmark) => (
-                    <SortableItem
-                      key={bookmark.id}
-                      id={bookmark.id}
-                      disabled={!editMode}
-                    >
-                      <BookmarkLauncherItem
+                <SimpleGrid
+                  cols={config.cols}
+                  spacing={config.spacing}
+                  verticalSpacing={config.spacing}
+                  mb={collections.length > 0 ? "xl" : undefined}
+                  py={8}
+                  style={{
+                    border: `2px solid ${
+                      activeContainerId === "uncollected" &&
+                      itemSourceContainerId !== "uncollected"
+                        ? theme.colors.green[6]
+                        : "transparent"
+                    }`,
+                    borderRadius: "16px",
+                    backgroundColor:
+                      activeContainerId === "uncollected" &&
+                      itemSourceContainerId !== "uncollected"
+                        ? alpha(theme.colors.green[0], 0.5)
+                        : "transparent",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <AddBookmarkLauncherItem size={config.size} />
+                  {uncollected?.items &&
+                    uncollected.items.length > 0 &&
+                    uncollected.items.map((bookmark) => (
+                      <SortableItem
+                        key={bookmark.id}
                         id={bookmark.id}
-                        title={bookmark.title}
-                        url={bookmark.url}
-                        iconId={bookmark.websiteIcon?.id}
-                        size={config.size}
-                        editMode={editMode}
-                        onEdit={() => handleEditBookmark(bookmark)}
-                        onDelete={() => handleDeleteBookmark(bookmark)}
-                      />
-                    </SortableItem>
-                  ))}
-              </SimpleGrid>
-            </SortableContext>
-          </SortableItem>
+                        disabled={!editMode}
+                      >
+                        <BookmarkLauncherItem
+                          id={bookmark.id}
+                          title={bookmark.title}
+                          url={bookmark.url}
+                          iconId={bookmark.websiteIcon?.id}
+                          size={config.size}
+                          editMode={editMode}
+                          onEdit={() => handleEditBookmark(bookmark)}
+                          onDelete={() => handleDeleteBookmark(bookmark)}
+                        />
+                      </SortableItem>
+                    ))}
+                </SimpleGrid>
+              </SortableContext>
+            </SortableItem>
+          )}
 
           {/* Collections Section */}
           {collections.length > 0 &&
@@ -403,6 +398,8 @@ export function BookmarkLauncherGrid({
                     size={config.size}
                     spacing={config.spacing}
                     cols={config.cols}
+                    opacity={launcherConfig.collectionOpacity}
+                    blur={launcherConfig.collectionBlur}
                     editMode={editMode}
                     onEditBookmark={handleEditBookmark}
                     onDeleteBookmark={handleDeleteBookmark}

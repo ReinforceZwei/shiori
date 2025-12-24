@@ -5,16 +5,17 @@ import {
   Group, 
   Text,
   Divider,
-  Box,
   Title
 } from '@mantine/core';
-import { IconLayout } from '@tabler/icons-react';
 import WallpaperSettings from './WallpaperSettings';
 import GeneralSettings from './GeneralSettings';
+import LayoutSettings from './LayoutSettings';
 import SettingsHeader from './SettingsHeader';
 import { WallpaperService } from '@/features/wallpaper/service';
 import { SettingsService } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
+import { DEFAULT_LAYOUT_CONFIG, layoutConfigSchema } from '@/features/settings/layout-config';
+import { z } from 'zod';
 
 export default async function SettingsPage() {
   // Fetch user settings and wallpaper metadata on the server
@@ -29,6 +30,12 @@ export default async function SettingsPage() {
 
   // Default to 'en-US' if no settings exist
   const currentLocale = (settings?.locale || 'en-US') as 'en-US' | 'zh-Hant';
+  
+  // Get layout settings (already validated by service)
+  const layoutMode = (settings?.layoutMode || 'launcher') as 'launcher' | 'grid' | 'list';
+  const layoutConfig: z.infer<typeof layoutConfigSchema> = settings?.layoutConfig 
+    ? (settings.layoutConfig as z.infer<typeof layoutConfigSchema>)
+    : DEFAULT_LAYOUT_CONFIG;
 
   return (
     <Container size="lg" py="xl">
@@ -49,32 +56,7 @@ export default async function SettingsPage() {
         <WallpaperSettings initialWallpapers={wallpapersMetadata} />
 
         {/* Layout Section */}
-        <Paper 
-          shadow="xs" 
-          p="xl" 
-          radius="md" 
-          withBorder
-        >
-          <Stack gap="md">
-            <Group gap="sm">
-              <IconLayout size={24} />
-              <Title order={3}>Layout</Title>
-            </Group>
-            
-            <Text size="sm" c="dimmed">
-              Customize how your content is displayed and organized.
-            </Text>
-
-            <Divider my="xs" />
-
-            {/* Placeholder for layout settings */}
-            <Box>
-              <Text size="sm" c="dimmed" ta="center" py="xl">
-                Layout settings will be added here
-              </Text>
-            </Box>
-          </Stack>
-        </Paper>
+        <LayoutSettings layoutMode={layoutMode} layoutConfig={layoutConfig} />
 
         {/* Placeholder for future sections */}
         <Paper 

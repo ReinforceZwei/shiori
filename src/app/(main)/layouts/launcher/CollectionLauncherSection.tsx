@@ -24,6 +24,8 @@ interface CollectionLauncherSectionProps {
     lg: number;
     xl: number;
   };
+  opacity?: number;
+  blur?: number;
   editMode: boolean;
   onEditBookmark: (bookmark: BookmarkWithIcon) => void;
   onDeleteBookmark: (bookmark: BookmarkWithIcon) => void;
@@ -39,6 +41,8 @@ export function CollectionLauncherSection({
   size,
   spacing,
   cols,
+  opacity = 0.5,
+  blur = 10,
   editMode,
   onEditBookmark,
   onDeleteBookmark,
@@ -51,8 +55,8 @@ export function CollectionLauncherSection({
   const theme = useMantineTheme();
   
   const backgroundColor = isDropTarget 
-    ? alpha(theme.colors.green[0], 0.5)
-    : alpha(collection.color || '#808080', 0.5);
+    ? alpha(theme.colors.green[0], opacity)
+    : alpha(collection.color || '#808080', opacity);
   const iconColor = collection.color ? darken(collection.color, 0.5) : undefined;
   const borderColor = isDropTarget 
     ? theme.colors.green[6]
@@ -109,7 +113,7 @@ export function CollectionLauncherSection({
     <Box
       style={{
         backgroundColor,
-        backdropFilter: "blur(5px)",
+        backdropFilter: `blur(${blur}px)`,
         borderRadius: "16px",
         marginBottom: spacing === "xl" ? "24px" : "16px",
         border: `2px solid ${borderColor}`,
