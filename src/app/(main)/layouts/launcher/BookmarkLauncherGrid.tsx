@@ -431,7 +431,7 @@ export function BookmarkLauncherGrid({
           <BookmarkDragOverlay
             id={activeItem.id}
             title={activeItem.title}
-            hasIcon={activeItem.websiteIcon !== null}
+            iconId={activeItem.websiteIcon?.id}
             size={config.size}
           />
         ) : activeType === "container" && activeContainer ? (

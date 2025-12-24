@@ -7,7 +7,7 @@ import { LauncherItemSize } from "./BookmarkLauncherItem";
 interface BookmarkDragOverlayProps {
   id: string;
   title: string;
-  hasIcon?: boolean;
+  iconId?: string;
   size?: LauncherItemSize;
 }
 
@@ -33,7 +33,7 @@ const SIZE_CONFIG = {
 export function BookmarkDragOverlay({ 
   id, 
   title,
-  hasIcon = false,
+  iconId,
   size = "medium",
 }: BookmarkDragOverlayProps) {
   const config = SIZE_CONFIG[size];
@@ -64,11 +64,11 @@ export function BookmarkDragOverlay({
           opacity: 0.95,
         }}
       >
-        {!hasIcon ? (
+        {!iconId ? (
           <IconWorld size={size === "medium" ? 32 : 24} opacity={0.3} />
         ) : (
           <Image
-            src={`/api/bookmark/${id}/websiteicon`}
+            src={`/api/icon/${iconId}`}
             width={config.imageSize}
             height={config.imageSize}
             fit="contain"

@@ -223,9 +223,6 @@ export class BookmarkService extends ServiceBase {
       throw new NotFoundError(`Bookmark(id: ${validatedData.id}) not found`);
     }
 
-    // Track old collection ID for bookmarkOrder updates
-    const oldCollectionId = bookmark.collectionId;
-
     // Prepare new website icon data if provided
     let newIconData: { base64Data: string; mimeType: string } | undefined;
     if (validatedData.websiteIcon) {
@@ -298,10 +295,11 @@ export class BookmarkService extends ServiceBase {
         data: updateData,
       });
 
-      // Update Order table if collection changed
-      if (validatedData.collectionId !== undefined) {
-        const newCollectionId = validatedData.collectionId;
+      const oldCollectionId = bookmark.collectionId;
+      const newCollectionId = validatedData.collectionId;
 
+      // Update Order table if collection changed
+      if (newCollectionId !== undefined && newCollectionId !== oldCollectionId) {
         // Remove bookmark from old collection's order
         if (oldCollectionId) {
           const oldOrderRecord = await orderService.get({
