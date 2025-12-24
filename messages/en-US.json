@@ -38,10 +38,13 @@
   },
   "AppShell": {
     "home": "Home",
-    "collection": "Collection",
     "import_bookmarks": "Import Bookmarks",
     "settings": "Settings",
     "sign_out": "Sign Out",
+    "sign_out_confirm_title": "Sign Out",
+    "sign_out_confirm_message": "Are you sure you want to sign out?",
+    "sign_out_confirm_button": "Sign Out",
+    "sign_out_cancel_button": "Cancel",
     "bookmark": "Bookmark",
     "create_new_bookmark": "Create New Bookmark",
     "create_new_collection": "Create New Collection"

@@ -55,18 +55,6 @@ export default function AppShell({
                   {t("home")}
                 </Menu.Item>
                 <Menu.Item
-                  leftSection={<IconFolderOpen size={16} />}
-                  onClick={() => router.push("/collection")}
-                >
-                  {t("collection")}
-                </Menu.Item>
-                <Menu.Item
-                  leftSection={<IconFileImport size={16} />}
-                  onClick={() => router.push("/import")}
-                >
-                  {t("import_bookmarks")}
-                </Menu.Item>
-                <Menu.Item
                   leftSection={<IconSettings size={16} />}
                   onClick={() => router.push("/settings")}
                 >
@@ -74,7 +62,19 @@ export default function AppShell({
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<IconLogout size={16} />}
-                  onClick={() => router.push("/signout")}
+                  onClick={() =>
+                    modals.openConfirmModal({
+                      title: t("sign_out_confirm_title"),
+                      children: t("sign_out_confirm_message"),
+                      labels: {
+                        confirm: t("sign_out_confirm_button"),
+                        cancel: t("sign_out_cancel_button"),
+                      },
+                      confirmProps: { color: "red" },
+                      onConfirm: () => router.push("/signout"),
+                    })
+                  }
+                  c="roseRed"
                 >
                   {t("sign_out")}
                 </Menu.Item>
@@ -112,7 +112,13 @@ export default function AppShell({
                     })
                   }
                 >
-                  {t("collection")}
+                  {t("create_new_collection")}
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<IconFileImport size={16} />}
+                  onClick={() => router.push("/import")}
+                >
+                  {t("import_bookmarks")}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
