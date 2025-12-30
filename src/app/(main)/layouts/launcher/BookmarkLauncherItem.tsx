@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Text, Image, ActionIcon, Loader } from "@mantine/core";
+import { Box, Text, Image, ActionIcon, Loader, Tooltip } from "@mantine/core";
 import { useState } from "react";
 import { IconEdit, IconWorld, IconX } from "@tabler/icons-react";
 
@@ -179,19 +179,21 @@ export function BookmarkLauncherItem({
       </Box>
 
       {/* Title */}
-      <Text
-        size={config.textSize}
-        fw={400}
-        ta="center"
-        lineClamp={2}
-        style={{
-          maxWidth: config.textMaxWidth,
-          color: "var(--mantine-color-text)",
-          padding: "0.2rem", // Noto Sans font a bit bigger, needs some padding
-        }}
-      >
-        {title}
-      </Text>
+      <Tooltip label={title} openDelay={500} closeDelay={100} position="bottom">
+        <Text
+          size={config.textSize}
+          fw={400}
+          ta="center"
+          lineClamp={2}
+          style={{
+            maxWidth: config.textMaxWidth,
+            color: "var(--mantine-color-text)",
+            padding: "0.2rem", // Noto Sans font a bit bigger, needs some padding
+          }}
+        >
+          {title}
+        </Text>
+      </Tooltip>
     </Box>
   );
 }

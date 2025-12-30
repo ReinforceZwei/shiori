@@ -41,10 +41,9 @@ export default function MetadataPage() {
               placeholder="https://github.com"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              size="md"
               required
             />
-            <Button type="submit" loading={isPending} size="md">
+            <Button type="submit" loading={isPending}>
               Fetch Metadata
             </Button>
           </Stack>
