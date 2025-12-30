@@ -31,6 +31,7 @@ SelectItem.displayName = 'SelectItem';
 interface CollectionSelectProps {
   data: Collection[];
   value?: string;
+  defaultValue?: string;
   onChange?: (value: string | null) => void;
   label?: string;
   placeholder?: string;
@@ -40,35 +41,47 @@ interface CollectionSelectProps {
   onFocus?: () => void;
 }
 
-export default function CollectionSelect({
-  data,
-  value,
-  onChange,
-  label,
-  placeholder,
-  error,
-  required,
-  onBlur,
-  onFocus,
-}: CollectionSelectProps) {
-  return (
-    <Select
-      label={label}
-      placeholder={placeholder}
-      data={data.map((c) => ({
-        value: c.id,
-        label: c.name,
-        color: c.color,
-      }))}
-      value={value || null}
-      onChange={onChange}
-      clearable
-      searchable
-      error={error}
-      required={required}
-      onBlur={onBlur}
-      onFocus={onFocus}
-      renderOption={(item) => <SelectItem {...item.option} />}
-    />
-  );
-}
+const CollectionSelect = forwardRef<HTMLInputElement, CollectionSelectProps>(
+  (
+    {
+      data,
+      value,
+      defaultValue,
+      onChange,
+      label,
+      placeholder,
+      error,
+      required,
+      onBlur,
+      onFocus,
+    },
+    ref
+  ) => {
+    return (
+      <Select
+        ref={ref}
+        label={label}
+        placeholder={placeholder}
+        data={data.map((c) => ({
+          value: c.id,
+          label: c.name,
+          color: c.color,
+        }))}
+        value={value}
+        defaultValue={defaultValue}
+        onChange={onChange}
+        clearable
+        searchable
+        error={error}
+        required={required}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        renderOption={(item) => <SelectItem {...item.option} />}
+      />
+    );
+  }
+);
+
+CollectionSelect.displayName = 'CollectionSelect';
+
+export default CollectionSelect;

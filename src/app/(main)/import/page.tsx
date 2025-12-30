@@ -17,6 +17,7 @@ import {
   Box,
   LoadingOverlay,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import {
   IconArrowLeft,
   IconUpload,
@@ -42,6 +43,19 @@ import {
 import { ImportFloatingPanel } from "./ImportFloatingPanel";
 import { bulkImportBookmarksAction } from "@/app/actions/bulkImport";
 import { extractBase64 } from "@/lib/utils/image";
+
+type FormCollectionItem = {
+  id: string;
+  name: string;
+  path: string[];
+  bookmarks: FlattenedBookmark[];
+  mapping: CollectionMapping;
+  selectedBookmarkIds: string[];
+};
+
+type FormValues = {
+  collections: FormCollectionItem[];
+};
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15);
@@ -129,25 +143,54 @@ export default function ImportPage() {
     uncollectedBookmarks: FlattenedBookmark[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedBookmarks, setSelectedBookmarks] = useState<Set<string>>(
-    new Set()
-  );
-  const [collectionMappings, setCollectionMappings] = useState<
-    Record<string, CollectionMapping>
-  >({});
   const [isImporting, setIsImporting] = useState(false);
 
-  const selectedCount = useMemo(() => {
-    return {
-      bookmarks: selectedBookmarks.size,
-      collections: Object.values(collectionMappings).filter((m) => !m.skip)
-        .length,
-    };
-  }, [selectedBookmarks, collectionMappings]);
+  // Initialize form with uncontrolled mode for performance
+  const form = useForm<FormValues>({
+    mode: 'uncontrolled',
+    cascadeUpdates: true,
+    initialValues: {
+      collections: [],
+    },
+  });
 
   // Fetch existing collections
   const { data: existingCollections, isLoading: isLoadingCollections } =
     useAllCollectionsQuery();
+
+  // Watch form to trigger re-render when needed
+  form.watch('collections', () => {
+    // This callback ensures component re-renders on form changes
+  });
+
+  const collections = form.getValues().collections;
+
+  const selectedCount = useMemo(() => {
+    const totalBookmarks = collections.reduce(
+      (sum, col) => sum + col.selectedBookmarkIds.length,
+      0
+    );
+    const activeCollections = collections.filter((col) => !col.mapping.skip).length;
+    
+    return {
+      bookmarks: totalBookmarks,
+      collections: activeCollections,
+    };
+  }, [collections]);
+
+  // Memoize collection cards to optimize rendering
+  const collectionCards = useMemo(() => {
+    return collections.map((collection, index) => (
+      <CollectionImportCard
+        key={collection.id}
+        form={form}
+        collectionIndex={index}
+        collection={collection}
+        existingCollections={existingCollections || []}
+        isLoadingCollections={isLoadingCollections}
+      />
+    ));
+  }, [collections, form, existingCollections, isLoadingCollections]);
 
   const handleFileSelect = async (selectedFile: File | null) => {
     if (!selectedFile) return;
@@ -162,34 +205,46 @@ export default function ImportPage() {
       const flattened = flattenBookmarks(parsed);
 
       setParsedData(flattened);
-      // Select all bookmarks by default
-      setSelectedBookmarks(new Set(flattened.bookmarks.map((b) => b.id)));
 
-      // Initialize collection mappings
-      const initialMappings: Record<string, CollectionMapping> = {};
+      // Build form collections array
+      const formCollections: FormCollectionItem[] = [];
 
       // Add root bookmarks as a collection if any exist
-      // Default to 'uncollected' mode since they don't have a folder
       if (flattened.uncollectedBookmarks.length > 0) {
-        initialMappings["__uncollected__"] = {
-          mode: "uncollected",
-          newName: "Root Bookmarks",
-          existingId: null,
-          skip: false,
-        };
+        formCollections.push({
+          id: "__uncollected__",
+          name: "Root Bookmarks",
+          path: [],
+          bookmarks: flattened.uncollectedBookmarks,
+          mapping: {
+            mode: "uncollected",
+            newName: "Root Bookmarks",
+            existingId: null,
+            skip: false,
+          },
+          selectedBookmarkIds: flattened.uncollectedBookmarks.map((b) => b.id),
+        });
       }
 
       // Add regular collections - default to creating new collections
       flattened.collections.forEach((collection) => {
-        initialMappings[collection.id] = {
-          mode: "create",
-          newName: collection.name,
-          existingId: null,
-          skip: false,
-        };
+        formCollections.push({
+          id: collection.id,
+          name: collection.name,
+          path: collection.path,
+          bookmarks: collection.bookmarks,
+          mapping: {
+            mode: "create",
+            newName: collection.name,
+            existingId: null,
+            skip: false,
+          },
+          selectedBookmarkIds: collection.bookmarks.map((b) => b.id),
+        });
       });
 
-      setCollectionMappings(initialMappings);
+      // Set form values
+      form.setValues({ collections: formCollections });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to parse bookmark file"
@@ -198,67 +253,38 @@ export default function ImportPage() {
     }
   };
 
-  const handleBookmarkSelectionChange = (
-    bookmarkId: string,
-    selected: boolean
-  ) => {
-    const newSelected = new Set(selectedBookmarks);
-    if (selected) {
-      newSelected.add(bookmarkId);
-    } else {
-      newSelected.delete(bookmarkId);
-    }
-    setSelectedBookmarks(newSelected);
-  };
-
-  const updateCollectionMapping = (
-    collectionId: string,
-    updates: Partial<CollectionMapping>
-  ) => {
-    setCollectionMappings((prev) => ({
-      ...prev,
-      [collectionId]: {
-        ...prev[collectionId],
-        ...updates,
-      },
-    }));
-  };
-
   const validateImport = (): { valid: boolean; errors: string[] } => {
     const errors: string[] = [];
+    const formValues = form.getValues();
 
-    if (selectedBookmarks.size === 0) {
+    // Count total selected bookmarks
+    const totalSelected = formValues.collections.reduce(
+      (sum, col) => sum + col.selectedBookmarkIds.length,
+      0
+    );
+
+    if (totalSelected === 0) {
       errors.push("No bookmarks selected");
     }
 
-    if (parsedData) {
-      // Validate all collections (including root bookmarks)
-      const allCollections = [
-        ...(parsedData.uncollectedBookmarks.length > 0
-          ? [{ id: "__uncollected__", name: "Root Bookmarks" }]
-          : []),
-        ...parsedData.collections.map((c) => ({ id: c.id, name: c.name })),
-      ];
+    // Validate all collections
+    for (const collection of formValues.collections) {
+      const mapping = collection.mapping;
 
-      for (const collection of allCollections) {
-        const mapping = collectionMappings[collection.id];
-        if (!mapping) continue;
+      // Skip validation for skipped collections
+      if (mapping.skip) continue;
 
-        // Skip validation for skipped collections
-        if (mapping.skip) continue;
+      // Skip validation for uncollected mode
+      if (mapping.mode === "uncollected") continue;
 
-        // Skip validation for uncollected mode
-        if (mapping.mode === "uncollected") continue;
+      if (mapping.mode === "create" && !mapping.newName.trim()) {
+        errors.push(`Collection "${collection.name}": Name is required`);
+      }
 
-        if (mapping.mode === "create" && !mapping.newName.trim()) {
-          errors.push(`Collection "${collection.name}": Name is required`);
-        }
-
-        if (mapping.mode === "existing" && !mapping.existingId) {
-          errors.push(
-            `Collection "${collection.name}": Please select an existing collection`
-          );
-        }
+      if (mapping.mode === "existing" && !mapping.existingId) {
+        errors.push(
+          `Collection "${collection.name}": Please select an existing collection`
+        );
       }
     }
 
@@ -272,7 +298,7 @@ export default function ImportPage() {
       modals.openConfirmModal({
         title: "Something is missing",
         children: (
-          <Text size="sm">
+          <Text size="sm" component="div">
             Please fix the following errors:
             <ul style={{ marginTop: 8, marginBottom: 0 }}>
               {validation.errors.map((error, index) => (
@@ -290,11 +316,11 @@ export default function ImportPage() {
       return;
     }
 
-    if (!parsedData) return;
-
     setIsImporting(true);
 
     try {
+      const formValues = form.getValues();
+
       // Build the payload for bulk import
       const collections: Array<{
         mode: 'create' | 'existing' | 'uncollected';
@@ -317,42 +343,15 @@ export default function ImportPage() {
         return match ? match[1] : 'image/png'; // Default to image/png if no match
       };
 
-      // Process root bookmarks if they exist and aren't skipped
-      if (parsedData.uncollectedBookmarks.length > 0) {
-        const rootMapping = collectionMappings["__uncollected__"];
-        if (rootMapping && !rootMapping.skip) {
-          const selectedRootBookmarks = parsedData.uncollectedBookmarks
-            .filter((b) => selectedBookmarks.has(b.id))
-            .map((b) => ({
-              title: b.title,
-              url: b.url,
-              description: undefined,
-              websiteIcon: b.icon ? {
-                data: extractBase64(b.icon),
-                mimeType: extractMimeType(b.icon),
-              } : undefined,
-            }));
-
-          if (selectedRootBookmarks.length > 0) {
-            collections.push({
-              mode: rootMapping.mode,
-              newName: rootMapping.mode === 'create' ? rootMapping.newName : undefined,
-              existingId: rootMapping.mode === 'existing' ? rootMapping.existingId ?? undefined : undefined,
-              bookmarks: selectedRootBookmarks,
-            });
-          }
-        }
-      }
-
-      // Process regular collections
-      for (const collection of parsedData.collections) {
-        const mapping = collectionMappings[collection.id];
-        
+      // Process all collections from form
+      for (const formCollection of formValues.collections) {
         // Skip if collection is marked as skipped
-        if (!mapping || mapping.skip) continue;
+        if (formCollection.mapping.skip) continue;
 
-        const selectedCollectionBookmarks = collection.bookmarks
-          .filter((b) => selectedBookmarks.has(b.id))
+        // Get selected bookmarks for this collection
+        const selectedSet = new Set(formCollection.selectedBookmarkIds);
+        const selectedCollectionBookmarks = formCollection.bookmarks
+          .filter((b) => selectedSet.has(b.id))
           .map((b) => ({
             title: b.title,
             url: b.url,
@@ -365,9 +364,9 @@ export default function ImportPage() {
 
         if (selectedCollectionBookmarks.length > 0) {
           collections.push({
-            mode: mapping.mode,
-            newName: mapping.mode === 'create' ? mapping.newName : undefined,
-            existingId: mapping.mode === 'existing' ? mapping.existingId ?? undefined : undefined,
+            mode: formCollection.mapping.mode,
+            newName: formCollection.mapping.mode === 'create' ? formCollection.mapping.newName : undefined,
+            existingId: formCollection.mapping.mode === 'existing' ? formCollection.mapping.existingId ?? undefined : undefined,
             bookmarks: selectedCollectionBookmarks,
           });
         }
@@ -407,8 +406,7 @@ export default function ImportPage() {
           </Text>
         ),
         labels: { confirm: "OK", cancel: "" },
-        confirmProps: { color: "red" },
-        cancelProps: { style: { display: "none" } },
+        confirmProps: { style: { display: "none" } },
         centered: true,
         onConfirm: () => {},
       });
@@ -525,56 +523,7 @@ export default function ImportPage() {
                   </Group>
 
                   <Stack gap="md">
-                    {/* Root Bookmarks - Show at top if any */}
-                    {parsedData.uncollectedBookmarks.length > 0 &&
-                      (() => {
-                        const rootMapping =
-                          collectionMappings["__uncollected__"];
-                        if (!rootMapping) return null;
-
-                        const rootCollection: FlattenedCollection = {
-                          id: "__uncollected__",
-                          name: "Root Bookmarks",
-                          path: [],
-                          bookmarks: parsedData.uncollectedBookmarks,
-                        };
-
-                        return (
-                          <CollectionImportCard
-                            key="__uncollected__"
-                            collection={rootCollection}
-                            mapping={rootMapping}
-                            existingCollections={existingCollections || []}
-                            isLoadingCollections={isLoadingCollections}
-                            selectedBookmarkIds={selectedBookmarks}
-                            onMappingChange={updateCollectionMapping}
-                            onBookmarkSelectionChange={
-                              handleBookmarkSelectionChange
-                            }
-                          />
-                        );
-                      })()}
-
-                    {/* Regular Collections */}
-                    {parsedData.collections.map((collection) => {
-                      const mapping = collectionMappings[collection.id];
-                      if (!mapping) return null;
-
-                      return (
-                        <CollectionImportCard
-                          key={collection.id}
-                          collection={collection}
-                          mapping={mapping}
-                          existingCollections={existingCollections || []}
-                          isLoadingCollections={isLoadingCollections}
-                          selectedBookmarkIds={selectedBookmarks}
-                          onMappingChange={updateCollectionMapping}
-                          onBookmarkSelectionChange={
-                            handleBookmarkSelectionChange
-                          }
-                        />
-                      );
-                    })}
+                    {collectionCards}
                   </Stack>
                 </Stack>
               </Paper>

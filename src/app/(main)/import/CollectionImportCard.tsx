@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   Card,
   Stack,
@@ -13,6 +14,7 @@ import {
   Button,
   Alert,
 } from '@mantine/core';
+import type { UseFormReturnType } from '@mantine/form';
 import {
   IconFolder,
   IconFolderPlus,
@@ -43,44 +45,66 @@ export interface CollectionMapping {
   skip: boolean;
 }
 
-interface CollectionImportCardProps {
-  collection: FlattenedCollection;
+type FormCollectionItem = {
+  id: string;
+  name: string;
+  path: string[];
+  bookmarks: FlattenedBookmark[];
   mapping: CollectionMapping;
+  selectedBookmarkIds: string[];
+};
+
+type FormValues = {
+  collections: FormCollectionItem[];
+};
+
+interface CollectionImportCardProps {
+  form: UseFormReturnType<FormValues>;
+  collectionIndex: number;
+  collection: FormCollectionItem;
   existingCollections: Collection[];
   isLoadingCollections: boolean;
-  selectedBookmarkIds: Set<string>;
-  onMappingChange: (collectionId: string, updates: Partial<CollectionMapping>) => void;
-  onBookmarkSelectionChange: (bookmarkId: string, selected: boolean) => void;
 }
 
 function getPathString(path: string[]): string {
   return path.length > 0 ? path.join(' > ') : 'Root';
 }
 
-export function CollectionImportCard({
+function CollectionImportCardComponent({
+  form,
+  collectionIndex,
   collection,
-  mapping,
   existingCollections,
   isLoadingCollections,
-  selectedBookmarkIds,
-  onMappingChange,
-  onBookmarkSelectionChange,
 }: CollectionImportCardProps) {
-  const selectedCount = collection.bookmarks.filter(b => 
-    selectedBookmarkIds.has(b.id)
-  ).length;
+  // Subscribe to this specific collection's changes to trigger re-renders
+  const [skip, setSkip] = useState(collection.mapping.skip);
+  form.watch(`collections.${collectionIndex}`, ({ value }) => {
+    setSkip(value.mapping.skip);
+  });
 
+  // Get current values from form
+  const formCollection = form.getValues().collections[collectionIndex];
+  const mapping = formCollection.mapping;
+  const selectedBookmarkIdsSet = new Set(formCollection.selectedBookmarkIds);
+
+  const selectedCount = formCollection.selectedBookmarkIds.length;
   const allSelected = selectedCount === collection.bookmarks.length;
 
   const toggleAll = () => {
     const shouldSelect = !allSelected;
-    collection.bookmarks.forEach(bookmark => {
-      if (shouldSelect && !selectedBookmarkIds.has(bookmark.id)) {
-        onBookmarkSelectionChange(bookmark.id, true);
-      } else if (!shouldSelect && selectedBookmarkIds.has(bookmark.id)) {
-        onBookmarkSelectionChange(bookmark.id, false);
-      }
-    });
+    const newSelectedIds = shouldSelect
+      ? collection.bookmarks.map(b => b.id)
+      : [];
+    form.setFieldValue(`collections.${collectionIndex}.selectedBookmarkIds`, newSelectedIds);
+  };
+
+  const handleBookmarkToggle = (bookmarkId: string, checked: boolean) => {
+    const currentIds = formCollection.selectedBookmarkIds;
+    const newIds = checked
+      ? [...currentIds, bookmarkId]
+      : currentIds.filter(id => id !== bookmarkId);
+    form.setFieldValue(`collections.${collectionIndex}.selectedBookmarkIds`, newIds);
   };
 
   return (
@@ -113,25 +137,23 @@ export function CollectionImportCard({
           </div>
           <Checkbox
             label="Skip"
-            checked={mapping.skip}
-            onChange={(e) => 
-              onMappingChange(collection.id, { skip: e.currentTarget.checked })
-            }
+            {...form.getInputProps(`collections.${collectionIndex}.mapping.skip`, { type: 'checkbox' })}
           />
         </Group>
 
         <Divider />
 
         {/* Mode Selection - hide when skipped */}
-        {!mapping.skip && (
+        {!skip && (
           <SegmentedControl
-            value={mapping.mode}
-            onChange={(value) => 
-              onMappingChange(collection.id, { 
-                mode: value as 'create' | 'existing' | 'uncollected',
-                existingId: value === 'create' || value === 'uncollected' ? null : mapping.existingId,
-              })
-            }
+            {...form.getInputProps(`collections.${collectionIndex}.mapping.mode`)}
+            onChange={(value) => {
+              form.setFieldValue(`collections.${collectionIndex}.mapping.mode`, value as 'create' | 'existing' | 'uncollected');
+              // Clear existingId when switching to create or uncollected mode
+              if (value === 'create' || value === 'uncollected') {
+                form.setFieldValue(`collections.${collectionIndex}.mapping.existingId`, null);
+              }
+            }}
             data={[
               { 
                 label: 'Create New', 
@@ -151,18 +173,13 @@ export function CollectionImportCard({
         )}
 
         {/* Conditional Inputs */}
-        {!mapping.skip && (
+        {!skip && (
           <>
             {mapping.mode === 'create' && (
               <TextInput
                 label="Collection Name"
                 placeholder="Enter collection name"
-                value={mapping.newName}
-                onChange={(e) => 
-                  onMappingChange(collection.id, { 
-                    newName: e.target.value 
-                  })
-                }
+                {...form.getInputProps(`collections.${collectionIndex}.mapping.newName`)}
                 leftSection={<IconFolderPlus size={16} />}
                 required
               />
@@ -173,12 +190,7 @@ export function CollectionImportCard({
                 label="Select Existing Collection"
                 placeholder="Choose a collection"
                 data={existingCollections || []}
-                value={mapping.existingId || undefined}
-                onChange={(value) => 
-                  onMappingChange(collection.id, { 
-                    existingId: value 
-                  })
-                }
+                {...form.getInputProps(`collections.${collectionIndex}.mapping.existingId`)}
                 required
               />
             )}
@@ -196,7 +208,7 @@ export function CollectionImportCard({
         )}
 
         {/* Bookmarks Section - only show if not skipped */}
-        {!mapping.skip && (
+        {!skip && (
           <div>
             <Group justify="space-between" mb="sm">
               <Text size="sm" fw={500}>Bookmarks</Text>
@@ -215,9 +227,9 @@ export function CollectionImportCard({
                   <Box key={bookmark.id}>
                     <Group gap="sm" wrap="nowrap">
                       <Checkbox
-                        checked={selectedBookmarkIds.has(bookmark.id)}
+                        checked={selectedBookmarkIdsSet.has(bookmark.id)}
                         onChange={(e) => 
-                          onBookmarkSelectionChange(bookmark.id, e.currentTarget.checked)
+                          handleBookmarkToggle(bookmark.id, e.currentTarget.checked)
                         }
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -242,7 +254,7 @@ export function CollectionImportCard({
         )}
 
         {/* Show skip message */}
-        {mapping.skip && (
+        {skip && (
           <Alert color="gray" variant="light">
             <Text size="sm" c="dimmed">
               This collection and its {collection.bookmarks.length} bookmark{collection.bookmarks.length !== 1 ? 's' : ''} will be skipped
@@ -254,3 +266,5 @@ export function CollectionImportCard({
   );
 }
 
+// Memoize component to prevent unnecessary re-renders
+export const CollectionImportCard = React.memo(CollectionImportCardComponent);
