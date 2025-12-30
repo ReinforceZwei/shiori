@@ -16,6 +16,7 @@ import {
   ActionIcon,
   Box,
   LoadingOverlay,
+  Checkbox,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import {
@@ -55,6 +56,7 @@ type FormCollectionItem = {
 
 type FormValues = {
   collections: FormCollectionItem[];
+  fetchMetadata: boolean;
 };
 
 function generateId(): string {
@@ -151,6 +153,7 @@ export default function ImportPage() {
     cascadeUpdates: true,
     initialValues: {
       collections: [],
+      fetchMetadata: true,
     },
   });
 
@@ -373,7 +376,10 @@ export default function ImportPage() {
       }
 
       // Call the server action
-      const result = await bulkImportBookmarksAction({ collections });
+      const result = await bulkImportBookmarksAction({ 
+        collections,
+        fetchMetadata: formValues.fetchMetadata,
+      });
 
       if (result.success) {
         // Navigate back to home on success
@@ -483,6 +489,15 @@ export default function ImportPage() {
                 {error}
               </Alert>
             )}
+
+            <Divider my="sm" />
+
+            <Checkbox
+              label="Fetch high quality icon and description"
+              description="Visit the link to fetch high quality icon and description. Will take few minutes to process"
+              key={form.key('fetchMetadata')}
+              {...form.getInputProps('fetchMetadata', { type: 'checkbox' })}
+            />
           </Stack>
         </Paper>
 

@@ -13,11 +13,13 @@ import {
   Box,
   Button,
   Alert,
+  Avatar,
 } from '@mantine/core';
 import type { UseFormReturnType } from '@mantine/form';
 import {
   IconFolder,
   IconFolderPlus,
+  IconWorld,
 } from '@tabler/icons-react';
 import type { Collection } from '@/generated/prisma/browser';
 import CollectionSelect from '@/features/collection/component/CollectionSelect';
@@ -56,6 +58,7 @@ type FormCollectionItem = {
 
 type FormValues = {
   collections: FormCollectionItem[];
+  fetchMetadata: boolean;
 };
 
 interface CollectionImportCardProps {
@@ -232,6 +235,31 @@ function CollectionImportCardComponent({
                           handleBookmarkToggle(bookmark.id, e.currentTarget.checked)
                         }
                       />
+                      <Avatar size={32} radius="sm">
+                        {bookmark.icon ? (
+                          <img 
+                            src={bookmark.icon} 
+                            alt="" 
+                            style={{ 
+                              width: '100%', 
+                              height: '100%',
+                              objectFit: 'contain'
+                            }} 
+                          />
+                        ) : (
+                          <Box
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: "100%",
+                              height: "100%",
+                            }}
+                          >
+                            <IconWorld size={20} opacity={0.3} />
+                          </Box>
+                        )}
+                      </Avatar>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <Text size="sm" lineClamp={1}>
                           {bookmark.title}

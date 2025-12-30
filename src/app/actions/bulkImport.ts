@@ -280,78 +280,87 @@ export async function bulkImportBookmarksAction(data: {
       };
     }>;
   }>;
+  fetchMetadata?: boolean;
 }) {
   try {
     const user = await requireUser();
     
-    // Flatten all bookmarks from all collections for batch processing
-    type BookmarkWithCollectionIndex = {
-      bookmark: typeof data.collections[0]['bookmarks'][0];
-      collectionIndex: number;
-      bookmarkIndex: number;
-    };
+    // Default fetchMetadata to false if not provided
+    const shouldFetchMetadata = data.fetchMetadata ?? false;
     
-    const allBookmarks: BookmarkWithCollectionIndex[] = [];
-    data.collections.forEach((collection, collectionIndex) => {
-      collection.bookmarks.forEach((bookmark, bookmarkIndex) => {
-        allBookmarks.push({ bookmark, collectionIndex, bookmarkIndex });
-      });
-    });
+    let collectionsWithMetadata = data.collections;
     
-    console.log(`Starting metadata fetch for ${allBookmarks.length} bookmarks with concurrency limit of 8...`);
-    const startTime = Date.now();
-    
-    // Fetch metadata with concurrency control (max 8 concurrent requests)
-    const metadataResults = await processConcurrently(
-      allBookmarks,
-      8, // Concurrency limit
-      async (item) => {
-        try {
-          const metadata = await fetchBookmarkMetadata(item.bookmark.url);
-          return {
-            ...item,
-            metadata,
-          };
-        } catch (error) {
-          console.error(`Failed to process metadata for bookmark at collection ${item.collectionIndex}, bookmark ${item.bookmarkIndex}:`, error);
-          // Return item with null metadata instead of throwing
-          return {
-            ...item,
-            metadata: null,
-          };
-        }
-      }
-    );
-    
-    const fetchDuration = ((Date.now() - startTime) / 1000).toFixed(2);
-    const successCount = metadataResults.filter(r => r && r.metadata !== null).length;
-    console.log(`Metadata fetch completed in ${fetchDuration}s. Success: ${successCount}/${allBookmarks.length}`);
-    
-    // Reconstruct collections with enriched metadata
-    const collectionsWithMetadata = data.collections.map((collection, collectionIndex) => {
-      const bookmarksWithMetadata = collection.bookmarks.map((bookmark, bookmarkIndex) => {
-        // Find the metadata result for this bookmark
-        // Use defensive check to handle undefined results from failed fetches
-        const result = metadataResults.find(
-          r => r && r.collectionIndex === collectionIndex && r.bookmarkIndex === bookmarkIndex
-        );
-        const metadata = result?.metadata;
-        
-        // Merge fetched metadata with original bookmark data
-        return {
-          ...bookmark,
-          // Use fetched description if available, otherwise keep original
-          description: metadata?.description || bookmark.description,
-          // Use fetched icon if available, otherwise keep original
-          websiteIcon: metadata?.websiteIcon || bookmark.websiteIcon,
-        };
+    // Conditionally fetch metadata if enabled
+    if (shouldFetchMetadata) {
+      // Flatten all bookmarks from all collections for batch processing
+      type BookmarkWithCollectionIndex = {
+        bookmark: typeof data.collections[0]['bookmarks'][0];
+        collectionIndex: number;
+        bookmarkIndex: number;
+      };
+      
+      const allBookmarks: BookmarkWithCollectionIndex[] = [];
+      data.collections.forEach((collection, collectionIndex) => {
+        collection.bookmarks.forEach((bookmark, bookmarkIndex) => {
+          allBookmarks.push({ bookmark, collectionIndex, bookmarkIndex });
+        });
       });
       
-      return {
-        ...collection,
-        bookmarks: bookmarksWithMetadata,
-      };
-    });
+      console.log(`Starting metadata fetch for ${allBookmarks.length} bookmarks with concurrency limit of 8...`);
+      const startTime = Date.now();
+      
+      // Fetch metadata with concurrency control (max 8 concurrent requests)
+      const metadataResults = await processConcurrently(
+        allBookmarks,
+        8, // Concurrency limit
+        async (item) => {
+          try {
+            const metadata = await fetchBookmarkMetadata(item.bookmark.url);
+            return {
+              ...item,
+              metadata,
+            };
+          } catch (error) {
+            console.error(`Failed to process metadata for bookmark at collection ${item.collectionIndex}, bookmark ${item.bookmarkIndex}:`, error);
+            // Return item with null metadata instead of throwing
+            return {
+              ...item,
+              metadata: null,
+            };
+          }
+        }
+      );
+      
+      const fetchDuration = ((Date.now() - startTime) / 1000).toFixed(2);
+      const successCount = metadataResults.filter(r => r && r.metadata !== null).length;
+      console.log(`Metadata fetch completed in ${fetchDuration}s. Success: ${successCount}/${allBookmarks.length}`);
+      
+      // Reconstruct collections with enriched metadata
+      collectionsWithMetadata = data.collections.map((collection, collectionIndex) => {
+        const bookmarksWithMetadata = collection.bookmarks.map((bookmark, bookmarkIndex) => {
+          // Find the metadata result for this bookmark
+          // Use defensive check to handle undefined results from failed fetches
+          const result = metadataResults.find(
+            r => r && r.collectionIndex === collectionIndex && r.bookmarkIndex === bookmarkIndex
+          );
+          const metadata = result?.metadata;
+          
+          // Merge fetched metadata with original bookmark data
+          return {
+            ...bookmark,
+            // Use fetched description if available, otherwise keep original
+            description: metadata?.description || bookmark.description,
+            // Use fetched icon if available, otherwise keep original
+            websiteIcon: metadata?.websiteIcon || bookmark.websiteIcon,
+          };
+        });
+        
+        return {
+          ...collection,
+          bookmarks: bookmarksWithMetadata,
+        };
+      });
+    }
     
     // Import with enriched metadata
     const bulkService = new BulkService();
