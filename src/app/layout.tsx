@@ -33,6 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+import '@/lib/theme.css';
+
 export default function RootLayout({
   children,
 }: Readonly<{

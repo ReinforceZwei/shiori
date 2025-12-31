@@ -1,0 +1,6 @@
+/* Dark mode text color. Mantine default use dark.0 which is too dark
+ * Not possible to override in theme.ts, so put it here
+ */
+:root[data-mantine-color-scheme="dark"] {
+  --mantine-color-text: #fff !important;
+}

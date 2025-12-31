@@ -22,6 +22,7 @@ import {
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 
 export default function AppShell({
   children,
@@ -80,6 +81,13 @@ export default function AppShell({
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
+            <Image
+              src="/icon.png"
+              alt="Logo"
+              width={32}
+              height={32}
+              style={{ marginLeft: 8, borderRadius: 8 }}
+            />
             <Title order={2}>{tMetadata("title")}</Title>
           </Group>
           <Group>
