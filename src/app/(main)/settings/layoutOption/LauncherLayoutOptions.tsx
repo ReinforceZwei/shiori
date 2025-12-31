@@ -2,7 +2,7 @@
 
 import {
   Stack,
-  Group,
+  Grid,
   Text,
   SegmentedControl,
   Slider,
@@ -10,6 +10,7 @@ import {
 } from "@mantine/core";
 import { z } from "zod";
 import { launcherLayoutConfigSchema } from "@/features/settings/layout-config";
+import { SettingRow } from "@/component/settings";
 
 type LauncherConfig = z.infer<typeof launcherLayoutConfigSchema>;
 
@@ -23,17 +24,12 @@ export default function LauncherLayoutOptions({
   onChange,
 }: LauncherLayoutOptionsProps) {
   return (
-    <Stack gap="lg">
+    <Grid gutter="md">
       {/* Density */}
-      <Group justify="space-between" wrap="wrap">
-        <div>
-          <Text size="sm" fw={500} mb={4}>
-            Density
-          </Text>
-          <Text size="xs" c="dimmed">
-            Control the spacing between items
-          </Text>
-        </div>
+      <SettingRow
+        label="Density"
+        description="Control the spacing between items"
+      >
         <SegmentedControl
           value={config.density}
           onChange={(value) =>
@@ -46,18 +42,13 @@ export default function LauncherLayoutOptions({
             { label: "Comfortable", value: "comfortable" },
           ]}
         />
-      </Group>
+      </SettingRow>
 
       {/* Collection Opacity */}
-      <Stack gap="xs" py="sm">
-        <div>
-          <Text size="sm" fw={500} mb={4}>
-            Collection Opacity
-          </Text>
-          <Text size="xs" c="dimmed">
-            Adjust the opacity of collection backgrounds
-          </Text>
-        </div>
+      <SettingRow
+        label="Collection Opacity"
+        description="Adjust the opacity of collection backgrounds"
+      >
         <Slider
           value={config.collectionOpacity}
           onChange={(value) => onChange({ collectionOpacity: value })}
@@ -70,19 +61,16 @@ export default function LauncherLayoutOptions({
             { value: 0.5, label: "50%" },
             { value: 1, label: "100%" },
           ]}
+          w="100%"
+          mb="md"
         />
-      </Stack>
+      </SettingRow>
 
       {/* Collection Blur */}
-      <Stack gap="xs" py="sm">
-        <div>
-          <Text size="sm" fw={500} mb={4}>
-            Collection Blur
-          </Text>
-          <Text size="xs" c="dimmed">
-            Adjust the blur effect on collection backgrounds
-          </Text>
-        </div>
+      <SettingRow
+        label="Collection Blur"
+        description="Adjust the blur effect on collection backgrounds"
+      >
         <Slider
           value={config.collectionBlur}
           onChange={(value) => onChange({ collectionBlur: value })}
@@ -95,19 +83,16 @@ export default function LauncherLayoutOptions({
             { value: 15, label: "15px" },
             { value: 30, label: "30px" },
           ]}
+          w="100%"
+          mb="md"
         />
-      </Stack>
+      </SettingRow>
 
       {/* Show Empty Uncollected */}
-      <Group justify="space-between" wrap="wrap">
-        <div>
-          <Text size="sm" fw={500} mb={4}>
-            Show Empty Uncollected Section
-          </Text>
-          <Text size="xs" c="dimmed">
-            Display the uncollected section even when empty
-          </Text>
-        </div>
+      <SettingRow
+        label="Show Empty Uncollected Section"
+        description="Display the uncollected section even when empty"
+      >
         <Switch
           checked={config.showEmptyUncollected}
           onChange={(event) =>
@@ -116,8 +101,8 @@ export default function LauncherLayoutOptions({
             })
           }
         />
-      </Group>
-    </Stack>
+      </SettingRow>
+    </Grid>
   );
 }
 

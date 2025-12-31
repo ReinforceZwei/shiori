@@ -23,6 +23,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { SearchButton } from "../SearchButton";
 
 export default function AppShell({
   children,
@@ -91,6 +92,7 @@ export default function AppShell({
             <Title order={2}>{tMetadata("title")}</Title>
           </Group>
           <Group>
+            <SearchButton />
             <Menu>
               <Menu.Target>
                 <ActionIcon variant="light" size="lg">

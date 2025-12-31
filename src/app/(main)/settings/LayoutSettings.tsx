@@ -8,10 +8,12 @@ import {
   Title,
   Text,
   Divider,
+  Grid,
   SegmentedControl,
 } from "@mantine/core";
 import { IconLayout } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { SettingRow } from "@/component/settings";
 import {
   updateLayoutModeAction,
   updateLayoutConfigAction,
@@ -127,26 +129,23 @@ export default function LayoutSettings({
         <Divider my="xs" />
 
         {/* Layout Mode Selector */}
-        <Group justify="space-between" wrap="wrap">
-          <div>
-            <Text size="sm" fw={500} mb={4}>
-              Layout Mode
-            </Text>
-            <Text size="xs" c="dimmed">
-              Choose how your bookmarks are displayed
-            </Text>
-          </div>
-          <SegmentedControl
-            value={layoutMode}
-            onChange={handleLayoutModeChange}
-            data={[
-              { label: "Launcher", value: "launcher" },
-              // { label: "Grid", value: "grid" },
-              // { label: "List", value: "list" },
-              { label: "More Coming Soon...", value: "more-coming", disabled: true },
-            ]}
-          />
-        </Group>
+        <Grid gutter="md">
+          <SettingRow
+            label="Layout Mode"
+            description="Choose how your bookmarks are displayed"
+          >
+            <SegmentedControl
+              value={layoutMode}
+              onChange={handleLayoutModeChange}
+              data={[
+                { label: "Launcher", value: "launcher" },
+                // { label: "Grid", value: "grid" },
+                // { label: "List", value: "list" },
+                { label: "More Coming Soon...", value: "more-coming", disabled: true },
+              ]}
+            />
+          </SettingRow>
+        </Grid>
 
         <Divider my="xs" />
 

@@ -8,6 +8,7 @@ import {
   Title,
   Text,
   Divider,
+  Grid,
   useMantineColorScheme,
 } from '@mantine/core';
 import {
@@ -16,6 +17,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { LocaleSwitcher } from '@/component/LocaleSwitcher';
 import { ColorSchemeSwitcher, ColorScheme } from '@/component/ColorSchemeSwitcher';
+import { SettingRow } from '@/component/settings';
 import { locales } from '@/i18n/locale';
 import { notifications } from '@mantine/notifications';
 import { updateLocaleAction } from '@/app/actions/settings';
@@ -73,43 +75,35 @@ export default function GeneralSettings({ locale }: GeneralSettingsProps) {
 
         <Divider my="xs" />
 
-        {/* Color Scheme Setting */}
-        <Group justify="space-between" wrap="wrap">
-          <div>
-            <Text size="sm" fw={500} mb={4}>
-              {t('theme_label')}
-            </Text>
-            <Text size="xs" c="dimmed">
-              {t('theme_description')}
-            </Text>
-          </div>
-          <ColorSchemeSwitcher
-            value={mountedColorScheme}
-            onChange={handleColorSchemeChange}
-            showIcon={true}
-            size="sm"
-            width={180}
-          />
-        </Group>
+        <Grid gutter="md">
+          {/* Color Scheme Setting */}
+          <SettingRow
+            label={t('theme_label')}
+            description={t('theme_description')}
+          >
+            <ColorSchemeSwitcher
+              value={mountedColorScheme}
+              onChange={handleColorSchemeChange}
+              showIcon={true}
+              size="sm"
+              width="100%"
+            />
+          </SettingRow>
 
-        {/* Language Setting */}
-        <Group justify="space-between" wrap="wrap">
-          <div>
-            <Text size="sm" fw={500} mb={4}>
-              {t('language_label')}
-            </Text>
-            <Text size="xs" c="dimmed">
-              {t('language_description')}
-            </Text>
-          </div>
-          <LocaleSwitcher
-            value={locale}
-            onChange={handleLocaleChange}
-            showIcon={true}
-            size="sm"
-            width={180}
-          />
-        </Group>
+          {/* Language Setting */}
+          <SettingRow
+            label={t('language_label')}
+            description={t('language_description')}
+          >
+            <LocaleSwitcher
+              value={locale}
+              onChange={handleLocaleChange}
+              showIcon={true}
+              size="sm"
+              width="100%"
+            />
+          </SettingRow>
+        </Grid>
       </Stack>
     </Paper>
   );
