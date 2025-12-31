@@ -108,6 +108,8 @@
   "Settings_General": {
     "title": "General",
     "description": "Configure your basic application preferences.",
+    "theme_label": "Theme",
+    "theme_description": "Choose your preferred color scheme",
     "language_label": "Language",
     "language_description": "Select your preferred language for the application",
     "error_title": "Error",

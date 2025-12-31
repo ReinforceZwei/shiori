@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Paper,
   Stack,
@@ -8,12 +8,14 @@ import {
   Title,
   Text,
   Divider,
+  useMantineColorScheme,
 } from '@mantine/core';
 import {
   IconSettings,
 } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 import { LocaleSwitcher } from '@/component/LocaleSwitcher';
+import { ColorSchemeSwitcher, ColorScheme } from '@/component/ColorSchemeSwitcher';
 import { locales } from '@/i18n/locale';
 import { notifications } from '@mantine/notifications';
 import { updateLocaleAction } from '@/app/actions/settings';
@@ -26,6 +28,15 @@ interface GeneralSettingsProps {
 export default function GeneralSettings({ locale }: GeneralSettingsProps) {
   const t = useTranslations('Settings_General');
   const router = useRouter();
+  const { colorScheme, setColorScheme } = useMantineColorScheme();
+  
+  // To avoid hydration issues, we use a local state that gets initialized after mount
+  // This ensures server and client render the same initial value
+  const [mountedColorScheme, setMountedColorScheme] = useState<ColorScheme>('light');
+
+  useEffect(() => {
+    setMountedColorScheme(colorScheme);
+  }, [colorScheme]);
 
   const handleLocaleChange = async (newLocale: (typeof locales)[number]) => {
     if (newLocale === locale) return;
@@ -44,6 +55,10 @@ export default function GeneralSettings({ locale }: GeneralSettingsProps) {
     }
   };
 
+  const handleColorSchemeChange = (newColorScheme: ColorScheme) => {
+    setColorScheme(newColorScheme);
+  };
+
   return (
     <Paper shadow="xs" p="xl" radius="md" withBorder>
       <Stack gap="md">
@@ -57,6 +72,25 @@ export default function GeneralSettings({ locale }: GeneralSettingsProps) {
         </Text>
 
         <Divider my="xs" />
+
+        {/* Color Scheme Setting */}
+        <Group justify="space-between" wrap="wrap">
+          <div>
+            <Text size="sm" fw={500} mb={4}>
+              {t('theme_label')}
+            </Text>
+            <Text size="xs" c="dimmed">
+              {t('theme_description')}
+            </Text>
+          </div>
+          <ColorSchemeSwitcher
+            value={mountedColorScheme}
+            onChange={handleColorSchemeChange}
+            showIcon={true}
+            size="sm"
+            width={180}
+          />
+        </Group>
 
         {/* Language Setting */}
         <Group justify="space-between" wrap="wrap">

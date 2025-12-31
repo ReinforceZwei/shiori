@@ -108,6 +108,8 @@
   "Settings_General": {
     "title": "一般",
     "description": "設定您的基本應用程式偏好設定。",
+    "theme_label": "主題",
+    "theme_description": "選擇您偏好的色彩配置",
     "language_label": "語言",
     "language_description": "選擇您偏好的應用程式語言",
     "error_title": "錯誤",
