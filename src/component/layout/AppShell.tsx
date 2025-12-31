@@ -37,7 +37,7 @@ export default function AppShell({
       <MantineAppShell.Header
         withBorder={false}
         style={(theme) => ({
-          backgroundColor: alpha(theme.colors.mintGreen[1], 0.7),
+          backgroundColor: alpha(theme.colors.mintGreen[7], 0.15),
           backdropFilter: "blur(10px)",
         })}
       >
