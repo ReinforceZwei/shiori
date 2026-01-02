@@ -14,6 +14,7 @@ import {
 import { useLocalStorage } from "@mantine/hooks";
 import Link from "next/link";
 import { IconEdit, IconX } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
 import { BookmarkLauncherItem } from "./BookmarkLauncherItem";
 import { AddBookmarkLauncherItem } from "./AddBookmarkLauncherItem";
 import { CollectionLauncherSection } from "./CollectionLauncherSection";
@@ -99,6 +100,7 @@ export function BookmarkLauncherGrid({
   collections: collectionsProps,
   config: launcherConfig,
 }: BookmarkLauncherGridProps) {
+  const t = useTranslations("Layout_Launcher");
   const [editMode, setEditMode] = useState(false);
   const density: DensityMode = launcherConfig.density;
   const config = DENSITY_CONFIG[density];
@@ -219,7 +221,7 @@ export function BookmarkLauncherGrid({
   const handleEditBookmark = (bookmark: BookmarkWithIcon) => {
     modals.openContextModal({
       modal: "editBookmark",
-      title: "Edit Bookmark",
+      title: t("edit_bookmark_title"),
       innerProps: {
         bookmarkId: bookmark.id,
       },
@@ -229,7 +231,7 @@ export function BookmarkLauncherGrid({
   const handleEditCollection = (collection: CollectionWithBookmarks) => {
     modals.openContextModal({
       modal: "editCollection",
-      title: "Edit Collection",
+      title: t("edit_collection_title"),
       innerProps: {
         collectionId: collection.id,
         initialValues: {
@@ -243,14 +245,13 @@ export function BookmarkLauncherGrid({
 
   const handleDeleteBookmark = (bookmark: BookmarkWithIcon) => {
     modals.openConfirmModal({
-      title: "Delete Bookmark",
+      title: t("delete_bookmark_title"),
       children: (
         <Text size="sm">
-          Are you sure you want to delete &quot;{bookmark.title}&quot;? This
-          action cannot be undone.
+          {t("delete_bookmark_message", { title: bookmark.title })}
         </Text>
       ),
-      labels: { confirm: "Delete", cancel: "Cancel" },
+      labels: { confirm: t("delete_confirm"), cancel: t("delete_cancel") },
       confirmProps: { color: "red" },
       onConfirm: async () => {
         const result = await deleteBookmarkAction(bookmark.id);
@@ -286,20 +287,23 @@ export function BookmarkLauncherGrid({
             }}
           >
             <Text size="xl" fw={600} c="dimmed" ta="center">
-              No bookmarks yet
+              {t("empty_title")}
             </Text>
             <Text size="md" c="dimmed" ta="center">
-              Start by adding your first bookmark
+              {t("empty_subtitle")}
             </Text>
           </Box>
           <AddBookmarkLauncherItem size={config.size} />
-          <Text size="sm" c="dimmed" ta="center">
-            Or{" "}
-            <Anchor component={Link} href="/import" c="blue">
-              import your bookmarks
-            </Anchor>{" "}
-            from a file
-          </Text>
+          <Anchor 
+            component={Link} 
+            href="/import" 
+            c="blue" 
+            size="sm" 
+            ta="center"
+            style={{ display: "block" }}
+          >
+            {t("empty_import_alternative")}
+          </Anchor>
         </Box>
       </AppContainer>
     );
@@ -490,7 +494,7 @@ export function BookmarkLauncherGrid({
                 boxShadow: theme.shadows.lg,
               }}
             >
-              Exit edit mode
+              {t("exit_edit_mode")}
             </Button>
           )}
         </Transition>

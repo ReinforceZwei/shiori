@@ -19,6 +19,7 @@ import {
   IconUpload,
   IconAlertCircle,
 } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import { 
   useBackgroundImagesQuery,
   useCreateBackgroundImageMutation,
@@ -41,6 +42,7 @@ interface WallpaperSettingsProps {
 }
 
 export default function WallpaperSettings({ initialWallpapers }: WallpaperSettingsProps) {
+  const t = useTranslations('Settings_Wallpaper');
   const queryClient = useQueryClient();
   const { data: wallpapers, isLoading } = useBackgroundImagesQuery({ 
     initialData: initialWallpapers 
@@ -59,8 +61,8 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       notifications.show({
-        title: 'File too large',
-        message: `Maximum file size is ${MAX_FILE_SIZE / (1024 * 1024)}MB`,
+        title: t('file_too_large_title'),
+        message: t('file_too_large_message', { size: MAX_FILE_SIZE / (1024 * 1024) }),
         color: 'red',
       });
       return;
@@ -69,8 +71,8 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
     // Validate file type
     if (!file.type.startsWith('image/')) {
       notifications.show({
-        title: 'Invalid file type',
-        message: 'Please upload an image file',
+        title: t('invalid_file_type_title'),
+        message: t('invalid_file_type_message'),
         color: 'red',
       });
       return;
@@ -93,16 +95,16 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
         {
           onSuccess: () => {
             notifications.show({
-              title: 'Success',
-              message: 'Wallpaper uploaded successfully',
+              title: t('upload_success_title'),
+              message: t('upload_success_message'),
               color: 'green',
             });
             setUploadingFile(null);
           },
           onError: (error) => {
             notifications.show({
-              title: 'Error',
-              message: error.message || 'Failed to upload wallpaper',
+              title: t('error_title'),
+              message: error.message || t('upload_error_message'),
               color: 'red',
             });
             setUploadingFile(null);
@@ -112,8 +114,8 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
     } catch (error) {
       console.error('Upload error:', error);
       notifications.show({
-        title: 'Error',
-        message: 'Failed to upload wallpaper',
+        title: t('error_title'),
+        message: t('upload_error_message'),
         color: 'red',
       });
       setUploadingFile(null);
@@ -125,22 +127,22 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
       const result = await deleteBackgroundImageAction(id);
       if (result.success) {
         notifications.show({
-          title: 'Success',
-          message: 'Wallpaper deleted successfully',
+          title: t('delete_success_title'),
+          message: t('delete_success_message'),
           color: 'green',
         });
       } else {
         notifications.show({
-          title: 'Error',
-          message: result.error || 'Failed to delete wallpaper',
+          title: t('error_title'),
+          message: result.error || t('delete_error_message'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Delete error:', error);
       notifications.show({
-        title: 'Error',
-        message: 'Failed to delete wallpaper',
+        title: t('error_title'),
+        message: t('delete_error_message'),
         color: 'red',
       });
     }
@@ -156,8 +158,8 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
         onError: (error) => {
           // Show error notification (rollback is handled by the mutation hook)
           notifications.show({
-            title: 'Error',
-            message: error.message || 'Failed to update wallpaper',
+            title: t('error_title'),
+            message: error.message || t('update_error_message'),
             color: 'red',
           });
         },
@@ -174,7 +176,7 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
         <Group gap="sm" justify="space-between" wrap="wrap">
           <Group gap="sm">
             <IconPhoto size={24} />
-            <Title order={3}>Wallpapers</Title>
+            <Title order={3}>{t('title')}</Title>
           </Group>
           <Badge variant="light" size="lg">
             {wallpaperCount} / {MAX_WALLPAPERS}
@@ -182,8 +184,7 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
         </Group>
 
         <Text size="sm" c="dimmed">
-          Upload background images for your home page. You can have up to{' '}
-          {MAX_WALLPAPERS} wallpapers and customize display settings for each.
+          {t('description', { max: MAX_WALLPAPERS })}
         </Text>
 
         <Divider my="xs" />
@@ -202,13 +203,13 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
                 disabled={!canUpload || isUploading}
                 variant="light"
               >
-                {isUploading ? 'Uploading...' : 'Upload Wallpaper'}
+                {isUploading ? t('uploading') : t('upload_button')}
               </Button>
             )}
           </FileButton>
           {!canUpload && (
             <Text size="xs" c="dimmed">
-              Maximum limit reached. Delete a wallpaper to upload a new one.
+              {t('max_limit_reached')}
             </Text>
           )}
         </Group>
@@ -223,7 +224,7 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
         {/* Empty State */}
         {!isLoading && wallpaperCount === 0 && (
           <Alert icon={<IconAlertCircle size={16} />} color="blue" variant="light">
-            No wallpapers uploaded yet. Upload your first wallpaper to get started!
+            {t('empty_state_message')}
           </Alert>
         )}
 

@@ -4,6 +4,7 @@ import { Box, Text } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 import { modals } from "@mantine/modals";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { LauncherItemSize } from "./BookmarkLauncherItem";
 
 interface AddBookmarkLauncherItemProps {
@@ -31,13 +32,14 @@ const SIZE_CONFIG = {
 };
 
 export function AddBookmarkLauncherItem({ size = "medium", collectionId }: AddBookmarkLauncherItemProps) {
+  const t = useTranslations("Layout_Launcher");
   const [isHovered, setIsHovered] = useState(false);
   const config = SIZE_CONFIG[size];
 
   const handleClick = () => {
     modals.openContextModal({
       modal: "newBookmark",
-      title: "Create New Bookmark",
+      title: t("create_bookmark_title"),
       innerProps: {
         initialValues: collectionId ? { collectionId } : undefined,
       },
@@ -96,7 +98,7 @@ export function AddBookmarkLauncherItem({ size = "medium", collectionId }: AddBo
           color: "var(--mantine-color-text)",
         }}
       >
-        Add Bookmark
+        {t("add_bookmark")}
       </Text>
     </Box>
   );

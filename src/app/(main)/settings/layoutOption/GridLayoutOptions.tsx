@@ -2,6 +2,7 @@
 
 import { Alert } from "@mantine/core";
 import { IconInfoCircle } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { gridLayoutConfigSchema } from "@/features/settings/layout-config";
 
@@ -16,9 +17,10 @@ export default function GridLayoutOptions({
   config,
   onChange,
 }: GridLayoutOptionsProps) {
+  const t = useTranslations("Settings_Layout");
   return (
     <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-      Configuration options for grid layout are coming soon!
+      {t("grid_coming_soon")}
     </Alert>
   );
 }

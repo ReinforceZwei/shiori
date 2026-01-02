@@ -4,6 +4,7 @@ import { Box, Text, SimpleGrid, ActionIcon, Group, alpha, darken, useMantineThem
 import { IconChevronDown, IconChevronUp, IconEdit, IconGripVertical, IconTrash } from "@tabler/icons-react";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
+import { useTranslations } from "next-intl";
 import { BookmarkLauncherItem, LauncherItemSize } from "./BookmarkLauncherItem";
 import { AddBookmarkLauncherItem } from "./AddBookmarkLauncherItem";
 import { SortableItem } from "@/lib/dnd";
@@ -52,6 +53,7 @@ export function CollectionLauncherSection({
   isExpanded,
   onToggleExpanded,
 }: CollectionLauncherSectionProps) {
+  const t = useTranslations("Layout_Launcher");
   const theme = useMantineTheme();
   
   const backgroundColor = isDropTarget 
@@ -66,19 +68,22 @@ export function CollectionLauncherSection({
     const bookmarkCount = collection.bookmark.length;
     
     modals.openConfirmModal({
-      title: 'Delete Collection',
+      title: t("delete_collection_title"),
       children: (
         <Text size="sm">
-          Are you sure you want to delete <strong>{collection.name}</strong>?
+          {t("delete_collection_message", { name: collection.name })}
           {bookmarkCount > 0 && (
             <>
               <br /><br />
-              {bookmarkCount} {bookmarkCount === 1 ? 'bookmark' : 'bookmarks'} will be moved to Uncollected.
+              {t("delete_collection_bookmarks_notice", { 
+                count: bookmarkCount,
+                bookmarks: bookmarkCount === 1 ? t("bookmark_singular") : t("bookmark_plural")
+              })}
             </>
           )}
         </Text>
       ),
-      labels: { confirm: 'Delete', cancel: 'Cancel' },
+      labels: { confirm: t("delete_confirm"), cancel: t("delete_cancel") },
       confirmProps: { color: 'red' },
       onConfirm: async () => {
         try {
@@ -86,22 +91,22 @@ export function CollectionLauncherSection({
           
           if (result.success) {
             notifications.show({
-              title: 'Collection deleted',
-              message: `${collection.name} has been deleted successfully.`,
+              title: t("delete_collection_success_title"),
+              message: t("delete_collection_success_message", { name: collection.name }),
               color: 'green',
             });
           } else {
             notifications.show({
-              title: 'Cannot delete collection',
-              message: result.error || 'An error occurred while deleting the collection.',
+              title: t("delete_collection_error_title"),
+              message: result.error || t("delete_collection_error_message"),
               color: 'red',
             });
           }
         } catch (error) {
           console.error('Error deleting collection:', error);
           notifications.show({
-            title: 'Cannot delete collection',
-            message: 'An error occurred while deleting the collection. Please try again.',
+            title: t("delete_collection_error_title"),
+            message: t("delete_collection_error_message_retry"),
             color: 'red',
           });
         }

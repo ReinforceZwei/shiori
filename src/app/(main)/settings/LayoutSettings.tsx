@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { IconLayout } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { useTranslations } from "next-intl";
 import { SettingRow } from "@/component/settings";
 import {
   updateLayoutModeAction,
@@ -41,6 +42,7 @@ export default function LayoutSettings({
   layoutMode: initialLayoutMode,
   layoutConfig: initialLayoutConfig,
 }: LayoutSettingsProps) {
+  const t = useTranslations("Settings_Layout");
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(initialLayoutMode);
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>({
     launcher: initialLayoutConfig.launcher || DEFAULT_LAUNCHER_LAYOUT_CONFIG,
@@ -57,21 +59,16 @@ export default function LayoutSettings({
 
     try {
       await updateLayoutModeAction({ layoutMode: newMode });
-      notifications.show({
-        title: "Layout mode updated",
-        message: `Switched to ${newMode} layout`,
-        color: "green",
-      });
     } catch (error) {
       console.error("Error updating layout mode:", error);
       // Revert on error
       setLayoutMode(previousMode);
       notifications.show({
-        title: "Error",
+        title: t("error_title"),
         message:
           error instanceof Error
             ? error.message
-            : "Failed to update layout mode",
+            : t("error_update_layout_mode"),
         color: "red",
       });
     }
@@ -102,11 +99,11 @@ export default function LayoutSettings({
         // Revert on error
         setLayoutConfig(previousConfig);
         notifications.show({
-          title: "Error",
+          title: t("error_title"),
           message:
             error instanceof Error
               ? error.message
-              : "Failed to update settings",
+              : t("error_update_settings"),
           color: "red",
         });
       }
@@ -119,11 +116,11 @@ export default function LayoutSettings({
       <Stack gap="md">
         <Group gap="sm">
           <IconLayout size={24} />
-          <Title order={3}>Layout</Title>
+          <Title order={3}>{t("title")}</Title>
         </Group>
 
         <Text size="sm" c="dimmed">
-          Customize how your content is displayed and organized.
+          {t("description")}
         </Text>
 
         <Divider my="xs" />
@@ -131,17 +128,17 @@ export default function LayoutSettings({
         {/* Layout Mode Selector */}
         <Grid gutter="md">
           <SettingRow
-            label="Layout Mode"
-            description="Choose how your bookmarks are displayed"
+            label={t("layout_mode_label")}
+            description={t("layout_mode_description")}
           >
             <SegmentedControl
               value={layoutMode}
               onChange={handleLayoutModeChange}
               data={[
-                { label: "Launcher", value: "launcher" },
+                { label: t("layout_mode_launcher"), value: "launcher" },
                 // { label: "Grid", value: "grid" },
                 // { label: "List", value: "list" },
-                { label: "More Coming Soon...", value: "more-coming", disabled: true },
+                { label: t("layout_mode_more_coming"), value: "more-coming", disabled: true },
               ]}
             />
           </SettingRow>

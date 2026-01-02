@@ -8,6 +8,7 @@ import {
   Slider,
   Switch,
 } from "@mantine/core";
+import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { launcherLayoutConfigSchema } from "@/features/settings/layout-config";
 import { SettingRow } from "@/component/settings";
@@ -23,12 +24,13 @@ export default function LauncherLayoutOptions({
   config,
   onChange,
 }: LauncherLayoutOptionsProps) {
+  const t = useTranslations("Settings_Layout");
   return (
     <Grid gutter="md">
       {/* Density */}
       <SettingRow
-        label="Density"
-        description="Control the spacing between items"
+        label={t("launcher_density_label")}
+        description={t("launcher_density_description")}
       >
         <SegmentedControl
           value={config.density}
@@ -38,16 +40,16 @@ export default function LauncherLayoutOptions({
             })
           }
           data={[
-            { label: "Compact", value: "compact" },
-            { label: "Comfortable", value: "comfortable" },
+            { label: t("launcher_density_compact"), value: "compact" },
+            { label: t("launcher_density_comfortable"), value: "comfortable" },
           ]}
         />
       </SettingRow>
 
       {/* Collection Opacity */}
       <SettingRow
-        label="Collection Opacity"
-        description="Adjust the opacity of collection backgrounds"
+        label={t("launcher_collection_opacity_label")}
+        description={t("launcher_collection_opacity_description")}
       >
         <Slider
           value={config.collectionOpacity}
@@ -68,8 +70,8 @@ export default function LauncherLayoutOptions({
 
       {/* Collection Blur */}
       <SettingRow
-        label="Collection Blur"
-        description="Adjust the blur effect on collection backgrounds"
+        label={t("launcher_collection_blur_label")}
+        description={t("launcher_collection_blur_description")}
       >
         <Slider
           value={config.collectionBlur}
@@ -90,8 +92,8 @@ export default function LauncherLayoutOptions({
 
       {/* Show Empty Uncollected */}
       <SettingRow
-        label="Show Empty Uncollected Section"
-        description="Display the uncollected section even when empty"
+        label={t("launcher_show_empty_uncollected_label")}
+        description={t("launcher_show_empty_uncollected_description")}
       >
         <Switch
           checked={config.showEmptyUncollected}

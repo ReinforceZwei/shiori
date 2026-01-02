@@ -16,6 +16,7 @@ import { requireUser } from '@/lib/auth';
 import { DEFAULT_LAYOUT_CONFIG, layoutConfigSchema } from '@/features/settings/layout-config';
 import { z } from 'zod';
 import { AppContainer } from '@/component/layout/AppContainer';
+import { getTranslations } from 'next-intl/server';
 
 export default async function SettingsPage() {
   // Fetch user settings and wallpaper metadata on the server
@@ -37,6 +38,8 @@ export default async function SettingsPage() {
     ? (settings.layoutConfig as z.infer<typeof layoutConfigSchema>)
     : DEFAULT_LAYOUT_CONFIG;
 
+  const t = await getTranslations('Settings');
+
   return (
     <AppContainer py="xl">
       <Stack gap="lg">
@@ -44,7 +47,7 @@ export default async function SettingsPage() {
         <SettingsHeader />
 
         <Text c="dimmed" size="sm">
-          Manage your preferences and configure your application settings.
+          {t('description')}
         </Text>
 
         <Divider my="sm" />
@@ -57,26 +60,6 @@ export default async function SettingsPage() {
 
         {/* Layout Section */}
         <LayoutSettings layoutMode={layoutMode} layoutConfig={layoutConfig} />
-
-        {/* Placeholder for future sections */}
-        <Paper 
-          shadow="xs" 
-          p="xl" 
-          radius="md" 
-          withBorder
-          opacity={0.6}
-          style={{ pointerEvents: 'none' }}
-        >
-          <Stack gap="md">
-            <Group gap="sm">
-              <Title order={3}>More Sections Coming Soon</Title>
-            </Group>
-            
-            <Text size="sm" c="dimmed">
-              Additional settings sections will be available here.
-            </Text>
-          </Stack>
-        </Paper>
       </Stack>
     </AppContainer>
   );

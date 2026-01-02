@@ -27,6 +27,7 @@ import {
   IconDeviceFloppy,
   IconRestore,
 } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import type { BackgroundImageMetadata } from '@/features/wallpaper/query';
 
 interface WallpaperCardProps {
@@ -53,6 +54,7 @@ export default function WallpaperCard({
   onDelete,
   onUpdateProperty,
 }: WallpaperCardProps) {
+  const t = useTranslations('Settings_Wallpaper');
   const form = useForm<WallpaperFormValues>({
     initialValues: {
       isActive: wallpaper.isActive,
@@ -127,7 +129,7 @@ export default function WallpaperCard({
         <Image
           src={`/api/wallpaper/${wallpaper.id}`}
           h={160}
-          alt={wallpaper.filename || 'Wallpaper'}
+          alt={wallpaper.filename || t('wallpaper_alt')}
           fit="cover"
         />
       </Card.Section>
@@ -136,7 +138,7 @@ export default function WallpaperCard({
         {/* Active Status & Device Type */}
         <Group justify="space-between" wrap="nowrap">
           <Switch
-            label="Active"
+            label={t('active_label')}
             size="sm"
             checked={form.values.isActive}
             onChange={(event) => handleActiveToggle(event.currentTarget.checked)}
@@ -144,7 +146,7 @@ export default function WallpaperCard({
           <Group gap={4}>
             {getDeviceIcon(form.values.deviceType)}
             <Badge size="sm" variant="light">
-              {form.values.deviceType}
+              {t(`device_type_${form.values.deviceType}_badge`)}
             </Badge>
           </Group>
         </Group>
@@ -166,7 +168,7 @@ export default function WallpaperCard({
             isExpanded ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />
           }
         >
-          {isExpanded ? 'Hide' : 'Show'} Options
+          {isExpanded ? t('hide_options') : t('show_options')}
         </Button>
 
         {/* Expanded Options */}
@@ -176,39 +178,39 @@ export default function WallpaperCard({
 
             {/* Device Type */}
             <Select
-              label="Device Type"
+              label={t('device_type_label')}
               size="xs"
               data={[
-                { value: 'all', label: 'All Devices' },
-                { value: 'desktop', label: 'Desktop Only' },
-                { value: 'mobile', label: 'Mobile Only' },
+                { value: 'all', label: t('device_type_all') },
+                { value: 'desktop', label: t('device_type_desktop') },
+                { value: 'mobile', label: t('device_type_mobile') },
               ]}
               {...form.getInputProps('deviceType')}
             />
 
             {/* Display Size */}
             <Select
-              label="Display Size"
+              label={t('display_size_label')}
               size="xs"
               data={[
-                { value: 'cover', label: 'Cover' },
-                { value: 'contain', label: 'Contain' },
-                { value: 'auto', label: 'Auto' },
-                { value: '100% 100%', label: 'Stretch' },
+                { value: 'cover', label: t('display_size_cover') },
+                { value: 'contain', label: t('display_size_contain') },
+                { value: 'auto', label: t('display_size_auto') },
+                { value: '100% 100%', label: t('display_size_stretch') },
               ]}
               {...form.getInputProps('displaySize')}
             />
 
             {/* Display Position */}
             <Select
-              label="Position"
+              label={t('position_label')}
               size="xs"
               data={[
-                { value: 'center', label: 'Center' },
-                { value: 'top', label: 'Top' },
-                { value: 'bottom', label: 'Bottom' },
-                { value: 'left', label: 'Left' },
-                { value: 'right', label: 'Right' },
+                { value: 'center', label: t('position_center') },
+                { value: 'top', label: t('position_top') },
+                { value: 'bottom', label: t('position_bottom') },
+                { value: 'left', label: t('position_left') },
+                { value: 'right', label: t('position_right') },
               ]}
               {...form.getInputProps('displayPosition')}
             />
@@ -216,7 +218,7 @@ export default function WallpaperCard({
             {/* Opacity */}
             <Box>
               <Text size="xs" fw={500} mb={4}>
-                Opacity: {Math.round(form.values.displayOpacity * 100)}%
+                {t('opacity_label', { value: Math.round(form.values.displayOpacity * 100) })}
               </Text>
               <Slider
                 min={0}
@@ -230,7 +232,7 @@ export default function WallpaperCard({
             {/* Blur */}
             <Box>
               <Text size="xs" fw={500} mb={4}>
-                Blur: {form.values.displayBlur}px
+                {t('blur_label', { value: form.values.displayBlur })}
               </Text>
               <Slider
                 min={0}
@@ -251,7 +253,7 @@ export default function WallpaperCard({
                   leftSection={<IconDeviceFloppy size={14} />}
                   onClick={handleSave}
                 >
-                  Save Changes
+                  {t('save_changes')}
                 </Button>
                 <Button
                   variant="light"
@@ -260,7 +262,7 @@ export default function WallpaperCard({
                   leftSection={<IconRestore size={14} />}
                   onClick={handleReset}
                 >
-                  Reset
+                  {t('reset')}
                 </Button>
               </Group>
             )}
@@ -277,7 +279,7 @@ export default function WallpaperCard({
           onClick={() => onDelete(wallpaper.id)}
           mt="xs"
         >
-          Delete
+          {t('delete')}
         </Button>
       </Stack>
     </Card>
