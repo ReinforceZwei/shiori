@@ -4,7 +4,6 @@ import {
   SimpleGrid,
   Box,
   Text,
-  Container,
   useMantineTheme,
   alpha,
   Anchor,
@@ -48,6 +47,7 @@ import {
   CollectionWithBookmarks,
 } from "../types";
 import { LauncherLayoutConfig } from "@/features/settings/layout-config";
+import { AppContainer } from "@/component/layout/AppContainer";
 
 export type DensityMode = "comfortable" | "compact";
 
@@ -266,7 +266,7 @@ export function BookmarkLauncherGrid({
 
   if (hasNoContent) {
     return (
-      <Container size="xl" py="xl">
+      <AppContainer py="xl">
         <Box
           style={{
             display: "flex",
@@ -301,13 +301,13 @@ export function BookmarkLauncherGrid({
             from a file
           </Text>
         </Box>
-      </Container>
+      </AppContainer>
     );
   }
 
   return (
     <DndContext {...dndContextProps}>
-      <Container fluid py="xl">
+      <AppContainer fluid py="xl">
         <SortableContext
           items={["uncollected", ...collections.map((c) => c.id)]}
           strategy={verticalListSortingStrategy}
@@ -418,7 +418,7 @@ export function BookmarkLauncherGrid({
               </SortableItem>
             ))}
         </SortableContext>
-      </Container>
+      </AppContainer>
       <DragOverlay
         modifiers={
           activeType === "container" ? [restrictToVertical] : undefined

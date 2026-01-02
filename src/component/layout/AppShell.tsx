@@ -139,7 +139,7 @@ export default function AppShell({
         </Group>
       </MantineAppShell.Header>
 
-      <MantineAppShell.Main h="100dvh">{children}</MantineAppShell.Main>
+      <MantineAppShell.Main>{children}</MantineAppShell.Main>
     </MantineAppShell>
   );
 }

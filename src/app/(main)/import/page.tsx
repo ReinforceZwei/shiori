@@ -44,6 +44,7 @@ import {
 import { ImportFloatingPanel } from "./ImportFloatingPanel";
 import { bulkImportBookmarksAction } from "@/app/actions/bulkImport";
 import { extractBase64 } from "@/lib/utils/image";
+import { AppContainer } from "@/component/layout/AppContainer";
 
 type FormCollectionItem = {
   id: string;
@@ -422,7 +423,7 @@ export default function ImportPage() {
   };
 
   return (
-    <Container size="xl" p={0} pos="relative">
+    <AppContainer pos="relative">
       <LoadingOverlay visible={isImporting} overlayProps={{ blur: 2 }} />
       <Stack gap="lg">
         {/* Header with back button */}
@@ -554,6 +555,6 @@ export default function ImportPage() {
           onClick={handleImport}
         />
       </Stack>
-    </Container>
+    </AppContainer>
   );
 }

@@ -1,5 +1,4 @@
 import { 
-  Container, 
   Paper, 
   Stack, 
   Group, 
@@ -16,6 +15,7 @@ import { SettingsService } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
 import { DEFAULT_LAYOUT_CONFIG, layoutConfigSchema } from '@/features/settings/layout-config';
 import { z } from 'zod';
+import { AppContainer } from '@/component/layout/AppContainer';
 
 export default async function SettingsPage() {
   // Fetch user settings and wallpaper metadata on the server
@@ -38,7 +38,7 @@ export default async function SettingsPage() {
     : DEFAULT_LAYOUT_CONFIG;
 
   return (
-    <Container size="lg" py="xl">
+    <AppContainer py="xl">
       <Stack gap="lg">
         {/* Header with back button */}
         <SettingsHeader />
@@ -78,6 +78,6 @@ export default async function SettingsPage() {
           </Stack>
         </Paper>
       </Stack>
-    </Container>
+    </AppContainer>
   );
 }
