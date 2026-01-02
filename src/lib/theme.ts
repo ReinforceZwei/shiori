@@ -3,7 +3,7 @@ import { createTheme, DEFAULT_THEME } from "@mantine/core";
 import { notoSansMono, notoSansTC } from "./font";
 
 // Shiori theme color
-const mintGreen: MantineColorsTuple = [
+export const mintGreen: MantineColorsTuple = [
   "#ecfaeb",
   "#dfefdd",
   "#c0dcbe",
@@ -16,7 +16,7 @@ const mintGreen: MantineColorsTuple = [
   "#3b7137"
 ];
 
-const roseRed: MantineColorsTuple = [
+export const roseRed: MantineColorsTuple = [
   '#ffecf0',
   '#f9d8de',
   '#ecaeba',

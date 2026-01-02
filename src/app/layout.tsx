@@ -2,13 +2,13 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@mantine/spotlight/styles.css';
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { NextIntlClientProvider } from 'next-intl';
 import ShioriModalProvider from '@/modals/modal.provider'
 import QueryProvider from '@/component/provider/QueryProvider';
-import theme from '@/lib/theme';
+import theme, { mintGreen } from '@/lib/theme';
 import { notoSansMono, notoSansTC } from '@/lib/font';
 import { IntlClientProvider } from '@/i18n/provider';
 import { headers } from 'next/headers';
@@ -31,7 +31,20 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${t('title')}`,
     },
     description: t('description'),
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: t('title'),
+    },
+    openGraph: {
+      title: t('title'),
+      description: t('description'),
+    }
   };
+}
+
+export const viewport: Viewport = {
+  themeColor: mintGreen[3],
 }
 
 import '@/lib/theme.css';
