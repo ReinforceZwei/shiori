@@ -47,7 +47,8 @@
     "sign_out_cancel_button": "Cancel",
     "bookmark": "Bookmark",
     "create_new_bookmark": "Create New Bookmark",
-    "create_new_collection": "Create New Collection"
+    "create_new_collection": "Create New Collection",
+    "search": "Search"
   },
   "BookmarkForm": {
     "url_label": "URL",
@@ -114,5 +115,10 @@
     "language_description": "Select your preferred language for the application",
     "error_title": "Error",
     "error_message": "Failed to update language"
+  },
+  "SearchSpotlight": {
+    "searching": "Searching...",
+    "no_bookmarks_found": "No bookmarks found",
+    "type_to_search": "Type to search bookmarks"
   }
 }

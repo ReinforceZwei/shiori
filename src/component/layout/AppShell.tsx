@@ -24,6 +24,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { SearchButton } from "../SearchButton";
+import { SearchSpotlight, storeActions } from "@/features/search/component/SearchSpotlight";
+import { spotlight } from "@mantine/spotlight";
 
 export default function AppShell({
   children,
@@ -43,6 +45,7 @@ export default function AppShell({
           backdropFilter: "blur(10px)",
         })}
       >
+        <SearchSpotlight />
         <Group h="100%" px="md" justify="space-between">
           <Group>
             <Menu>
@@ -92,7 +95,7 @@ export default function AppShell({
             <Title order={2}>{tMetadata("title")}</Title>
           </Group>
           <Group>
-            <SearchButton />
+            <SearchButton label={t("search")} onClick={() => storeActions.open()} />
             <Menu>
               <Menu.Target>
                 <ActionIcon variant="light" size="lg">

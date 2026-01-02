@@ -10,7 +10,7 @@ const searchQuerySchema = z.object({
 });
 
 export class SearchService extends ServiceBase {
-  async search(data: z.infer<typeof searchQuerySchema>) {
+  async searchFts(data: z.infer<typeof searchQuerySchema>) {
     const validatedData = searchQuerySchema.parse(data);
     const limit = validatedData.limit ?? 10;
     const offset = validatedData.offset ?? 0;
@@ -49,5 +49,23 @@ ORDER BY
 	) DESC
 LIMIT ${limit} OFFSET ${offset};
     `
+  }
+
+  async search(data: z.infer<typeof searchQuerySchema>) {
+    const validatedData = searchQuerySchema.parse(data);
+    const limit = validatedData.limit ?? 10;
+    const offset = validatedData.offset ?? 0;
+    return await this.prisma.bookmark.findMany({
+      where: {
+        OR: [
+          { title: { contains: validatedData.query, mode: "insensitive" } },
+          { url: { contains: validatedData.query, mode: "insensitive" } },
+          { description: { contains: validatedData.query, mode: "insensitive" } },
+        ],
+        userId: validatedData.userId,
+      },
+      take: limit,
+      skip: offset,
+    });
   }
 }

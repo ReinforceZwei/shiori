@@ -23,6 +23,7 @@
     "@mantine/hooks": "^8.3.6",
     "@mantine/modals": "^8.3.6",
     "@mantine/notifications": "^8.3.6",
+    "@mantine/spotlight": "^8.3.6",
     "@prisma/adapter-pg": "7.0.1",
     "@prisma/client": "7.0.1",
     "@reinforcezwei/favicon-fetcher": "^1.0.5",

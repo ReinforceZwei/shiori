@@ -47,7 +47,8 @@
     "sign_out_cancel_button": "取消",
     "bookmark": "書籤",
     "create_new_bookmark": "新增書籤",
-    "create_new_collection": "新增收藏集"
+    "create_new_collection": "新增收藏集",
+    "search": "搜尋"
   },
   "BookmarkForm": {
     "url_label": "網址",
@@ -114,5 +115,10 @@
     "language_description": "選擇您偏好的應用程式語言",
     "error_title": "錯誤",
     "error_message": "更新語言失敗"
+  },
+  "SearchSpotlight": {
+    "searching": "搜尋中...",
+    "no_bookmarks_found": "找不到書籤",
+    "type_to_search": "輸入以搜尋書籤"
   }
 }
