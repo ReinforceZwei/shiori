@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
@@ -10,8 +8,6 @@ services:
       POSTGRES_DB: shiori
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "${DB_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U shiori"]
       interval: 5s
@@ -19,32 +15,27 @@ services:
       retries: 5
 
   migrate:
-    # Use pre-built migration image from registry
-    # Specify the version tag you want to deploy (e.g., 1.0.1)
-    image: ${MIGRATION_IMAGE:-ghcr.io/${GITHUB_REPOSITORY}-migrate:${VERSION:-latest}}
+    image: ghcr.io/reinforcezwei/shiori-migrate:latest
     environment:
       DATABASE_URL: postgresql://shiori:${DB_PASSWORD:-shiori_password}@db:5432/shiori
     depends_on:
       db:
         condition: service_healthy
     restart: "no"  # Run once and exit
-    command: ["node_modules/.bin/prisma", "migrate", "deploy"]
 
   app:
-    # Use pre-built app image from registry
-    # Specify the version tag you want to deploy (e.g., v1.0.1)
-    image: ${APP_IMAGE:-ghcr.io/${GITHUB_REPOSITORY}:${VERSION:-latest}}
+    image: ghcr.io/reinforcezwei/shiori:latest
     restart: always
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
       # Database connection
       DATABASE_URL: postgresql://shiori:${DB_PASSWORD:-shiori_password}@db:5432/shiori
-
-      # Better Auth configuration
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
-
+      
+      # Better Auth configuration (generate your own secret!)
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-secret-key-change-this-in-production}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      
       # Node environment
       NODE_ENV: production
     depends_on:
@@ -52,15 +43,6 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    volumes:
-      - app_data:/app/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
 volumes:
   postgres_data:
-  app_data:

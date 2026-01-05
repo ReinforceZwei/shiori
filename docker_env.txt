@@ -1,0 +1,25 @@
+# Docker Compose Environment Variables
+# Copy this file to .env and update the values for your deployment
+
+# ======================
+# Database Configuration
+# ======================
+# Database password (change this!)
+DB_PASSWORD=shiori_password
+
+# ======================
+# Better Auth Configuration
+# ======================
+# Generate a strong random secret for production!
+# You can use: openssl rand -base64 32
+BETTER_AUTH_SECRET=your-secret-key-change-this-in-production
+
+# The public URL where your app will be accessible
+# Update this to your domain in production
+BETTER_AUTH_URL=http://localhost:3000
+
+# ======================
+# Application Configuration
+# ======================
+# Application port (default: 3000)
+APP_PORT=3000
