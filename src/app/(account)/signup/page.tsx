@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { LocaleSwitcher } from '@/component/LocaleSwitcher';
 import { locales } from '@/i18n/locale';
 import { initSettingsAction } from '@/app/actions/settings';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Wallpaper } from '@/component/layout/Wallpaper';
 
 // Zod schema for sign-up form validation
@@ -29,12 +29,13 @@ export default function SignupPage() {
   const router = useRouter();
   const t = useTranslations('Signup');
   const tMetadata = useTranslations('metadata');
+  const locale = useLocale();
   const form = useForm<SignupFormValues>({
     initialValues: {
       name: '',
       email: '',
       password: '',
-      locale: 'en-US' as const,
+      locale: locale as (typeof locales)[number],
     },
     validate: zodResolver(signupFormSchema),
   });
