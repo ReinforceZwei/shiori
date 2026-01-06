@@ -1,6 +1,7 @@
 import { Affix, Transition, Alert, Group, Text, Button } from "@mantine/core";
 import { useWindowScroll } from "@mantine/hooks";
 import { IconCheck } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
 
 interface ImportFloatingPanelProps {
   show: boolean;
@@ -11,6 +12,7 @@ export function ImportFloatingPanel({
   show,
   onClick,
 }: ImportFloatingPanelProps) {
+  const t = useTranslations("Import");
   const [scroll, scrollTo] = useWindowScroll();
   return (
     <Affix
@@ -29,14 +31,14 @@ export function ImportFloatingPanel({
             }}
           >
             <Group gap="md" justify="center">
-              <Text size="sm">Confirm Import</Text>
+              <Text size="sm">{t("floating_panel_text")}</Text>
               <Button
                 size="xs"
                 variant="light"
                 leftSection={<IconCheck size={16} />}
                 onClick={onClick}
               >
-                Import
+                {t("floating_panel_button")}
               </Button>
             </Group>
           </Alert>

@@ -48,6 +48,7 @@ import { ImportFloatingPanel } from "./ImportFloatingPanel";
 import { extractBase64 } from "@/lib/utils/image";
 import { AppContainer } from "@/component/layout/AppContainer";
 import { useBulkImportMutation } from "./query";
+import { useTranslations } from "next-intl";
 
 type FormCollectionItem = {
   id: string;
@@ -141,6 +142,7 @@ function flattenBookmarks(bookmarkFile: BookmarkFile): {
 }
 
 export default function ImportPage() {
+  const t = useTranslations("Import");
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<{
@@ -217,12 +219,12 @@ export default function ImportPage() {
       if (flattened.uncollectedBookmarks.length > 0) {
         formCollections.push({
           id: "__uncollected__",
-          name: "Root Bookmarks",
+          name: t("root_bookmarks"),
           path: [],
           bookmarks: flattened.uncollectedBookmarks,
           mapping: {
             mode: "uncollected",
-            newName: "Root Bookmarks",
+            newName: t("root_bookmarks"),
             existingId: null,
             skip: false,
           },
@@ -268,7 +270,7 @@ export default function ImportPage() {
     );
 
     if (totalSelected === 0) {
-      errors.push("No bookmarks selected");
+      errors.push(t("validation_no_bookmarks"));
     }
 
     // Validate all collections
@@ -282,12 +284,12 @@ export default function ImportPage() {
       if (mapping.mode === "uncollected") continue;
 
       if (mapping.mode === "create" && !mapping.newName.trim()) {
-        errors.push(`Collection "${collection.name}": Name is required`);
+        errors.push(t("validation_name_required", { name: collection.name }));
       }
 
       if (mapping.mode === "existing" && !mapping.existingId) {
         errors.push(
-          `Collection "${collection.name}": Please select an existing collection`
+          t("validation_select_existing", { name: collection.name })
         );
       }
     }
@@ -300,10 +302,10 @@ export default function ImportPage() {
 
     if (!validation.valid) {
       modals.openConfirmModal({
-        title: "Something is missing",
+        title: t("validation_modal_title"),
         children: (
           <Text size="sm" component="div">
-            Please fix the following errors:
+            {t("validation_modal_message")}
             <ul style={{ marginTop: 8, marginBottom: 0 }}>
               {validation.errors.map((error, index) => (
                 <li key={index}>{error}</li>
@@ -311,7 +313,7 @@ export default function ImportPage() {
             </ul>
           </Text>
         ),
-        labels: { confirm: "OK", cancel: "" },
+        labels: { confirm: t("validation_modal_ok"), cancel: "" },
         confirmProps: { color: "red" },
         cancelProps: { style: { display: "none" } },
         centered: true,
@@ -389,20 +391,20 @@ export default function ImportPage() {
 
       if (result.success) {
         modals.openConfirmModal({
-          title: "Import Successful",
+          title: t("success_modal_title"),
           children: (
             <>
               <Text size="sm">
-                You can now go to home and check your bookmarks.
+                {t("success_modal_message")}
               </Text>
               { result.count ? (
                 <Text size="sm">
-                  {result.count} bookmarks are still processing in background. Check them out few minutes later.
+                  {t("success_modal_processing", { count: result.count })}
                 </Text>
               ) : null}
             </>
           ),
-          labels: { confirm: "Go to home", cancel: "" },
+          labels: { confirm: t("success_modal_confirm"), cancel: "" },
           cancelProps: { style: { display: "none" } },
           centered: true,
           onConfirm: () => {
@@ -412,13 +414,13 @@ export default function ImportPage() {
       } else {
         // Show error modal on failure
         modals.openConfirmModal({
-          title: "Import Failed",
+          title: t("error_modal_title"),
           children: (
             <Text size="sm">
-              {result.error || 'An unexpected error occurred during import'}
+              {result.error || t("error_modal_message")}
             </Text>
           ),
-          labels: { confirm: "OK", cancel: "" },
+          labels: { confirm: t("error_modal_ok"), cancel: "" },
           confirmProps: { color: "red" },
           cancelProps: { style: { display: "none" } },
           centered: true,
@@ -430,13 +432,13 @@ export default function ImportPage() {
       
       // Show error modal
       modals.openConfirmModal({
-        title: "Import Failed",
+        title: t("error_modal_title"),
         children: (
           <Text size="sm">
-            {error instanceof Error ? error.message : 'An unexpected error occurred during import'}
+            {error instanceof Error ? error.message : t("error_modal_message")}
           </Text>
         ),
-        labels: { confirm: "OK", cancel: "" },
+        labels: { confirm: t("error_modal_ok"), cancel: "" },
         confirmProps: { style: { display: "none" } },
         centered: true,
         onConfirm: () => {},
@@ -456,7 +458,7 @@ export default function ImportPage() {
             <Paper shadow="xs" withBorder p="xl">
               <Flex gap="md" align="center" direction="column">
                 <Loader />
-                <Text size="sm">Importing bookmarks...</Text>
+                <Text size="sm">{t("importing_loading")}</Text>
               </Flex>
             </Paper>
           )
@@ -470,15 +472,15 @@ export default function ImportPage() {
             variant="subtle"
             size="lg"
             onClick={() => router.push("/")}
-            aria-label="Back to home"
+            aria-label={t("back_to_home_aria")}
           >
             <IconArrowLeft size={20} />
           </ActionIcon>
-          <Title order={1}>Import Bookmarks</Title>
+          <Title order={1}>{t("title")}</Title>
         </Group>
 
         <Text c="dimmed" size="sm">
-          Import your bookmarks from a browser export file (HTML format).
+          {t("subtitle")}
         </Text>
 
         <Divider my="sm" />
@@ -488,11 +490,11 @@ export default function ImportPage() {
           <Stack gap="md">
             <Group gap="sm">
               <IconFileImport size={24} />
-              <Title order={3}>Select Bookmark File</Title>
+              <Title order={3}>{t("file_section_title")}</Title>
             </Group>
 
             <Text size="sm" c="dimmed">
-              Choose an HTML bookmark file exported from your browser.
+              {t("file_section_description")}
             </Text>
 
             <Group>
@@ -506,15 +508,17 @@ export default function ImportPage() {
                     leftSection={<IconUpload size={16} />}
                     variant="filled"
                   >
-                    Select File
+                    {t("select_file_button")}
                   </Button>
                 )}
               </FileButton>
 
               {file && (
                 <Text size="sm" c="dimmed">
-                  Selected: <strong>{file.name}</strong> (
-                  {(file.size / 1024).toFixed(2)} KB)
+                  {t("file_selected", { 
+                    name: file.name,
+                    size: (file.size / 1024).toFixed(2)
+                  })}
                 </Text>
               )}
             </Group>
@@ -522,7 +526,7 @@ export default function ImportPage() {
             {error && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
-                title="Error"
+                title={t("error_alert_title")}
                 color="red"
               >
                 {error}
@@ -532,8 +536,8 @@ export default function ImportPage() {
             <Divider my="sm" />
 
             <Checkbox
-              label="Fetch high quality icon and description"
-              description="Visit the link to fetch high quality icon and description. Will take few minutes to process"
+              label={t("fetch_metadata_label")}
+              description={t("fetch_metadata_description")}
               key={form.key('fetchMetadata')}
               {...form.getInputProps('fetchMetadata', { type: 'checkbox' })}
             />
@@ -555,25 +559,26 @@ export default function ImportPage() {
                 <Stack gap="md">
                   <Group justify="space-between">
                     <div>
-                      <Title order={4}>Collections & Bookmarks</Title>
+                      <Title order={4}>{t("collections_section_title")}</Title>
                       <Text size="sm" c="dimmed" mt="xs">
-                        Choose how to handle each collection and select
-                        bookmarks to import
+                        {t("collections_section_description")}
                       </Text>
                     </div>
                     <Group gap="md">
                       <Badge size="lg" variant="light" color="blue">
-                        {selectedCount.bookmarks} /{" "}
-                        {parsedData.bookmarks.length} Bookmarks
+                        {t("bookmarks_count_badge", { 
+                          selected: selectedCount.bookmarks,
+                          total: parsedData.bookmarks.length 
+                        })}
                       </Badge>
                       <Badge size="lg" variant="light" color="grape">
-                        {selectedCount.collections} Collections
+                        {t("collections_count_badge", { count: selectedCount.collections })}
                       </Badge>
                     </Group>
                   </Group>
 
                   <Group justify="flex-end">
-                    <Button onClick={handleImport} leftSection={<IconCheck size={16} />}>Confirm Import</Button>
+                    <Button onClick={handleImport} leftSection={<IconCheck size={16} />}>{t("confirm_import_button")}</Button>
                   </Group>
 
                   <Stack gap="md">

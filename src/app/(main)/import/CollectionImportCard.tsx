@@ -23,6 +23,7 @@ import {
 } from '@tabler/icons-react';
 import type { Collection } from '@/generated/prisma/browser';
 import CollectionSelect from '@/features/collection/component/CollectionSelect';
+import { useTranslations } from 'next-intl';
 
 export interface FlattenedBookmark {
   id: string;
@@ -80,6 +81,7 @@ function CollectionImportCardComponent({
   existingCollections,
   isLoadingCollections,
 }: CollectionImportCardProps) {
+  const t = useTranslations("Import");
   // Subscribe to this specific collection's changes to trigger re-renders
   const [skip, setSkip] = useState(collection.mapping.skip);
   form.watch(`collections.${collectionIndex}`, ({ value }) => {
@@ -124,22 +126,22 @@ function CollectionImportCardComponent({
               <IconFolder size={18} />
               <Text fw={500}>{collection.name}</Text>
               <Badge size="sm" variant="light" color="blue">
-                {collection.bookmarks.length} bookmarks
+                {t("card_bookmarks_count", { count: collection.bookmarks.length })}
               </Badge>
               {!mapping.skip && (
                 <Badge size="sm" variant="light" color="green">
-                  {selectedCount} selected
+                  {t("card_selected_count", { count: selectedCount })}
                 </Badge>
               )}
             </Group>
             {collection.path.length > 0 && (
               <Text size="xs" c="dimmed" mt={4}>
-                Path: {getPathString(collection.path)}
+                {t("card_path_label", { path: getPathString(collection.path) })}
               </Text>
             )}
           </div>
           <Checkbox
-            label="Skip"
+            label={t("card_skip_label")}
             {...form.getInputProps(`collections.${collectionIndex}.mapping.skip`, { type: 'checkbox' })}
           />
         </Group>
@@ -159,15 +161,15 @@ function CollectionImportCardComponent({
             }}
             data={[
               { 
-                label: 'Create New', 
+                label: t("card_mode_create"), 
                 value: 'create',
               },
               { 
-                label: 'Use Existing', 
+                label: t("card_mode_existing"), 
                 value: 'existing',
               },
               { 
-                label: 'Uncollected', 
+                label: t("card_mode_uncollected"), 
                 value: 'uncollected',
               },
             ]}
@@ -180,8 +182,8 @@ function CollectionImportCardComponent({
           <>
             {mapping.mode === 'create' && (
               <TextInput
-                label="Collection Name"
-                placeholder="Enter collection name"
+                label={t("card_collection_name_label")}
+                placeholder={t("card_collection_name_placeholder")}
                 {...form.getInputProps(`collections.${collectionIndex}.mapping.newName`)}
                 leftSection={<IconFolderPlus size={16} />}
                 required
@@ -190,8 +192,8 @@ function CollectionImportCardComponent({
 
             {mapping.mode === 'existing' && (
               <CollectionSelect
-                label="Select Existing Collection"
-                placeholder="Choose a collection"
+                label={t("card_existing_collection_label")}
+                placeholder={t("card_existing_collection_placeholder")}
                 data={existingCollections || []}
                 {...form.getInputProps(`collections.${collectionIndex}.mapping.existingId`)}
                 required
@@ -201,7 +203,7 @@ function CollectionImportCardComponent({
             {mapping.mode === 'uncollected' && (
               <Alert color="orange" variant="light">
                 <Text size="sm">
-                  These bookmarks will be imported without a collection
+                  {t("card_uncollected_alert")}
                 </Text>
               </Alert>
             )}
@@ -214,13 +216,13 @@ function CollectionImportCardComponent({
         {!skip && (
           <div>
             <Group justify="space-between" mb="sm">
-              <Text size="sm" fw={500}>Bookmarks</Text>
+              <Text size="sm" fw={500}>{t("card_bookmarks_label")}</Text>
               <Button 
                 variant="subtle" 
                 size="xs"
                 onClick={toggleAll}
               >
-                {allSelected ? 'Deselect All' : 'Select All'}
+                {allSelected ? t("card_deselect_all") : t("card_select_all")}
               </Button>
             </Group>
 
@@ -285,7 +287,7 @@ function CollectionImportCardComponent({
         {skip && (
           <Alert color="gray" variant="light">
             <Text size="sm" c="dimmed">
-              This collection and its {collection.bookmarks.length} bookmark{collection.bookmarks.length !== 1 ? 's' : ''} will be skipped
+              {t("card_skip_message", { count: collection.bookmarks.length })}
             </Text>
           </Alert>
         )}
