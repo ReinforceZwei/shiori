@@ -17,6 +17,9 @@ import {
   Box,
   LoadingOverlay,
   Checkbox,
+  Loader,
+  Flex,
+  RemoveScroll,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import {
@@ -42,9 +45,9 @@ import {
   type CollectionMapping,
 } from "./CollectionImportCard";
 import { ImportFloatingPanel } from "./ImportFloatingPanel";
-import { bulkImportBookmarksAction } from "@/app/actions/bulkImport";
 import { extractBase64 } from "@/lib/utils/image";
 import { AppContainer } from "@/component/layout/AppContainer";
+import { useBulkImportMutation } from "./query";
 
 type FormCollectionItem = {
   id: string;
@@ -162,10 +165,7 @@ export default function ImportPage() {
   const { data: existingCollections, isLoading: isLoadingCollections } =
     useAllCollectionsQuery();
 
-  // Watch form to trigger re-render when needed
-  form.watch('collections', () => {
-    // This callback ensures component re-renders on form changes
-  });
+  const { mutateAsync: importMutation } = useBulkImportMutation();
 
   const collections = form.getValues().collections;
 
@@ -376,15 +376,39 @@ export default function ImportPage() {
         }
       }
 
-      // Call the server action
-      const result = await bulkImportBookmarksAction({ 
+      const result = await importMutation({
         collections,
         fetchMetadata: formValues.fetchMetadata,
       });
+      // const result = {
+      //   success: true,
+      //   count: 100,
+      //   error: undefined
+      // }
+      // await new Promise(resolve => setTimeout(resolve, 10000));
 
       if (result.success) {
-        // Navigate back to home on success
-        router.push('/');
+        modals.openConfirmModal({
+          title: "Import Successful",
+          children: (
+            <>
+              <Text size="sm">
+                You can now go to home and check your bookmarks.
+              </Text>
+              { result.count ? (
+                <Text size="sm">
+                  {result.count} bookmarks are still processing in background. Check them out few minutes later.
+                </Text>
+              ) : null}
+            </>
+          ),
+          labels: { confirm: "Go to home", cancel: "" },
+          cancelProps: { style: { display: "none" } },
+          centered: true,
+          onConfirm: () => {
+            router.push('/');
+          },
+        });
       } else {
         // Show error modal on failure
         modals.openConfirmModal({
@@ -422,9 +446,23 @@ export default function ImportPage() {
     }
   };
 
-  return (
-    <AppContainer pos="relative">
-      <LoadingOverlay visible={isImporting} overlayProps={{ blur: 2 }} />
+  const content = (
+    <AppContainer>
+      <LoadingOverlay
+        visible={isImporting}
+        overlayProps={{ blur: 2 }}
+        loaderProps={{
+          children: (
+            <Paper shadow="xs" withBorder p="xl">
+              <Flex gap="md" align="center" direction="column">
+                <Loader />
+                <Text size="sm">Importing bookmarks...</Text>
+              </Flex>
+            </Paper>
+          )
+        }}
+        style={{ position: 'fixed' }}
+      />
       <Stack gap="lg">
         {/* Header with back button */}
         <Group gap="md">
@@ -557,4 +595,6 @@ export default function ImportPage() {
       </Stack>
     </AppContainer>
   );
+
+  return isImporting ? <RemoveScroll>{content}</RemoveScroll> : content;
 }
