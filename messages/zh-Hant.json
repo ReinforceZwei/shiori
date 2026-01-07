@@ -272,5 +272,10 @@
     "card_select_all": "全選",
     "card_deselect_all": "取消全選",
     "card_skip_message": "此收藏集及其 {count} 個{count, plural, one {書籤} other {書籤}}將被跳過"
+  },
+  "ColorScheme": {
+    "light": "淺色",
+    "dark": "深色",
+    "auto": "自動"
   }
 }

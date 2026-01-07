@@ -2,16 +2,11 @@
 
 import { Select } from "@mantine/core";
 import { IconSun, IconMoon, IconDeviceDesktop } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
 
 export type ColorScheme = "light" | "dark" | "auto";
 
 const colorSchemes: ColorScheme[] = ["light", "dark", "auto"];
-
-const colorSchemeLabels: Record<ColorScheme, string> = {
-  light: "Light",
-  dark: "Dark",
-  auto: "Auto",
-};
 
 const colorSchemeIcons: Record<ColorScheme, React.ReactNode> = {
   light: <IconSun size={16} />,
@@ -49,6 +44,8 @@ export function ColorSchemeSwitcher({
   size = "sm",
   width = 150,
 }: ColorSchemeSwitcherProps) {
+  const t = useTranslations("ColorScheme");
+
   const handleColorSchemeChange = (selectedValue: string | null) => {
     if (!selectedValue || !colorSchemes.includes(selectedValue as ColorScheme)) {
       return;
@@ -60,7 +57,7 @@ export function ColorSchemeSwitcher({
 
   const selectData = colorSchemes.map((scheme) => ({
     value: scheme,
-    label: colorSchemeLabels[scheme],
+    label: t(scheme),
   }));
 
   return (

@@ -272,5 +272,10 @@
     "card_select_all": "Select All",
     "card_deselect_all": "Deselect All",
     "card_skip_message": "This collection and its {count} {count, plural, one {bookmark} other {bookmarks}} will be skipped"
+  },
+  "ColorScheme": {
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto"
   }
 }
