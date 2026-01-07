@@ -3,12 +3,16 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { UnauthorizedError } from "./errors";
+import { config } from "@/lib/config";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
-  emailAndPassword: { enabled: true },
+  emailAndPassword: { 
+    enabled: true,
+    disableSignUp: config.auth.disableSignup,
+  },
   session: {
     cookieCache: {
       enabled: true,

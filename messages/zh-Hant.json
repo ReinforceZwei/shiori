@@ -21,6 +21,8 @@
   "Signup": {
     "subtitle": "建立您的帳戶",
     "sign_up_failed": "註冊失敗",
+    "sign_up_disabled": "註冊已停用",
+    "sign_up_disabled_message": "目前已停用新使用者註冊。如需存取權限，請聯絡管理員。",
     "name": "名稱",
     "name_input_placeholder": "輸入您的名稱",
     "email": "電子郵件",

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Wallpaper } from '@/component/layout/Wallpaper';
+import { useAppConfig } from '@/lib/config/client';
 
 // Zod schema for sign-in form validation
 const signinFormSchema = z.object({
@@ -24,6 +25,7 @@ export default function SigninPage() {
   const router = useRouter();
   const t = useTranslations('Signin');
   const tMetadata = useTranslations('metadata');
+  const config = useAppConfig();
   const form = useForm<SigninFormValues>({
     initialValues: {
       email: '',
@@ -97,12 +99,14 @@ export default function SigninPage() {
         </Button>
       </form>
 
-      <Text ta="center" mt="lg" size="sm">
-        {t('dont_have_an_account')}{' '}
-        <Text component={Link} href="/signup" c="blue" style={{ textDecoration: 'none', fontWeight: 500 }}>
-          {t('sign_up')}
+      {!config.auth.disableSignup && (
+        <Text ta="center" mt="lg" size="sm">
+          {t('dont_have_an_account')}{' '}
+          <Text component={Link} href="/signup" c="blue" style={{ textDecoration: 'none', fontWeight: 500 }}>
+            {t('sign_up')}
+          </Text>
         </Text>
-      </Text>
+      )}
     </Box>
   );
 }

@@ -21,6 +21,8 @@
   "Signup": {
     "subtitle": "Create your account",
     "sign_up_failed": "Sign-up failed",
+    "sign_up_disabled": "Sign-up Disabled",
+    "sign_up_disabled_message": "New user registration is currently disabled. Please contact the administrator if you need access.",
     "name": "Name",
     "name_input_placeholder": "Enter your name",
     "email": "Email",

@@ -14,6 +14,7 @@ import { locales } from '@/i18n/locale';
 import { initSettingsAction } from '@/app/actions/settings';
 import { useTranslations, useLocale } from 'next-intl';
 import { Wallpaper } from '@/component/layout/Wallpaper';
+import { useAppConfig } from '@/lib/config/client';
 
 // Zod schema for sign-up form validation
 const signupFormSchema = z.object({
@@ -30,6 +31,7 @@ export default function SignupPage() {
   const t = useTranslations('Signup');
   const tMetadata = useTranslations('metadata');
   const locale = useLocale();
+  const config = useAppConfig();
   const form = useForm<SignupFormValues>({
     initialValues: {
       name: '',
@@ -69,6 +71,26 @@ export default function SignupPage() {
       setErrorMessage(t('sign_up_failed_message'));
     }
   };
+
+  if (config.auth.disableSignup) {
+    return (
+      <Box maw={400} mx="auto" mt="xl" p="sm">
+        <Wallpaper imageUrl={'/shiori-bg-transparent.webp'} displayPosition='right bottom' />
+        <Title ta="center" order={1} mb="sm">
+          {tMetadata('title')}
+        </Title>
+        <Alert title={t('sign_up_disabled')} color="yellow" mb="md" icon={<IconInfoCircle />}>
+          {t('sign_up_disabled_message')}
+        </Alert>
+        <Text ta="center" mt="lg" size="sm">
+          {t('already_have_an_account')}{' '}
+          <Text component={Link} href="/signin" c="blue" style={{ textDecoration: 'none', fontWeight: 500 }}>
+            {t('sign_in')}
+          </Text>
+        </Text>
+      </Box>
+    );
+  }
 
   return (
     <Box maw={400} mx="auto" mt="xl" p="sm">

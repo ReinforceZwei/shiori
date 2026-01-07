@@ -1,10 +1,17 @@
+/**
+ * ⚠️ SERVER-ONLY MODULE ⚠️
+ * 
+ * This file contains server-side configuration and MUST NOT be imported in client components.
+ * For client-side config, use '@/lib/config/client' instead.
+ * 
+ * @module config (server-only)
+ */
+import 'server-only';
+
 import { z } from 'zod';
 
 /**
  * Application configuration schema
- * 
- * All environment variables are validated at startup.
- * Built-in Next.js/Node.js env vars (NEXT_RUNTIME, NODE_ENV) are not included here.
  */
 const configSchema = z.object({
   // Database
@@ -16,6 +23,7 @@ const configSchema = z.object({
   auth: z.object({
     secret: z.string().min(32, 'BETTER_AUTH_SECRET must be at least 32 characters'),
     url: z.url('BETTER_AUTH_URL must be a valid URL'),
+    disableSignup: z.coerce.boolean().default(false),
   }),
   
   // Job Worker Configuration
@@ -32,6 +40,15 @@ export type Config = z.infer<typeof configSchema>;
  * Load and validate configuration from environment variables
  */
 function loadConfig(): Config {
+  // Runtime check: Ensure we're running on the server
+  if (typeof window !== 'undefined') {
+    throw new Error(
+      '❌ Server config cannot be imported in client components!\n' +
+      '   Use "@/lib/config/client" instead for client-side configuration.\n' +
+      '   Make sure your component has "use client" directive and uses useAppConfig() hook.'
+    );
+  }
+
   try {
     return configSchema.parse({
       database: {
@@ -40,6 +57,7 @@ function loadConfig(): Config {
       auth: {
         secret: process.env.BETTER_AUTH_SECRET,
         url: process.env.BETTER_AUTH_URL,
+        disableSignup: process.env.DISABLE_SIGNUP,
       },
       worker: {
         batchSize: process.env.BATCH_SIZE,
@@ -62,11 +80,20 @@ function loadConfig(): Config {
  * 
  * This is loaded and validated once at startup.
  * Import this constant to access type-safe configuration values.
- * 
- * @example
- * import { config } from '@/lib/config';
- * 
- * const batchSize = config.worker.batchSize;
  */
 export const config = loadConfig();
+
+/**
+ * Get client-safe configuration that can be safely shared with the browser
+ * 
+ * This filters out sensitive configuration (like database URLs, secrets) and only
+ * includes values that are safe to expose to the client.
+ */
+export function getClientConfig() {
+  return {
+    auth: {
+      disableSignup: config.auth.disableSignup,
+    },
+  };
+}
 

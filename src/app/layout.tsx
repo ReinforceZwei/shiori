@@ -15,6 +15,8 @@ import { headers } from 'next/headers';
 import { getLocaleFromHeader, locales } from '@/i18n/locale';
 import { getTranslations } from 'next-intl/server';
 import { getLocaleAction } from './actions/settings';
+import { getClientConfig } from '@/lib/config';
+import { AppConfigProvider } from '@/lib/config/client';
 
 export async function generateMetadata(): Promise<Metadata> {
   let locale: (typeof locales)[number] = "en-US";
@@ -58,24 +60,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clientConfig = getClientConfig();
+  
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript />
       </head>
       <body className={`${notoSansMono.variable} ${notoSansTC.variable}`}>
-        <NextIntlClientProvider>
-          <IntlClientProvider>
-            <MantineProvider theme={theme}>
-              <QueryProvider>
-                <ShioriModalProvider>
-                  <Notifications position='top-right' />
-                  {children}
-                </ShioriModalProvider>
-              </QueryProvider>
-            </MantineProvider>
-          </IntlClientProvider>
-        </NextIntlClientProvider>
+        <AppConfigProvider config={clientConfig}>
+          <NextIntlClientProvider>
+            <IntlClientProvider>
+              <MantineProvider theme={theme}>
+                <QueryProvider>
+                  <ShioriModalProvider>
+                    <Notifications position='top-right' />
+                    {children}
+                  </ShioriModalProvider>
+                </QueryProvider>
+              </MantineProvider>
+            </IntlClientProvider>
+          </NextIntlClientProvider>
+        </AppConfigProvider>
       </body>
     </html>
   );
