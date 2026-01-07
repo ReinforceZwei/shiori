@@ -8,6 +8,10 @@ import {
   layoutConfigSchema,
   DEFAULT_LAYOUT_CONFIG 
 } from "@/features/settings/layout-config";
+import {
+  uiConfigSchema,
+  DEFAULT_UI_CONFIG
+} from "@/features/settings/ui-config";
 import { z } from "zod";
 import deepmerge from "deepmerge";
 
@@ -54,6 +58,13 @@ export async function getLocaleAction() {
   const settingsService = new SettingsService();
   const locale = await settingsService.getLocale({ userId: user.id });
   return locale;
+}
+
+export async function getColorSchemeAction() {
+  const user = await requireUser();
+  const settingsService = new SettingsService();
+  const settings = await settingsService.get({ userId: user.id });
+  return settings?.uiConfig?.colorScheme;
 }
 
 /**
@@ -105,6 +116,45 @@ export async function updateLayoutConfigAction(data: {
   const settings = await settingsService.upsert({
     userId: user.id,
     layoutConfig: validatedConfig,
+  });
+  
+  revalidatePath('/settings');
+  revalidatePath('/', 'layout');
+  return settings;
+}
+
+/**
+ * Update UI configuration
+ */
+export async function updateUIConfigAction(data: {
+  config: Partial<z.infer<typeof uiConfigSchema>>;
+}) {
+  const user = await requireUser();
+  const settingsService = new SettingsService();
+  
+  // Fetch current settings (already validated by service)
+  const currentSettings = await settingsService.get({ userId: user.id });
+  
+  // Get existing config or use defaults (type-safe)
+  const existingConfig: z.infer<typeof uiConfigSchema> = currentSettings?.uiConfig 
+    ? (currentSettings.uiConfig as z.infer<typeof uiConfigSchema>)
+    : DEFAULT_UI_CONFIG;
+  
+  // Deep merge the new config with existing config and defaults
+  // First merge defaults with existing, then merge with new config
+  const mergedConfig = deepmerge.all([
+    DEFAULT_UI_CONFIG, 
+    existingConfig, 
+    data.config
+  ]) as z.infer<typeof uiConfigSchema>;
+  
+  // Validate merged config
+  const validatedConfig = uiConfigSchema.parse(mergedConfig);
+  
+  // Update settings with merged config
+  const settings = await settingsService.upsert({
+    userId: user.id,
+    uiConfig: validatedConfig,
   });
   
   revalidatePath('/settings');

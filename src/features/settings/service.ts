@@ -4,12 +4,14 @@ import { NotFoundError } from "@/lib/errors";
 import { ServiceBase } from "@/lib/service-base.class";
 import { CollectionService } from "@/features/collection/service";
 import { layoutConfigSchema, DEFAULT_LAYOUT_CONFIG } from "./layout-config";
+import { uiConfigSchema, DEFAULT_UI_CONFIG } from "./ui-config";
 
 const upsertSettingsInputSchema = z.object({
   userId: z.string(),
   locale: z.enum(locales).optional(),
   layoutMode: z.enum(["launcher", "grid", "list"]).optional(),
   layoutConfig: layoutConfigSchema.optional(),
+  uiConfig: uiConfigSchema.optional(),
   pinnedCollectionId: z.string().nullable().optional(),
 });
 
@@ -35,33 +37,48 @@ export class SettingsService extends ServiceBase {
       return settings;
     }
     
+    let validatedLayoutConfig = settings.layoutConfig;
+    let validatedUiConfig = settings.uiConfig;
+    let needsUpdate = false;
+    const updateData: { layoutConfig?: typeof DEFAULT_LAYOUT_CONFIG; uiConfig?: typeof DEFAULT_UI_CONFIG } = {};
+    
     // Validate layoutConfig
     if (settings.layoutConfig) {
       try {
-        const validatedConfig = layoutConfigSchema.parse(settings.layoutConfig);
-        return {
-          ...settings,
-          layoutConfig: validatedConfig,
-        };
+        validatedLayoutConfig = layoutConfigSchema.parse(settings.layoutConfig);
       } catch (error) {
         console.error("Failed to validate layout config, resetting to defaults:", error);
-        
-        // Reset to default and save
-        await this.prisma.settings.update({
-          where: { userId },
-          data: {
-            layoutConfig: DEFAULT_LAYOUT_CONFIG,
-          },
-        });
-        
-        return {
-          ...settings,
-          layoutConfig: DEFAULT_LAYOUT_CONFIG,
-        };
+        validatedLayoutConfig = DEFAULT_LAYOUT_CONFIG;
+        updateData.layoutConfig = DEFAULT_LAYOUT_CONFIG;
+        needsUpdate = true;
       }
     }
     
-    return settings;
+    // Validate uiConfig
+    if (settings.uiConfig) {
+      try {
+        validatedUiConfig = uiConfigSchema.parse(settings.uiConfig);
+      } catch (error) {
+        console.error("Failed to validate UI config, resetting to defaults:", error);
+        validatedUiConfig = DEFAULT_UI_CONFIG;
+        updateData.uiConfig = DEFAULT_UI_CONFIG;
+        needsUpdate = true;
+      }
+    }
+    
+    // If any config failed validation, update the database
+    if (needsUpdate) {
+      await this.prisma.settings.update({
+        where: { userId },
+        data: updateData,
+      });
+    }
+    
+    return {
+      ...settings,
+      layoutConfig: validatedLayoutConfig as z.infer<typeof layoutConfigSchema>,
+      uiConfig: validatedUiConfig as z.infer<typeof uiConfigSchema>,
+    };
   }
 
   /**
@@ -91,6 +108,7 @@ export class SettingsService extends ServiceBase {
       const settingsData: {
         layoutMode?: typeof validatedData.layoutMode;
         layoutConfig?: z.infer<typeof layoutConfigSchema>;
+        uiConfig?: z.infer<typeof uiConfigSchema>;
         pinnedCollectionId?: string | null;
         locale?: (typeof locales)[number];
       } = {};
@@ -101,6 +119,10 @@ export class SettingsService extends ServiceBase {
 
       if (validatedData.layoutConfig !== undefined) {
         settingsData.layoutConfig = validatedData.layoutConfig;
+      }
+
+      if (validatedData.uiConfig !== undefined) {
+        settingsData.uiConfig = validatedData.uiConfig;
       }
 
       // Validate pinned collection if provided

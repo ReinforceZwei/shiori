@@ -14,7 +14,7 @@ import { IntlClientProvider } from '@/i18n/provider';
 import { headers } from 'next/headers';
 import { getLocaleFromHeader, locales } from '@/i18n/locale';
 import { getTranslations } from 'next-intl/server';
-import { getLocaleAction } from './actions/settings';
+import { getColorSchemeAction, getLocaleAction } from './actions/settings';
 import { getClientConfig } from '@/lib/config';
 import { AppConfigProvider } from '@/lib/config/client';
 
@@ -54,13 +54,20 @@ export const viewport: Viewport = {
 }
 
 import '@/lib/theme.css';
+import { ColorScheme } from '@/component/ColorSchemeSwitcher';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const clientConfig = getClientConfig();
+  let colorScheme: ColorScheme = "light";
+  try {
+    colorScheme = await getColorSchemeAction() as ColorScheme;
+  } catch {
+    colorScheme = "light";
+  }
   
   return (
     <html lang="en" {...mantineHtmlProps}>

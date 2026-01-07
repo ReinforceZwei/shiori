@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from 'react';
 import {
   Paper,
   Stack,
@@ -20,25 +19,18 @@ import { ColorSchemeSwitcher, ColorScheme } from '@/component/ColorSchemeSwitche
 import { SettingRow } from '@/component/settings';
 import { locales } from '@/i18n/locale';
 import { notifications } from '@mantine/notifications';
-import { updateLocaleAction } from '@/app/actions/settings';
+import { updateLocaleAction, updateUIConfigAction } from '@/app/actions/settings';
 import { useRouter } from 'next/navigation';
 
 interface GeneralSettingsProps {
   locale: (typeof locales)[number];
+  colorScheme: ColorScheme;
 }
 
-export default function GeneralSettings({ locale }: GeneralSettingsProps) {
+export default function GeneralSettings({ locale, colorScheme: initialColorScheme }: GeneralSettingsProps) {
   const t = useTranslations('Settings_General');
   const router = useRouter();
-  const { colorScheme, setColorScheme } = useMantineColorScheme();
-  
-  // To avoid hydration issues, we use a local state that gets initialized after mount
-  // This ensures server and client render the same initial value
-  const [mountedColorScheme, setMountedColorScheme] = useState<ColorScheme>('light');
-
-  useEffect(() => {
-    setMountedColorScheme(colorScheme);
-  }, [colorScheme]);
+  const { setColorScheme } = useMantineColorScheme();
 
   const handleLocaleChange = async (newLocale: (typeof locales)[number]) => {
     if (newLocale === locale) return;
@@ -57,8 +49,28 @@ export default function GeneralSettings({ locale }: GeneralSettingsProps) {
     }
   };
 
-  const handleColorSchemeChange = (newColorScheme: ColorScheme) => {
+  const handleColorSchemeChange = async (newColorScheme: ColorScheme) => {
+    if (newColorScheme === initialColorScheme) return;
+    
+    // Update Mantine color scheme immediately for instant UI feedback
     setColorScheme(newColorScheme);
+    
+    try {
+      await updateUIConfigAction({
+        config: { colorScheme: newColorScheme }
+      });
+      // Trigger a refresh to update the color scheme in the provider
+      router.refresh();
+    } catch (error) {
+      console.error('Error updating color scheme:', error);
+      // Revert to previous color scheme on error
+      setColorScheme(initialColorScheme);
+      notifications.show({
+        title: t('error_title'),
+        message: error instanceof Error ? error.message : t('error_message'),
+        color: 'red',
+      });
+    }
   };
 
   return (
@@ -82,7 +94,7 @@ export default function GeneralSettings({ locale }: GeneralSettingsProps) {
             description={t('theme_description')}
           >
             <ColorSchemeSwitcher
-              value={mountedColorScheme}
+              value={initialColorScheme}
               onChange={handleColorSchemeChange}
               showIcon={true}
               size="sm"

@@ -37,6 +37,8 @@ export default async function SettingsPage() {
   const layoutConfig: z.infer<typeof layoutConfigSchema> = settings?.layoutConfig 
     ? (settings.layoutConfig as z.infer<typeof layoutConfigSchema>)
     : DEFAULT_LAYOUT_CONFIG;
+  
+  const colorScheme = settings?.uiConfig?.colorScheme || "light";
 
   const t = await getTranslations('Settings');
 
@@ -53,7 +55,7 @@ export default async function SettingsPage() {
         <Divider my="sm" />
 
         {/* General Section */}
-        <GeneralSettings locale={currentLocale} />
+        <GeneralSettings locale={currentLocale} colorScheme={colorScheme} />
 
         {/* Wallpaper Section */}
         <WallpaperSettings initialWallpapers={wallpapersMetadata} />

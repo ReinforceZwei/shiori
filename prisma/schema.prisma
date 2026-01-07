@@ -183,6 +183,7 @@ model Settings {
   locale             String      @default("en-US")
   layoutMode         LayoutMode  @default(launcher)
   layoutConfig       Json?       @default("{}")
+  uiConfig           Json?       @default("{}")
   pinnedCollectionId String?     @unique
   pinnedCollection   Collection? @relation(fields: [pinnedCollectionId], references: [id], onDelete: SetNull)
   createdAt          DateTime    @default(now())
