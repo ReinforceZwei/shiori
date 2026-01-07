@@ -1,8 +1,9 @@
 import { JobService } from "./service";
 import { Job } from "@/generated/prisma/client";
+import { config } from "@/lib/config";
 
-const BATCH_SIZE = process.env.BATCH_SIZE ? parseInt(process.env.BATCH_SIZE) : 5;
-const MAX_WORKERS = process.env.MAX_WORKERS ? parseInt(process.env.MAX_WORKERS) : 2;
+const BATCH_SIZE = config.worker.batchSize;
+const MAX_WORKERS = config.worker.maxWorkers;
 
 /**
  * Track number of active workers
