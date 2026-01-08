@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bookmark } from "@/generated/prisma/browser";
+import { BookmarkWithIcon } from "@/features/bookmark/types";
 
 // API fetch function
-async function searchBookmarks(query: string): Promise<Bookmark[]> {
+async function searchBookmarks(query: string): Promise<BookmarkWithIcon[]> {
   if (!query) {
     return [];
   }

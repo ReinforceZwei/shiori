@@ -64,6 +64,7 @@ LIMIT ${limit} OFFSET ${offset};
         ],
         userId: validatedData.userId,
       },
+      include: { websiteIcon: { select: { id: true }}},
       take: limit,
       skip: offset,
     });

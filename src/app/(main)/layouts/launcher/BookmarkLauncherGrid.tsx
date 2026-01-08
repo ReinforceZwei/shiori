@@ -44,9 +44,8 @@ import {
 } from "@/app/actions/order";
 import {
   BookmarkLayoutProps,
-  BookmarkWithIcon,
-  CollectionWithBookmarks,
 } from "../types";
+import { BookmarkWithIcon, CollectionWithBookmarks } from "@/features/bookmark/types";
 import { LauncherLayoutConfig } from "@/features/settings/layout-config";
 import { AppContainer } from "@/component/layout/AppContainer";
 

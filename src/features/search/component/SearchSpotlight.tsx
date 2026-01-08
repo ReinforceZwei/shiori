@@ -1,12 +1,13 @@
 'use client';
 
 import { createSpotlight, Spotlight, SpotlightActionData } from "@mantine/spotlight";
-import { IconSearch, IconExternalLink, IconBookmark } from "@tabler/icons-react";
+import { IconSearch, IconExternalLink, IconWorld } from "@tabler/icons-react";
 import { useState, useMemo, useEffect } from "react";
 import { useTranslations } from 'next-intl';
 import { useSearchQuery } from "@/features/search/query";
 import { useDebouncedValue } from "@mantine/hooks";
 import { selectAction } from "./store";
+import { Box, Image } from "@mantine/core";
 
 const [store, storeActions] = createSpotlight();
 
@@ -23,16 +24,39 @@ export function SearchSpotlight() {
       return [];
     }
 
-    return searchResults.map((bookmark) => ({
-      id: bookmark.id,
-      label: bookmark.title,
-      description: bookmark.url,
-      onClick: () => {
-        window.open(bookmark.url, '_blank', 'noopener,noreferrer');
-      },
-      leftSection: <IconBookmark size={16} />,
-      rightSection: <IconExternalLink size={16} />,
-    }));
+    return searchResults.map((bookmark) => {
+      const iconId = bookmark.websiteIcon?.id;
+      
+      return {
+        id: bookmark.id,
+        label: bookmark.title,
+        description: bookmark.url,
+        onClick: () => {
+          window.open(bookmark.url, '_blank', 'noopener,noreferrer');
+        },
+        leftSection: !iconId ? (
+          <Box
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 32,
+              height: 32,
+            }}
+          >
+            <IconWorld size={32} opacity={0.3} />
+          </Box>
+        ) : (
+          <Image
+            src={`/api/icon/${iconId}`}
+            w={32}
+            h={32}
+            fit="contain"
+          />
+        ),
+        rightSection: <IconExternalLink size={16} />,
+      };
+    });
   }, [searchResults]);
 
   useEffect(() => {

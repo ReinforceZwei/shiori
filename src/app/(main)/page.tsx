@@ -3,7 +3,7 @@ import { CollectionService } from "@/features/collection/service";
 import { requireUser } from "@/lib/auth";
 import { BookmarkLauncherGrid } from "./layouts/launcher/BookmarkLauncherGrid";
 import { OrderService } from "@/features/order/service";
-import { BookmarkWithIcon, CollectionWithBookmarks } from "./layouts/types";
+import { BookmarkWithIcon, CollectionWithBookmarks } from "@/features/bookmark/types";
 import { WallpaperService, WallpaperDisplay } from "@/features/wallpaper";
 import { SettingsService } from "@/features/settings/service";
 import { 
