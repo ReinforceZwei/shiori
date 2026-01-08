@@ -1,8 +1,9 @@
 "use client";
 
-import { Box, Text, Image, ActionIcon, Loader, Tooltip } from "@mantine/core";
+import { Box, Text, Image, ActionIcon, Tooltip } from "@mantine/core";
 import { useState } from "react";
 import { IconEdit, IconWorld, IconX } from "@tabler/icons-react";
+import { useBookmarkContextMenu } from "@/features/bookmark/context-menu";
 
 export type LauncherItemSize = "medium" | "small";
 
@@ -49,6 +50,15 @@ export function BookmarkLauncherItem({
   const [isHovered, setIsHovered] = useState(false);
   const config = SIZE_CONFIG[size];
 
+  // Use shared bookmark context menu hook
+  const { getTriggerProps } = useBookmarkContextMenu({
+    id,
+    title,
+    url,
+    onEdit,
+    onDelete,
+  });
+
   const handleClick = (e: React.MouseEvent) => {
     if (editMode && onEdit) {
       e.preventDefault();
@@ -68,6 +78,7 @@ export function BookmarkLauncherItem({
       {/* Icon Container with Delete Badge */}
       <Box style={{ position: "relative" }}>
         <Box
+          {...getTriggerProps()}
           component={editMode ? "div" : "a"}
           href={editMode ? undefined : url}
           target={editMode ? undefined : "_blank"}

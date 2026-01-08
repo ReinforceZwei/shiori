@@ -55,6 +55,7 @@ export const viewport: Viewport = {
 
 import '@/lib/theme.css';
 import { ColorScheme } from '@/component/ColorSchemeSwitcher';
+import { ContextMenuProvider } from '@/lib/context-menu';
 
 export default async function RootLayout({
   children,
@@ -81,8 +82,10 @@ export default async function RootLayout({
               <MantineProvider theme={theme}>
                 <QueryProvider>
                   <ShioriModalProvider>
-                    <Notifications position='top-right' />
-                    {children}
+                    <ContextMenuProvider>
+                      <Notifications position='top-right' />
+                      {children}
+                    </ContextMenuProvider>
                   </ShioriModalProvider>
                 </QueryProvider>
               </MantineProvider>

@@ -278,5 +278,15 @@
     "light": "淺色",
     "dark": "深色",
     "auto": "自動"
+  },
+  "Bookmark_ContextMenu": {
+    "open_in_new_tab": "在新分頁開啟",
+    "open_in_new_window": "在新視窗開啟",
+    "copy_link": "複製連結",
+    "link_copied": "連結已複製",
+    "copy_failed_title": "複製失敗",
+    "copy_failed_message": "無法將連結複製到剪貼簿",
+    "edit": "編輯",
+    "delete": "刪除"
   }
 }
