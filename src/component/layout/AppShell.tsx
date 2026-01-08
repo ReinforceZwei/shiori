@@ -19,6 +19,7 @@ import {
   IconSettings,
   IconFileImport,
   IconLogout,
+  IconInfoCircle,
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -64,6 +65,12 @@ export default function AppShell({
                   onClick={() => router.push("/settings")}
                 >
                   {t("settings")}
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<IconInfoCircle size={16} />}
+                  onClick={() => router.push("/about")}
+                >
+                  {t("about")}
                 </Menu.Item>
                 <Menu.Item
                   leftSection={<IconLogout size={16} />}

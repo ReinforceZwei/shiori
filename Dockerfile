@@ -27,6 +27,14 @@ RUN rm -f prisma.config.ts
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build arguments for version information
+ARG APP_VERSION=unknown
+ARG BUILD_TIME=unknown
+
+# Pass build args as environment variables for Next.js build
+ENV NEXT_PUBLIC_APP_VERSION=${APP_VERSION}
+ENV NEXT_PUBLIC_BUILD_TIME=${BUILD_TIME}
+
 # Generate Prisma Client before building Next.js
 RUN npm run db:gen
 
