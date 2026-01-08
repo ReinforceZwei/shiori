@@ -1,7 +1,7 @@
 "use client";
 import { NextIntlClientProvider, useLocale, useMessages } from "next-intl";
 import { getMessageFallback, onError } from "./fallback";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getLocaleAction } from "@/app/actions/settings";
 import { locales } from "./locale";
 import { authClient } from "@/lib/auth-client";
@@ -15,7 +15,11 @@ export const IntlClientProvider = ({
   const initialMessages = useMessages();
   const [localeState, setLocaleState] = useState(initialLocale);
   const [messages, setMessages] = useState<Record<string, any>>(initialMessages);
-  const { data: session } = authClient.useSession();
+  // useSession will refetch on tab visibility change
+  const { data } = authClient.useSession();
+  // data.user contains Date object, cause reference change
+  // use stable user ID instead
+  const userId = useMemo(() => data?.user?.id, [data]);
 
   // Update locale and messages when user signs in or locale changes on the server
   useEffect(() => {
@@ -36,10 +40,10 @@ export const IntlClientProvider = ({
         console.error('Error getting locale:', error);
       }
     };
-    if (session) {
+    if (userId) {
       fetchLocale();
     }
-  }, [session, localeState]);
+  }, [userId, localeState]);
 
   // Sync with server-side locale changes (e.g., after router.refresh())
   useEffect(() => {
