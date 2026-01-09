@@ -9,6 +9,7 @@
 import 'server-only';
 
 import { z } from 'zod';
+import { PHASE_PRODUCTION_BUILD } from 'next/constants';
 
 /**
  * Application configuration schema
@@ -47,6 +48,22 @@ function loadConfig(): Config {
       '   Use "@/lib/config/client" instead for client-side configuration.\n' +
       '   Make sure your component has "use client" directive and uses useAppConfig() hook.'
     );
+  }
+
+  // Skip validation during build phase - environment variables aren't needed for build
+  const isBuildPhase = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD;
+  
+  if (isBuildPhase) {
+    // Return dummy config for build time
+    return {
+      database: { url: 'postgresql://dummy' },
+      auth: { 
+        secret: 'dummy-secret-at-least-32-characters-long',
+        url: 'http://localhost:3000',
+        disableSignup: false 
+      },
+      worker: { batchSize: 5, maxWorkers: 2 },
+    };
   }
 
   try {
