@@ -282,6 +282,13 @@
     "dark": "Dark",
     "auto": "Auto"
   },
+  "Settings_DangerZone": {
+    "title": "Danger Zone",
+    "description": "Irreversible and destructive actions. Proceed with caution.",
+    "delete_account_label": "Delete Account",
+    "delete_account_description": "Permanently delete your account and all associated data. This action cannot be undone.",
+    "delete_account_button": "Delete My Account"
+  },
   "Bookmark_ContextMenu": {
     "open_in_new_tab": "Open in new tab",
     "open_in_new_window": "Open in new window",
@@ -291,5 +298,28 @@
     "copy_failed_message": "Could not copy the link to clipboard",
     "edit": "Edit",
     "delete": "Delete"
+  },
+  "DeleteAccount": {
+    "title": "Delete My Account",
+    "subtitle": "Permanently delete your account and all associated data",
+    "warning_title": "Warning: This action is permanent",
+    "warning_intro": "Once you delete your account:",
+    "warning_item_account": "Your account will be deleted immediately",
+    "warning_item_data": "All your bookmarks and collections will be permanently removed",
+    "warning_item_irreversible": "This action cannot be undone or recovered",
+    "error_title": "Deletion Failed",
+    "delete_failed_message": "Failed to delete account. Please check your password.",
+    "unexpected_error_message": "An unexpected error occurred. Please try again.",
+    "confirm_modal_title": "Confirm Account Deletion",
+    "confirm_modal_message": "Are you absolutely sure you want to delete your account? This action is",
+    "confirm_modal_permanent": "permanent and cannot be undone",
+    "confirm_modal_data_removal": "All your data will be permanently removed.",
+    "confirm_modal_confirm": "Delete My Account",
+    "confirm_modal_cancel": "Cancel",
+    "password_label": "Enter your password to confirm",
+    "password_placeholder": "Your password",
+    "password_description": "You must enter your current password to delete your account",
+    "cancel_button": "Cancel",
+    "delete_button": "Delete My Account"
   }
 }

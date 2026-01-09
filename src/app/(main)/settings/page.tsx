@@ -10,6 +10,7 @@ import WallpaperSettings from './WallpaperSettings';
 import GeneralSettings from './GeneralSettings';
 import LayoutSettings from './LayoutSettings';
 import SettingsHeader from './SettingsHeader';
+import DangerZoneSettings from './DangerZoneSettings';
 import { WallpaperService } from '@/features/wallpaper/service';
 import { SettingsService } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
@@ -62,6 +63,9 @@ export default async function SettingsPage() {
 
         {/* Layout Section */}
         <LayoutSettings layoutMode={layoutMode} layoutConfig={layoutConfig} />
+
+        {/* Danger Zone Section */}
+        <DangerZoneSettings />
       </Stack>
     </AppContainer>
   );
