@@ -192,6 +192,7 @@ export default function BookmarkForm({
             placeholder={t('url_placeholder')}
             required
             {...form.getInputProps('url')}
+            data-autofocus="true"
             rightSection={
               isFetchingMetadata ? (
                 <Loader size="xs" />

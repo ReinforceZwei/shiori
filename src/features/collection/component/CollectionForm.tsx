@@ -70,6 +70,7 @@ export default function CollectionForm({
             placeholder={t('name_placeholder')}
             {...form.getInputProps('name')}
             required
+            data-autofocus="true"
           />
 
           <TextInput

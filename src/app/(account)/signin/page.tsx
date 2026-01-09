@@ -77,6 +77,7 @@ export default function SigninPage() {
           placeholder={t('email_input_placeholder')}
           {...form.getInputProps('email')}
           required
+          autoFocus
           mt="md"
         />
 
