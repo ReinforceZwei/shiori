@@ -10,7 +10,7 @@ import { AddBookmarkLauncherItem } from "./AddBookmarkLauncherItem";
 import { SortableItem } from "@/lib/dnd";
 import { type DragHandleProps } from "@/lib/dnd/components/SortableItem";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
-import { BookmarkWithIcon, CollectionWithBookmarks } from "../types";
+import { BookmarkWithIcon, CollectionWithBookmarks } from "@/features/bookmark/types";
 import { deleteCollectionAction } from "@/app/actions/collection";
 
 interface CollectionLauncherSectionProps {
