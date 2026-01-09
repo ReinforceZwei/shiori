@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useForm } from '@mantine/form';
 import { zodResolver } from 'mantine-form-zod-resolver';
 import { z } from 'zod';
@@ -13,7 +13,6 @@ import {
   Loader,
   Box,
   Paper,
-  Image,
   ActionIcon,
   Alert,
   Autocomplete,
@@ -26,27 +25,9 @@ import { IconRefresh, IconAlertCircle } from '@tabler/icons-react';
 import { useTranslations } from 'next-intl';
 import type { Collection } from '@/generated/prisma/browser';
 import { useFetchBookmarkMetadataMutation } from '@/features/bookmark/query';
-import { BookmarkIcon, createIconDataUrl } from '@/app/api/bookmark/metadata/types';
 import CollectionSelect from '@/features/collection/component/CollectionSelect';
-
-// Helper functions
-function normalizeUrl(url: string): string {
-  const trimmed = url.trim();
-  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-    return `https://${trimmed}`;
-  }
-  return trimmed;
-}
-
-function isValidUrl(url: string): boolean {
-  try {
-    const normalized = normalizeUrl(url);
-    new URL(normalized);
-    return true;
-  } catch {
-    return false;
-  }
-}
+import IconSelector from './IconSelector';
+import { normalizeUrl, isValidUrl } from '../utils';
 
 // Zod schema for form validation
 const bookmarkFormSchema = z.object({
@@ -151,41 +132,14 @@ export default function BookmarkForm({
   }, [metadata]);
 
   const uniqueIcons = useMemo(() => {
-    const icons: BookmarkIcon[] = [];
+    if (!metadata?.icons) return [];
     const seen = new Set<string>();
-    
-    // Add initial icon first if it exists
-    if (initialValues?.websiteIcon && initialValues?.websiteIconMimeType) {
-      const initialIcon: BookmarkIcon = {
-        base64: initialValues.websiteIcon,
-        mimeType: initialValues.websiteIconMimeType,
-        source: 'default',
-        url: '',
-        type: 'current',
-        sizes: 'unknown',
-        metadata: { 
-          width: 0, 
-          height: 0, 
-          format: initialValues.websiteIconMimeType.split('/')[1] || 'unknown',
-          size: 0,
-        },
-      };
-      icons.push(initialIcon);
-      seen.add(initialValues.websiteIcon);
-    }
-    
-    // Add metadata icons (avoiding duplicates)
-    if (metadata?.icons) {
-      metadata.icons.forEach((icon) => {
-        if (!seen.has(icon.base64)) {
-          icons.push(icon);
-          seen.add(icon.base64);
-        }
-      });
-    }
-    
-    return icons;
-  }, [metadata, initialValues?.websiteIcon, initialValues?.websiteIconMimeType]);
+    return metadata.icons.filter((icon) => {
+      if (seen.has(icon.base64)) return false;
+      seen.add(icon.base64);
+      return true;
+    });
+  }, [metadata]);
 
   // Auto-select first options when metadata is fetched
   useEffect(() => {
@@ -196,13 +150,9 @@ export default function BookmarkForm({
       if (uniqueDescriptions.length > 0 && !form.values.description) {
         form.setFieldValue('description', uniqueDescriptions[0].value);
       }
-      if (uniqueIcons.length > 0 && !form.values.websiteIcon) {
-        form.setFieldValue('websiteIcon', uniqueIcons[0].base64);
-        form.setFieldValue('websiteIconMimeType', uniqueIcons[0].mimeType);
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [metadata, uniqueTitles, uniqueDescriptions, uniqueIcons]);
+  }, [metadata, uniqueTitles, uniqueDescriptions]);
 
   const handleRefreshMetadata = () => {
     if (form.values.url && isValidUrl(form.values.url)) {
@@ -210,6 +160,12 @@ export default function BookmarkForm({
       fetchMetadata(normalizedUrl);
     }
   };
+
+  // Handler for icon changes (handles both base64 and mimeType)
+  const handleIconChange = useCallback((base64: string, mimeType: string) => {
+    form.setFieldValue('websiteIcon', base64);
+    form.setFieldValue('websiteIconMimeType', mimeType);
+  }, [form]);
 
   // Prepare autocomplete data for titles
   const titleAutocompleteData = useMemo(() => {
@@ -286,26 +242,22 @@ export default function BookmarkForm({
           />
 
           {/* Icon Selection */}
-          {uniqueIcons.length > 0 && (
-            <Box>
-              <Text size="sm" fw={500} mb="xs">
-                {t('icon_label')}
-              </Text>
-              <Group gap="xs">
-                {uniqueIcons.map((icon, index) => (
-                  <IconOption
-                    key={index}
-                    icon={icon}
-                    selected={form.values.websiteIcon === icon.base64}
-                    onClick={() => {
-                      form.setFieldValue('websiteIcon', icon.base64);
-                      form.setFieldValue('websiteIconMimeType', icon.mimeType);
-                    }}
-                  />
-                ))}
-              </Group>
-            </Box>
-          )}
+          <IconSelector
+            label={t('icon_label')}
+            value={form.values.websiteIcon}
+            onChange={handleIconChange}
+            error={form.errors.websiteIcon}
+            currentUrl={form.values.url}
+            metadataIcons={uniqueIcons}
+            initialIcon={
+              initialValues?.websiteIcon && initialValues?.websiteIconMimeType
+                ? {
+                    base64: initialValues.websiteIcon,
+                    mimeType: initialValues.websiteIconMimeType,
+                  }
+                : undefined
+            }
+          />
 
           {/* Description with Suggestions */}
           <Box>
@@ -378,42 +330,5 @@ export default function BookmarkForm({
         </Stack>
       </form>
     </Box>
-  );
-}
-
-// Helper component for icon selection
-interface IconOptionProps {
-  icon: BookmarkIcon;
-  selected: boolean;
-  onClick: () => void;
-}
-
-function IconOption({ icon, selected, onClick }: IconOptionProps) {
-  const t = useTranslations('BookmarkForm');
-  const hasMetadata = icon.metadata && icon.metadata.width > 0 && icon.metadata.height > 0;
-  
-  return (
-    <Paper
-      p="xs"
-      withBorder
-      radius="sm"
-      style={{
-        cursor: 'pointer',
-        outline: selected ? '2px solid var(--mantine-primary-color-6)' : 'none',
-        outlineOffset: '-1px',
-      }}
-      onClick={onClick}
-    >
-      <Image
-        src={createIconDataUrl(icon)}
-        alt={t('icon_alt')}
-        w={48}
-        h={48}
-        fit="contain"
-      />
-      <Text size="xs" c="dimmed" ta="center" mt={4}>
-        {hasMetadata ? t('icon_size', { width: icon.metadata.width, height: icon.metadata.height }) : t('icon_current')}
-      </Text>
-    </Paper>
   );
 }
