@@ -26,7 +26,7 @@ Shiori don't save the actual webpage content, only the bookmark link.
 - **Create & Edit Bookmarks**: Save URLs with titles, descriptions, and automatically fetched metadata
 - **Website Icons**: Automatically fetch and store website favicons
 - **Smart Organization**: Group bookmarks into collections with custom colors and descriptions
-- **Bulk Import**: Import bookmarks from browser export files (JSON format)
+- **Bulk Import**: Import bookmarks from browser export files (HTML format)
 
 ### 🎨 Flexible Layouts
 - **Launcher Mode**: A launcher-style grid interface with customizable density and visual effects
