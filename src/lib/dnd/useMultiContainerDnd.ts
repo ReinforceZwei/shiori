@@ -9,6 +9,8 @@ import {
   KeyboardSensor,
   useSensor,
   useSensors,
+  TouchSensor,
+  MouseSensor,
 } from '@dnd-kit/core';
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type {
@@ -45,9 +47,12 @@ export function useMultiContainerDnd<T extends DndItem = DndItem>(
   // Configure sensors with activation constraints
   // This prevents accidental drags on click - user must drag 8px or wait 250ms
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    // useSensor(PointerSensor),
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, {
       activationConstraint: {
-        distance: 8, // Require 8px of movement before drag starts
+        delay: 250,
+        tolerance: 8,
       },
     }),
     useSensor(KeyboardSensor, {

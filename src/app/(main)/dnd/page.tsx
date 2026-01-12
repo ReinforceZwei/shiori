@@ -172,7 +172,7 @@ export default function DndPage() {
                 id={container.id}
                 data={{ type: "container", containerId: container.id }}
                 restrictDirection="vertical"
-                disabled={!editMode || (isUncollected && activeType === "container")} // Disable sorting for uncollected
+                disabled={!editMode || isUncollected} // Disable sorting for uncollected
               >
                 <Stack
                   style={{
