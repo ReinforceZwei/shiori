@@ -1,6 +1,24 @@
-# Shiori (栞ちゃん)
+![Shiori Logo](shiori-chan-banner.png)
+
+# 栞ちゃん Shiori Chan
 
 A modern, beautiful bookmark manager built with Next.js that helps you organize and access your favorite websites with style.
+
+## What is this?
+
+- A self-hosted bookmark manager web application
+- Carry your bookmarks with you, accessible from any device, no more browser lock-in
+- Homepage for your browser to quick access to your favorite sites
+- Focused on user experience, customization, and performance
+- _Very Cute_ mascot named "Shiori-chan" (栞ちゃん)
+
+## This is not...
+
+- A browser extension to manage bookmarks
+- A web clipper
+- A read-it-later service
+
+Shiori don't save the actual webpage content, only the bookmark link.
 
 ## ✨ Features
 
@@ -8,7 +26,7 @@ A modern, beautiful bookmark manager built with Next.js that helps you organize 
 - **Create & Edit Bookmarks**: Save URLs with titles, descriptions, and automatically fetched metadata
 - **Website Icons**: Automatically fetch and store website favicons
 - **Smart Organization**: Group bookmarks into collections with custom colors and descriptions
-- **Bulk Import**: Import bookmarks from browser export files (JSON format)
+- **Bulk Import**: Import bookmarks from browser export files (HTML format)
 
 ### 🎨 Flexible Layouts
 - **Launcher Mode**: A launcher-style grid interface with customizable density and visual effects
@@ -32,7 +50,7 @@ A modern, beautiful bookmark manager built with Next.js that helps you organize 
 - Translation ready, contribution welcome!
 
 ### 📱 Responsive Design
-- **Mobile & Desktop**: Optimized for all device sizes
+- **Mobile & Desktop**: Optimized for all device sizes, PWA ready
 - **Device-specific Wallpapers**: Set different wallpapers for mobile and desktop
 
 ## 🚀 Getting Started
