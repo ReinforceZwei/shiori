@@ -324,7 +324,7 @@ export function BookmarkLauncherGrid({
               id={"uncollected"}
               data={{ type: "container", containerId: "uncollected" }}
               restrictDirection="vertical"
-              disabled={activeType === "container"} // Disable sorting for uncollected
+              disabled={!editMode || activeType === "container"} // Disable sorting for uncollected
             >
               <SortableContext
                 items={
