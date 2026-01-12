@@ -321,5 +321,15 @@
     "password_description": "You must enter your current password to delete your account",
     "cancel_button": "Cancel",
     "delete_button": "Delete My Account"
+  },
+  "Error": {
+    "title": "Something Went Wrong",
+    "description": "An unexpected error has occurred. Don't worry, your data is safe.",
+    "error_details": "Error Details",
+    "unknown_error": "An unknown error occurred.",
+    "error_id": "Error ID",
+    "try_again": "Try Again",
+    "back_to_home": "Back to Home",
+    "help_text": "If this error persists, please check the console for more details or contact support."
   }
 }

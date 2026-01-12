@@ -321,5 +321,15 @@
     "password_description": "您必須輸入目前的密碼才能刪除帳戶",
     "cancel_button": "取消",
     "delete_button": "刪除我的帳戶"
+  },
+  "Error": {
+    "title": "發生錯誤",
+    "description": "發生未預期的錯誤。別擔心，您的資料是安全的。",
+    "error_details": "錯誤詳情",
+    "unknown_error": "發生未知錯誤。",
+    "error_id": "錯誤 ID",
+    "try_again": "重試",
+    "back_to_home": "返回首頁",
+    "help_text": "如果錯誤持續發生，請檢查控制台以獲取更多詳細資訊或聯絡支援。"
   }
 }
