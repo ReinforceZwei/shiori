@@ -123,27 +123,14 @@ export function useBookmarkContextMenu(options: BookmarkContextMenuOptions) {
   const items = useMemo(() => {
     const menuItems: ContextMenuItem[] = [];
 
-    // Browser actions group
-    const browserActions: ContextMenuItem[] = [];
-    
-    if (actions.openInNewTab) {
-      browserActions.push({
-        label: t('open_in_new_tab'),
-        icon: <IconExternalLink size={16} />,
-        onClick: handlers.handleOpenInNewTab,
+    // Edit action (first)
+    if (actions.edit) {
+      menuItems.push({
+        label: t('edit'),
+        icon: <IconEdit size={16} />,
+        onClick: handlers.handleEdit,
+        disabled: !onEdit,
       });
-    }
-
-    if (actions.openInNewWindow) {
-      browserActions.push({
-        label: t('open_in_new_window'),
-        icon: <IconWindow size={16} />,
-        onClick: handlers.handleOpenInNewWindow,
-      });
-    }
-
-    if (browserActions.length > 0) {
-      menuItems.push(...browserActions);
     }
 
     // Copy link action
@@ -158,33 +145,38 @@ export function useBookmarkContextMenu(options: BookmarkContextMenuOptions) {
       });
     }
 
-    // Edit/Delete actions group
-    const editActions: ContextMenuItem[] = [];
-
-    if (actions.edit) {
-      editActions.push({
-        label: t('edit'),
-        icon: <IconEdit size={16} />,
-        onClick: handlers.handleEdit,
-        disabled: !onEdit,
+    // Browser actions group
+    if (actions.openInNewTab) {
+      if (menuItems.length > 0) {
+        menuItems.push({ type: 'divider' });
+      }
+      menuItems.push({
+        label: t('open_in_new_tab'),
+        icon: <IconExternalLink size={16} />,
+        onClick: handlers.handleOpenInNewTab,
       });
     }
 
+    if (actions.openInNewWindow) {
+      menuItems.push({
+        label: t('open_in_new_window'),
+        icon: <IconWindow size={16} />,
+        onClick: handlers.handleOpenInNewWindow,
+      });
+    }
+
+    // Delete action (last)
     if (actions.delete) {
-      editActions.push({
+      if (menuItems.length > 0) {
+        menuItems.push({ type: 'divider' });
+      }
+      menuItems.push({
         label: t('delete'),
         color: 'red',
         icon: <IconTrash size={16} />,
         onClick: handlers.handleDelete,
         disabled: !onDelete,
       });
-    }
-
-    if (editActions.length > 0) {
-      if (menuItems.length > 0) {
-        menuItems.push({ type: 'divider' });
-      }
-      menuItems.push(...editActions);
     }
 
     return menuItems;
