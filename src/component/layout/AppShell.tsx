@@ -92,14 +92,20 @@ export default function AppShell({
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
-            <Image
-              src="/icon.png"
-              alt="Logo"
-              width={32}
-              height={32}
-              style={{ marginLeft: 8, borderRadius: 8 }}
-            />
-            <Title order={2}>{tMetadata("title")}</Title>
+            <Group
+              gap="xs"
+              style={{ cursor: "pointer" }}
+              onClick={() => router.push("/")}
+            >
+              <Image
+                src="/icon.png"
+                alt="Logo"
+                width={32}
+                height={32}
+                style={{ marginLeft: 8, borderRadius: 8 }}
+              />
+              <Title order={2}>{tMetadata("title")}</Title>
+            </Group>
           </Group>
           <Group>
             <SearchButton label={t("search")} onClick={() => storeActions.open()} />
