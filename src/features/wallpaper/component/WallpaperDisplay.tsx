@@ -28,7 +28,7 @@ export function WallpaperDisplay({
   cycleIntervalMs = 60 * 60 * 1000 // Default: 1 hour
 }: WallpaperDisplayProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPortrait, setIsPortrait] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
   const isInitialMount = useRef(true);
 
   // Detect screen orientation (portrait vs landscape)
