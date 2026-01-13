@@ -312,9 +312,11 @@ export function BookmarkLauncherGrid({
     <DndContext {...dndContextProps}>
       <AppContainer fluid py="xl">
         <SortableContext
-          items={["uncollected", ...collections.map((c) => c.id)]}
+          // items={["uncollected", ...collections.map((c) => c.id)]}
+          items={containerIds}
           strategy={verticalListSortingStrategy}
         >
+          {/* TODO: Better rendering container logic, use single .map to loop containers */}
           {/* Uncollected Bookmarks Section */}
           {((uncollected?.items && uncollected.items.length > 0) ||
             itemSourceContainerId === "uncollected" ||
@@ -326,37 +328,37 @@ export function BookmarkLauncherGrid({
               restrictDirection="vertical"
               disabled={!editMode || activeType === "container"} // Disable sorting for uncollected
             >
-              <SortableContext
-                items={
-                  uncollected?.items
-                    ? uncollected.items.map((item) => item.id)
-                    : []
-                }
-                strategy={rectSortingStrategy}
+              <SimpleGrid
+                cols={config.cols}
+                spacing={config.spacing}
+                verticalSpacing={config.spacing}
+                mb={collections.length > 0 ? "xl" : undefined}
+                py={8}
+                style={{
+                  border: `2px solid ${
+                    activeContainerId === "uncollected" &&
+                    itemSourceContainerId !== "uncollected"
+                      ? theme.colors.green[6]
+                      : "transparent"
+                  }`,
+                  borderRadius: "16px",
+                  backgroundColor:
+                    activeContainerId === "uncollected" &&
+                    itemSourceContainerId !== "uncollected"
+                      ? alpha(theme.colors.green[0], 0.5)
+                      : "transparent",
+                  transition: "all 0.2s ease",
+                }}
               >
-                <SimpleGrid
-                  cols={config.cols}
-                  spacing={config.spacing}
-                  verticalSpacing={config.spacing}
-                  mb={collections.length > 0 ? "xl" : undefined}
-                  py={8}
-                  style={{
-                    border: `2px solid ${
-                      activeContainerId === "uncollected" &&
-                      itemSourceContainerId !== "uncollected"
-                        ? theme.colors.green[6]
-                        : "transparent"
-                    }`,
-                    borderRadius: "16px",
-                    backgroundColor:
-                      activeContainerId === "uncollected" &&
-                      itemSourceContainerId !== "uncollected"
-                        ? alpha(theme.colors.green[0], 0.5)
-                        : "transparent",
-                    transition: "all 0.2s ease",
-                  }}
+                <AddBookmarkLauncherItem size={config.size} />
+                <SortableContext
+                  items={
+                    uncollected?.items
+                      ? uncollected.items.map((item) => item.id)
+                      : []
+                  }
+                  strategy={rectSortingStrategy}
                 >
-                  <AddBookmarkLauncherItem size={config.size} />
                   {uncollected?.items &&
                     uncollected.items.length > 0 &&
                     uncollected.items.map((bookmark) => (
@@ -377,8 +379,8 @@ export function BookmarkLauncherGrid({
                         />
                       </SortableItem>
                     ))}
-                </SimpleGrid>
-              </SortableContext>
+                </SortableContext>
+              </SimpleGrid>
             </SortableItem>
           )}
 

@@ -12,6 +12,7 @@ import { type DragHandleProps } from "@/lib/dnd/components/SortableItem";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { BookmarkWithIcon, CollectionWithBookmarks } from "@/features/bookmark/types";
 import { deleteCollectionAction } from "@/app/actions/collection";
+import { useMemo } from "react";
 
 interface CollectionLauncherSectionProps {
   collection: CollectionWithBookmarks;
@@ -114,6 +115,10 @@ export function CollectionLauncherSection({
     });
   };
 
+  // SortableContext items need to be stable
+  // else will cause weired dragging transition behavior
+  const bookmarkIds = useMemo(() => collection.bookmark.map((item) => item.id), [collection.bookmark]);
+
   return (
     <Box
       style={{
@@ -197,7 +202,7 @@ export function CollectionLauncherSection({
         >
           <AddBookmarkLauncherItem size={size} collectionId={collection.id} />
           <SortableContext
-            items={collection.bookmark.map(item => item.id)}
+            items={bookmarkIds}
             strategy={rectSortingStrategy}
           >
             {collection.bookmark.map(bookmark => (

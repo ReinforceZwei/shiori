@@ -208,7 +208,7 @@ export default function DndPage() {
                     {isUncollected && " (Static Container)"}
                   </Text>
 
-                  <SimpleGrid cols={12} style={{ minHeight: "80px" }}>
+                  <SimpleGrid cols={6} style={{ minHeight: "80px" }}>
                     <SortableContext
                       items={container.items.map((item) => item.id)}
                       strategy={rectSortingStrategy}
