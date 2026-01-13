@@ -48,7 +48,11 @@ export function useMultiContainerDnd<T extends DndItem = DndItem>(
   // This prevents accidental drags on click - user must drag 8px or wait 250ms
   const sensors = useSensors(
     // useSensor(PointerSensor),
-    useSensor(MouseSensor),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      }
+    }),
     useSensor(TouchSensor, {
       activationConstraint: {
         delay: 250,
