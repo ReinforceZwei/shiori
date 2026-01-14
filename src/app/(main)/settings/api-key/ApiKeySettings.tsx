@@ -33,7 +33,7 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { createApiKeyAction, deleteApiKeyAction } from '@/app/actions/apiKey';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface ApiKeySettingsProps {
   apiKeys: Omit<ApiKey, "key">[]; // BetterAuth document says key is returned, but typescript says it's not
@@ -41,14 +41,24 @@ interface ApiKeySettingsProps {
 
 // Convert seconds to readable format
 // use string type because Select dont accept number as value
-const EXPIRATION_OPTIONS = [
-  { value: (30 * 24 * 60 * 60).toString(), label: '1 month' }, // 30 days
-  { value: (90 * 24 * 60 * 60).toString(), label: '3 months' }, // 90 days
-  { value: (180 * 24 * 60 * 60).toString(), label: '6 months' }, // 180 days
-  { value: (365 * 24 * 60 * 60).toString(), label: '1 year' }, // 365 days
-  { value: (3 * 365 * 24 * 60 * 60).toString(), label: '3 years' }, // 1095 days
-  { value: (5 * 365 * 24 * 60 * 60).toString(), label: '5 years' }, // 1825 days
-  { value: (3650 * 24 * 60 * 60).toString(), label: '10 years (you sure?)' }, // 3650 days
+const EXPIRATION_OPTIONS_VALUES = [
+  (30 * 24 * 60 * 60).toString(), // 30 days
+  (90 * 24 * 60 * 60).toString(), // 90 days
+  (180 * 24 * 60 * 60).toString(), // 180 days
+  (365 * 24 * 60 * 60).toString(), // 365 days
+  (3 * 365 * 24 * 60 * 60).toString(), // 1095 days
+  (5 * 365 * 24 * 60 * 60).toString(), // 1825 days
+  (3650 * 24 * 60 * 60).toString(), // 3650 days
+];
+
+const getExpirationOptions = (t: (key: string) => string) => [
+  { value: EXPIRATION_OPTIONS_VALUES[0], label: t('expiration_1_month') },
+  { value: EXPIRATION_OPTIONS_VALUES[1], label: t('expiration_3_months') },
+  { value: EXPIRATION_OPTIONS_VALUES[2], label: t('expiration_6_months') },
+  { value: EXPIRATION_OPTIONS_VALUES[3], label: t('expiration_1_year') },
+  { value: EXPIRATION_OPTIONS_VALUES[4], label: t('expiration_3_years') },
+  { value: EXPIRATION_OPTIONS_VALUES[5], label: t('expiration_5_years') },
+  { value: EXPIRATION_OPTIONS_VALUES[6], label: t('expiration_10_years') },
 ];
 
 const formatDate = (date: Date, locale: string = 'en-US') => {
@@ -69,15 +79,18 @@ type ApiKeyFormValues = z.infer<typeof apiKeyFormSchema>;
 
 export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettingsProps) {
   const locale = useLocale();
+  const t = useTranslations('Settings_ApiKey');
   const [apiKeys, setApiKeys] = useState(initialApiKeys);
   const [showForm, setShowForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createdKey, setCreatedKey] = useState<string | null>(null);
 
+  const expirationOptions = getExpirationOptions(t);
+
   const form = useForm<ApiKeyFormValues>({
     initialValues: {
       name: '',
-      expirationSeconds: EXPIRATION_OPTIONS[3].value, // 1 year
+      expirationSeconds: expirationOptions[3].value, // 1 year
     },
     validate: zodResolver(apiKeyFormSchema),
   });
@@ -103,16 +116,16 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
         form.reset();
       } else {
         notifications.show({
-          title: 'Error',
-          message: result.error || 'Failed to create API key',
+          title: t('error_title'),
+          message: result.error || t('create_error_message'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Error creating API key:', error);
       notifications.show({
-        title: 'Error',
-        message: 'An unexpected error occurred',
+        title: t('error_title'),
+        message: t('unexpected_error_message'),
         color: 'red',
       });
     } finally {
@@ -126,8 +139,8 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
 
       if (result.success) {
         notifications.show({
-          title: 'Success',
-          message: 'API key deleted successfully',
+          title: t('success_title'),
+          message: t('delete_success_message'),
           color: 'green',
         });
 
@@ -135,16 +148,16 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
         setApiKeys(apiKeys.filter((key) => key.id !== keyId));
       } else {
         notifications.show({
-          title: 'Error',
-          message: result.error || 'Failed to delete API key',
+          title: t('error_title'),
+          message: result.error || t('delete_error_message'),
           color: 'red',
         });
       }
     } catch (error) {
       console.error('Error deleting API key:', error);
       notifications.show({
-        title: 'Error',
-        message: 'An unexpected error occurred',
+        title: t('error_title'),
+        message: t('unexpected_error_message'),
         color: 'red',
       });
     }
@@ -161,7 +174,7 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
         <Group gap="sm" justify="space-between" wrap="wrap">
           <Group gap="sm">
             <IconKey size={24} />
-            <Title order={3}>API Keys</Title>
+            <Title order={3}>{t('title')}</Title>
           </Group>
           <Button
             leftSection={<IconPlus size={18} />}
@@ -169,13 +182,12 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
             variant="light"
             disabled={!!createdKey}
           >
-            New API Key
+            {t('new_api_key_button')}
           </Button>
         </Group>
 
         <Text size="sm" c="dimmed">
-          API keys allow you to authenticate and access Shiori from API and browser extensions.
-          Keep your keys secure and never share them publicly.
+          {t('description')}
         </Text>
 
         <Divider my="xs" />
@@ -184,7 +196,7 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
         {createdKey && (
           <Alert
             icon={<IconAlertCircle size={16} />}
-            title="Your new API key"
+            title={t('created_key_alert_title')}
             color="blue"
             variant="light"
             withCloseButton
@@ -192,7 +204,7 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
           >
             <Stack gap="sm">
               <Text size="sm">
-                Make sure to copy your API key now. You won't be able to see it again!
+                {t('created_key_alert_message')}
               </Text>
               <Group gap="xs">
                 <TextInput
@@ -203,7 +215,7 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
                 />
                 <CopyButton value={createdKey}>
                   {({ copied, copy }) => (
-                    <Tooltip label={copied ? 'Copied!' : 'Copy'} withArrow>
+                    <Tooltip label={copied ? t('copy_tooltip_copied') : t('copy_tooltip')} withArrow>
                       <ActionIcon
                         color={copied ? 'teal' : 'blue'}
                         variant="filled"
@@ -226,18 +238,18 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
             <form onSubmit={form.onSubmit(handleCreateKey)}>
               <Stack gap="md">
                 <TextInput
-                  label="Name"
-                  placeholder="My API Key"
-                  description="A descriptive name for this API key"
+                  label={t('form_name_label')}
+                  placeholder={t('form_name_placeholder')}
+                  description={t('form_name_description')}
                   {...form.getInputProps('name')}
                   required
                 />
 
                 <Select
-                  label="Expiration"
-                  placeholder="Select expiration time"
-                  description="How long until this key expires"
-                  data={EXPIRATION_OPTIONS}
+                  label={t('form_expiration_label')}
+                  placeholder={t('form_expiration_placeholder')}
+                  description={t('form_expiration_description')}
+                  data={expirationOptions}
                   {...form.getInputProps('expirationSeconds')}
                   required
                 />
@@ -250,13 +262,13 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
                       form.reset();
                     }}
                   >
-                    Cancel
+                    {t('cancel_button')}
                   </Button>
                   <Button
                     type="submit"
                     loading={isCreating}
                   >
-                    Create API Key
+                    {t('create_button')}
                   </Button>
                 </Group>
               </Stack>
@@ -267,18 +279,18 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
         {/* API Keys Table */}
         {apiKeys.length === 0 ? (
           <Alert icon={<IconAlertCircle size={16} />} color="blue" variant="light">
-            No API keys yet. Create one to get started!
+            {t('empty_state_message')}
           </Alert>
         ) : (
           <Box style={{ overflowX: 'auto' }}>
             <Table striped highlightOnHover>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Created</Table.Th>
-                  <Table.Th>Expires</Table.Th>
-                  <Table.Th>Last Used</Table.Th>
-                  <Table.Th style={{ width: 80 }}>Actions</Table.Th>
+                  <Table.Th>{t('table_header_name')}</Table.Th>
+                  <Table.Th>{t('table_header_created')}</Table.Th>
+                  <Table.Th>{t('table_header_expires')}</Table.Th>
+                  <Table.Th>{t('table_header_last_used')}</Table.Th>
+                  <Table.Th style={{ width: 80 }}>{t('table_header_actions')}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -294,16 +306,16 @@ export default function ApiKeySettings({ apiKeys: initialApiKeys }: ApiKeySettin
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm" c="dimmed">
-                        {key.expiresAt ? formatDate(key.expiresAt, locale) : 'Never'}
+                        {key.expiresAt ? formatDate(key.expiresAt, locale) : t('never')}
                       </Text>
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm" c="dimmed">
-                        {key.lastRequest ? formatDate(key.lastRequest, locale) : 'Never'}
+                        {key.lastRequest ? formatDate(key.lastRequest, locale) : t('never')}
                       </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Tooltip label="Delete" withArrow>
+                      <Tooltip label={t('delete_tooltip')} withArrow>
                         <ActionIcon
                           color="red"
                           variant="subtle"
