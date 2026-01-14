@@ -8,8 +8,8 @@ import { Notifications } from '@mantine/notifications';
 import { NextIntlClientProvider } from 'next-intl';
 import ShioriModalProvider from '@/modals/modal.provider'
 import QueryProvider from '@/component/provider/QueryProvider';
-import theme, { mintGreen } from '@/lib/theme';
-import { notoSansMono, notoSansTC } from '@/lib/font';
+import { theme, mintGreen } from '@/lib/theme';
+import { notoSansMono, notoSansTC } from '@/lib/theme/font';
 import { IntlClientProvider } from '@/i18n/provider';
 import { headers } from 'next/headers';
 import { getLocaleFromHeader, locales } from '@/i18n/locale';
@@ -53,9 +53,10 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
-import '@/lib/theme.css';
+import '@/lib/theme/theme.css';
 import { ColorScheme } from '@/component/ColorSchemeSwitcher';
 import { ContextMenuProvider } from '@/lib/context-menu';
+import { SetColorSchemeScript } from '@/lib/theme/SetColorSchemeScript';
 
 export default async function RootLayout({
   children,
@@ -73,13 +74,19 @@ export default async function RootLayout({
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript />
+        <SetColorSchemeScript colorScheme={colorScheme} />
+        <ColorSchemeScript
+          defaultColorScheme={colorScheme}
+        />
       </head>
       <body className={`${notoSansMono.variable} ${notoSansTC.variable}`}>
         <AppConfigProvider config={clientConfig}>
           <NextIntlClientProvider>
             <IntlClientProvider>
-              <MantineProvider theme={theme}>
+              <MantineProvider
+                theme={theme}
+                defaultColorScheme={colorScheme}
+              >
                 <QueryProvider>
                   <ShioriModalProvider>
                     <ContextMenuProvider>
