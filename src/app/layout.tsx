@@ -17,6 +17,7 @@ import { getTranslations } from 'next-intl/server';
 import { getColorSchemeAction, getLocaleAction } from './actions/settings';
 import { getClientConfig } from '@/lib/config';
 import { AppConfigProvider } from '@/lib/config/client';
+import { config } from '@/lib/config';
 
 export async function generateMetadata(): Promise<Metadata> {
   let locale: (typeof locales)[number] = "en-US";
@@ -33,6 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${t('title')}`,
     },
     description: t('description'),
+    metadataBase: new URL(config.auth.url),
     appleWebApp: {
       capable: true,
       statusBarStyle: 'default',
