@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { apiKey } from "better-auth/plugins"
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
@@ -25,7 +26,10 @@ export const auth = betterAuth({
     deleteUser: {
       enabled: true,
     }
-  }
+  },
+  plugins: [
+    apiKey(),
+  ],
 });
 
 export type ServerSession = Awaited<ReturnType<typeof auth.api.getSession>>; // type for session object
