@@ -31,7 +31,7 @@ import {
 } from '@/app/actions/wallpaper';
 import { notifications } from '@mantine/notifications';
 import { useQueryClient } from '@tanstack/react-query';
-import WallpaperGrid from './wallpaper/WallpaperGrid';
+import WallpaperGrid from './WallpaperGrid';
 import { fileToBase64 } from '@/lib/utils/image';
 
 const MAX_WALLPAPERS = 5;
@@ -47,6 +47,8 @@ export default function WallpaperSettings({ initialWallpapers }: WallpaperSettin
   const { data: wallpapers, isLoading } = useBackgroundImagesQuery({ 
     initialData: initialWallpapers 
   });
+  // We use API route to upload wallpaper because server action has size limit
+  // can increase size limit, but i dont want to add extra complexity :P
   const { mutate: createWallpaper, isPending: isUploading } = useCreateBackgroundImageMutation();
   const { mutate: updateWallpaper } = useUpdateBackgroundImageMutation();
   const [uploadingFile, setUploadingFile] = useState<File | null>(null);

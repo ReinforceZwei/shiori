@@ -26,9 +26,9 @@ import {
   DEFAULT_GRID_LAYOUT_CONFIG,
   DEFAULT_LIST_LAYOUT_CONFIG,
 } from "@/features/settings/layout-config";
-import LauncherLayoutOptions from "./layoutOption/LauncherLayoutOptions";
-import GridLayoutOptions from "./layoutOption/GridLayoutOptions";
-import ListLayoutOptions from "./layoutOption/ListLayoutOptions";
+import LauncherLayoutOptions from "./LauncherLayoutOptions";
+import GridLayoutOptions from "./GridLayoutOptions";
+import ListLayoutOptions from "./ListLayoutOptions";
 
 type LayoutMode = "launcher" | "grid" | "list";
 type LayoutConfig = z.infer<typeof layoutConfigSchema>;
@@ -173,3 +173,4 @@ export default function LayoutSettings({
     </Paper>
   );
 }
+

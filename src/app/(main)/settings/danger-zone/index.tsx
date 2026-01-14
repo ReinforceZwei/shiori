@@ -18,7 +18,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { SettingRow } from '@/component/settings';
 
-export default function DangerZoneSettings() {
+export default function DangerZoneSection() {
   const t = useTranslations('Settings_DangerZone');
 
   return (

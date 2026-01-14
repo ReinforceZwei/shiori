@@ -28,7 +28,11 @@ export const auth = betterAuth({
     }
   },
   plugins: [
-    apiKey(),
+    apiKey({
+      keyExpiration: {
+        maxExpiresIn: 3650, // 10 years
+      }
+    }),
   ],
 });
 
