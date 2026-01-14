@@ -28,7 +28,7 @@ export function WallpaperDisplay({
   cycleIntervalMs = 60 * 60 * 1000 // Default: 1 hour
 }: WallpaperDisplayProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+  const [isPortrait, setIsPortrait] = useState(false);
   const isInitialMount = useRef(true);
 
   // Detect screen orientation (portrait vs landscape)
@@ -87,6 +87,15 @@ export function WallpaperDisplay({
       isInitialMount.current = false;
     }
   }, [filteredWallpapers.length]);
+
+  useEffect(() => {
+    // Fix a bug that currentIndex out of bound when isPortrait changed
+    // and filteredWallpapers recalculated
+    if (filteredWallpapers.length > 0 && currentIndex >= filteredWallpapers.length) {
+      const randomIndex = Math.floor(Math.random() * filteredWallpapers.length);
+      setCurrentIndex(randomIndex);
+    }
+  }, [filteredWallpapers.length, currentIndex]);
 
   // Get the current wallpaper to display
   const currentWallpaper = filteredWallpapers[currentIndex];
