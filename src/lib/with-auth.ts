@@ -5,11 +5,12 @@ import { ZodError } from 'zod';
 import { Prisma } from '@/lib/prisma';
 
 /**
- * Type for authenticated user from Better Auth session
+ * Type for authenticated user in route context
+ * Simplified to only include id since API key authentication doesn't return full user data
  */
-type AuthenticatedUser = NonNullable<
-  Awaited<ReturnType<typeof auth.api.getSession>>
->['user'];
+type AuthenticatedUser = {
+  id: string;
+};
 
 /**
  * Route handler with authenticated user in context
@@ -21,6 +22,10 @@ type AuthenticatedRouteHandler<T = any> = (
 
 /**
  * Higher-order function that wraps API route handlers with authentication
+ * 
+ * Supports two authentication methods:
+ * 1. API Key (via x-api-key header)
+ * 2. Cookie session (default Better Auth flow)
  * 
  * Usage:
  * ```ts
@@ -38,7 +43,34 @@ export function withAuth<T = any>(
     routeContext: { params: T }
   ): Promise<Response> => {
     try {
-      // Get session (Better Auth uses cookie cache for performance)
+      // Check for API key authentication
+      const apiKey = request.headers.get('x-api-key');
+      
+      if (apiKey) {
+        // Verify API key using Better Auth
+        const verificationResult = await auth.api.verifyApiKey({
+          headers: request.headers as any,
+          body: {
+            key: apiKey
+          }
+        });
+
+        // Check if verification was successful
+        if (!verificationResult.valid || !verificationResult.key) {
+          return NextResponse.json(
+            { error: 'Invalid API key', code: ERROR_CODES.UNAUTHORIZED },
+            { status: 401 }
+          );
+        }
+
+        // Call handler with API key authenticated context
+        return await handler(request, {
+          ...routeContext,
+          user: { id: verificationResult.key.userId }
+        });
+      }
+
+      // Fall back to cookie session authentication
       const session = await auth.api.getSession({
         headers: request.headers as any
       });
@@ -50,10 +82,10 @@ export function withAuth<T = any>(
         );
       }
 
-      // Call handler with authenticated context
+      // Call handler with session authenticated context
       return await handler(request, {
         ...routeContext,
-        user: session.user
+        user: { id: session.user.id }
       });
 
     } catch (error) {
