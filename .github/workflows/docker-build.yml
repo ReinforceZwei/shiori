@@ -192,6 +192,14 @@ jobs:
       # STEP 5: Build and Push App Image
       # =============================================================================
       
+      - name: Generate build timestamp
+        id: build_time
+        run: |
+          # Use current time when CI runs
+          BUILD_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "timestamp=$BUILD_TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "Build timestamp: $BUILD_TIMESTAMP"
+      
       - name: Extract metadata for app image
         id: meta
         uses: docker/metadata-action@v5
@@ -211,7 +219,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             APP_VERSION=${{ steps.version.outputs.version }}
-            BUILD_TIME=${{ github.event.head_commit.timestamp }}
+            BUILD_TIME=${{ steps.build_time.outputs.timestamp }}
           cache-from: type=registry,ref=${{ steps.image_names.outputs.app_image }}:buildcache
           cache-to: type=registry,ref=${{ steps.image_names.outputs.app_image }}:buildcache,mode=max
       
