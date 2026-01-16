@@ -13,6 +13,11 @@ export default defineConfig({
       "storage", // Required to save extension config (API key, instance URL)
     ],
     host_permissions: ["http://*/", "http://*/*", "https://*/", "https://*/*"],
+    browser_specific_settings: {
+      gecko: {
+        id: "shiori-chan@reinforce.moe",
+      }
+    },
     commands: {
       // Chrome uses Manifest V3 with _execute_action
       // Firefox uses Manifest V2 with _execute_browser_action

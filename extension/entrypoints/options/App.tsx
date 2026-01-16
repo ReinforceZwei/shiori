@@ -1,6 +1,34 @@
 import ShioriLogo from '@/assets/icon.png';
 import './App.css';
 import { useSettings } from './hooks/useSettings';
+import {
+  Container,
+  Paper,
+  Stack,
+  Group,
+  Image,
+  Title,
+  TextInput,
+  PasswordInput,
+  Button,
+  Alert,
+  Loader,
+  Center,
+  Text,
+  Divider,
+  List,
+  ThemeIcon,
+  Box,
+} from '@mantine/core';
+import {
+  IconCheck,
+  IconAlertCircle,
+  IconWorld,
+  IconKey,
+  IconDeviceFloppy,
+  IconTrash,
+  IconInfoCircle,
+} from '@tabler/icons-react';
 
 function App() {
   const {
@@ -27,86 +55,161 @@ function App() {
 
   if (loading) {
     return (
-      <div className="options-container">
-        <p>Loading...</p>
-      </div>
+      <Container size="sm" py="xl">
+        <Center style={{ minHeight: '400px' }}>
+          <Stack align="center" gap="md">
+            <Loader size="lg" />
+            <Text c="dimmed">Loading settings...</Text>
+          </Stack>
+        </Center>
+      </Container>
     );
   }
 
   return (
-    <div className="options-container">
-      <header>
-        <img src={ShioriLogo} alt="Shiori Chan Logo" width={48} height={48} />
-        <h1>Shiori Chan Settings</h1>
-      </header>
+    <Container size="sm" py="xl">
+      <Stack gap="xl">
+        {/* Header */}
+        <Group justify="center" gap="md">
+          <Image src={ShioriLogo} alt="Shiori Chan Logo" w={48} h={48} />
+          <Title order={1} c="blue">
+            Shiori Chan Settings
+          </Title>
+        </Group>
 
-      <form onSubmit={handleSave}>
-        <div className="form-group">
-          <label htmlFor="instanceUrl">
-            Shiori Chan Instance URL
-            <span className="required">*</span>
-          </label>
-          <input
-            type="url"
-            id="instanceUrl"
-            value={settings.instanceUrl}
-            onChange={(e) => updateSetting('instanceUrl', e.target.value)}
-            placeholder="https://your-shiori-instance.com"
-            required
-          />
-          <small>The URL of your self-hosted Shiori Chan instance</small>
-        </div>
+        <Divider />
 
-        <div className="form-group">
-          <label htmlFor="apiKey">
-            API Key
-            <span className="required">*</span>
-          </label>
-          <input
-            type="password"
-            id="apiKey"
-            value={settings.apiKey}
-            onChange={(e) => updateSetting('apiKey', e.target.value)}
-            placeholder="Enter your API key"
-            required
-          />
-          <small>Your Shiori Chan API key for authentication</small>
-        </div>
+        {/* Main Settings Form */}
+        <Paper shadow="md" p="xl" radius="md" withBorder>
+          <form onSubmit={handleSave}>
+            <Stack gap="lg">
+              <Title order={3} size="h4" c="dimmed">
+                Connection Settings
+              </Title>
 
-        <div className="button-group">
-          <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Settings'}
-          </button>
-          <button type="button" onClick={handleClear} className="btn-secondary" disabled={saving}>
-            Clear Settings
-          </button>
-        </div>
+              {/* Instance URL */}
+              <TextInput
+                label="Instance URL"
+                placeholder="https://your-shiori-instance.com"
+                description="The URL of your self-hosted Shiori Chan instance"
+                value={settings.instanceUrl}
+                onChange={(e) => updateSetting('instanceUrl', e.target.value)}
+                leftSection={
+                  <ThemeIcon size="sm" variant="light" color="blue">
+                    <IconWorld size={16} />
+                  </ThemeIcon>
+                }
+                required
+                withAsterisk
+                size="md"
+              />
 
-        {error && (
-          <div className="error-message">
-            ✗ {error}
-          </div>
-        )}
+              {/* API Key */}
+              <PasswordInput
+                label="API Key"
+                placeholder="Enter your API key"
+                description="Your Shiori Chan API key for authentication"
+                value={settings.apiKey}
+                onChange={(e) => updateSetting('apiKey', e.target.value)}
+                leftSection={
+                  <ThemeIcon size="sm" variant="light" color="grape">
+                    <IconKey size={16} />
+                  </ThemeIcon>
+                }
+                required
+                withAsterisk
+                size="md"
+              />
 
-        {saved && (
-          <div className="success-message">
-            ✓ Settings saved successfully!
-          </div>
-        )}
-      </form>
+              {/* Action Buttons */}
+              <Group justify="flex-start" mt="md">
+                <Button
+                  type="submit"
+                  leftSection={<IconDeviceFloppy size={18} />}
+                  loading={saving}
+                  size="md"
+                >
+                  Save Settings
+                </Button>
+                <Button
+                  type="button"
+                  variant="light"
+                  color="red"
+                  leftSection={<IconTrash size={18} />}
+                  onClick={handleClear}
+                  disabled={saving}
+                  size="md"
+                >
+                  Clear Settings
+                </Button>
+              </Group>
 
-      <footer>
-        <p>
-          <strong>How to get your API key:</strong>
-        </p>
-        <ol>
-          <li>Log in to your Shiori Chan instance</li>
-          <li>Go to Settings → API Key</li>
-          <li>Generate a new API key</li>
-          <li>Copy and paste it here</li>
-        </ol>
-      </footer>
-    </div>
+              {/* Success Message */}
+              {saved && (
+                <Alert
+                  icon={<IconCheck size={16} />}
+                  title="Success!"
+                  color="green"
+                  variant="light"
+                  withCloseButton={false}
+                >
+                  Settings saved successfully!
+                </Alert>
+              )}
+
+              {/* Error Message */}
+              {error && (
+                <Alert
+                  icon={<IconAlertCircle size={16} />}
+                  title="Error"
+                  color="red"
+                  variant="light"
+                >
+                  {error}
+                </Alert>
+              )}
+            </Stack>
+          </form>
+        </Paper>
+
+        {/* Instructions */}
+        <Paper shadow="sm" p="lg" radius="md" withBorder bg="blue.0">
+          <Stack gap="md">
+            <Group gap="xs">
+              <ThemeIcon size="md" variant="light" color="blue">
+                <IconInfoCircle size={18} />
+              </ThemeIcon>
+              <Title order={4} size="h5">
+                How to get your API key
+              </Title>
+            </Group>
+
+            <List
+              spacing="xs"
+              size="sm"
+              center
+              icon={
+                <ThemeIcon size={20} radius="xl" color="blue" variant="light">
+                  <IconCheck size={12} />
+                </ThemeIcon>
+              }
+            >
+              <List.Item>Log in to your Shiori Chan instance</List.Item>
+              <List.Item>Go to Settings → API Key</List.Item>
+              <List.Item>Generate a new API key</List.Item>
+              <List.Item>Copy and paste it here</List.Item>
+            </List>
+          </Stack>
+        </Paper>
+
+        {/* Footer */}
+        <Box ta="center">
+          <Text size="sm" c="dimmed">
+            Shiori Chan Browser Extension v0.0.0
+          </Text>
+        </Box>
+      </Stack>
+    </Container>
   );
 }
 
