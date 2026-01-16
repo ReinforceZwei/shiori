@@ -10,7 +10,29 @@ const defaultSettings: ExtensionSettings = {
   apiKey: '',
 };
 
-export function useSettings() {
+export interface UseExtensionSettingsReturn {
+  settings: ExtensionSettings;
+  updateSetting: <K extends keyof ExtensionSettings>(
+    key: K,
+    value: ExtensionSettings[K]
+  ) => void;
+  save: () => Promise<boolean>;
+  clear: () => Promise<boolean>;
+  loading: boolean;
+  saving: boolean;
+  saved: boolean;
+  error: string | null;
+  isConfigured: boolean;
+}
+
+/**
+ * Hook for managing extension settings with full CRUD operations
+ * 
+ * @example
+ * const { settings, updateSetting, save, clear, loading, saving, saved, error, isConfigured } = 
+ *   useExtensionSettings();
+ */
+export function useExtensionSettings(): UseExtensionSettingsReturn {
   const [settings, setSettings] = useState<ExtensionSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -21,20 +43,41 @@ export function useSettings() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const result = await browser.storage.sync.get(['instanceUrl', 'apiKey']) as ExtensionSettings;
+        const result = await browser.storage.sync.get(['instanceUrl', 'apiKey']);
+        
         setSettings({
           instanceUrl: result.instanceUrl || '',
           apiKey: result.apiKey || '',
-        });
+        } as ExtensionSettings);
+        setLoading(false);
       } catch (err) {
-        console.error('Error loading settings:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load settings');
-      } finally {
+        console.error('Error loading extension settings:', err);
+        const errorMsg = err instanceof Error ? err.message : 'Failed to load settings';
+        setError(errorMsg);
         setLoading(false);
       }
     };
 
     loadSettings();
+
+    // Listen for changes to settings
+    const handleStorageChange = (
+      changes: Record<string, Browser.storage.StorageChange>,
+      areaName: string
+    ) => {
+      if (areaName === 'sync') {
+        setSettings((prev) => ({
+          instanceUrl: (changes.instanceUrl?.newValue as string) ?? prev.instanceUrl,
+          apiKey: (changes.apiKey?.newValue as string) ?? prev.apiKey,
+        }));
+      }
+    };
+
+    browser.storage.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      browser.storage.onChanged.removeListener(handleStorageChange);
+    };
   }, []);
 
   // Update a single setting field
@@ -64,7 +107,8 @@ export function useSettings() {
       return true;
     } catch (err) {
       console.error('Error saving settings:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save settings');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to save settings';
+      setError(errorMsg);
       return false;
     } finally {
       setSaving(false);
@@ -81,27 +125,23 @@ export function useSettings() {
       return true;
     } catch (err) {
       console.error('Error clearing settings:', err);
-      setError(err instanceof Error ? err.message : 'Failed to clear settings');
+      const errorMsg = err instanceof Error ? err.message : 'Failed to clear settings';
+      setError(errorMsg);
       return false;
     }
   }, []);
 
+  const isConfigured = !!(settings.instanceUrl && settings.apiKey);
+
   return {
-    // Settings object
     settings,
-    
-    // Setter
     updateSetting,
-    
-    // Actions
     save,
     clear,
-    
-    // States
     loading,
     saving,
     saved,
     error,
+    isConfigured,
   };
 }
-

@@ -1,6 +1,6 @@
 import ShioriLogo from '@/assets/icon.png';
 import './App.css';
-import { useCurrentTab } from './hooks/useCurrentTab';
+import { useCurrentTab } from '../../hooks';
 import {
   Stack,
   Group,

@@ -1,6 +1,6 @@
 import ShioriLogo from '@/assets/icon.png';
 import './App.css';
-import { useSettings } from './hooks/useSettings';
+import { useExtensionSettings } from '../../hooks';
 import {
   Container,
   Paper,
@@ -40,7 +40,7 @@ function App() {
     saving,
     saved,
     error,
-  } = useSettings();
+  } = useExtensionSettings();
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
