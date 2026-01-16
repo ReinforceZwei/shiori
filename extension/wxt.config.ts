@@ -8,6 +8,11 @@ export default defineConfig({
   },
   manifest: ({ browser, manifestVersion }) => ({
     name: "Shiori Chan",
+    permissions: [
+      "tabs", // Required to access tab title, url, and favIconUrl
+      "storage", // Required to save extension config (API key, instance URL)
+    ],
+    host_permissions: ["http://*/", "http://*/*", "https://*/", "https://*/*"],
     commands: {
       // Chrome uses Manifest V3 with _execute_action
       // Firefox uses Manifest V2 with _execute_browser_action
