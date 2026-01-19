@@ -178,6 +178,8 @@ model Bookmark {
   collection   Collection?  @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   collectionId String?
   websiteIcon  WebsiteIcon?
+
+  @@index([userId, url])
 }
 
 model Collection {

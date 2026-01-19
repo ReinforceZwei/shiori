@@ -111,6 +111,21 @@ export class BookmarkService extends ServiceBase {
   }
 
   /**
+   * Get all bookmarks by exact URL match
+   * @param params - url and userId
+   */
+  async getByUrl({ url, userId }: { url: string; userId: string }) {
+    const bookmarks = await this.prisma.bookmark.findMany({
+      where: {
+        url,
+        userId,
+      },
+      include: { websiteIcon: { select: { id: true }}},
+    });
+    return bookmarks;
+  }
+
+  /**
    * Create a new bookmark
    * @param data - Bookmark creation data
    */
