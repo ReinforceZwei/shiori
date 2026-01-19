@@ -20,12 +20,12 @@ export const GET = withAuth(async (request, { params, user }) => {
     throw new NotFoundError(`BackgroundImage(id: ${id}) not found`);
   }
 
-  // Return the image binary data with appropriate content type
+  // Return the image binary data with appropriate content type, cache for 1 year
   return new Response(backgroundImage.data, {
     status: 200,
     headers: {
       'Content-Type': backgroundImage.mimeType,
-      'Cache-Control': 'public, max-age=604800, stale-while-revalidate=86400', // Cache for 1 week
+      'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
       'Last-Modified': backgroundImage.updatedAt.toUTCString(),
     }
   });
