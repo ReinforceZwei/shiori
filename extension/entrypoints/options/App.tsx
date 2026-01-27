@@ -1,6 +1,7 @@
 import ShioriLogo from '@/assets/icon.png';
 import './App.css';
-import { useExtensionSettings } from '../../hooks';
+import { useExtensionSettings, useShioriApi } from '../../hooks';
+import { useState } from 'react';
 import {
   Container,
   Paper,
@@ -41,16 +42,46 @@ function App() {
     saved,
     error,
   } = useExtensionSettings();
+  
+  const { testConnection } = useShioriApi();
+  
+  const [testError, setTestError] = useState<string | null>(null);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await save();
+    setTestError(null); // Clear any previous test errors
+    
+    // Test the connection before saving using the hook
+    const result = await testConnection(
+      settings.instanceUrl,
+      settings.apiKey
+    );
+    
+    if (!result.success) {
+      setTestError(result.error || 'Connection test failed');
+      return;
+    }
+    
+    // Connection successful, now save the settings
+    const saveSuccess = await save();
+    if (saveSuccess) {
+      setTestError(null); // Clear any errors on successful save
+    }
   };
 
   const handleClear = async () => {
     if (confirm('Are you sure you want to clear all settings?')) {
+      setTestError(null);
       await clear();
     }
+  };
+  
+  const handleSettingChange = <K extends keyof typeof settings>(
+    key: K,
+    value: string
+  ) => {
+    setTestError(null); // Clear test error when user makes changes
+    updateSetting(key, value);
   };
 
   if (loading) {
@@ -93,7 +124,7 @@ function App() {
                 placeholder="https://your-shiori-instance.com"
                 description="The URL of your self-hosted Shiori Chan instance"
                 value={settings.instanceUrl}
-                onChange={(e) => updateSetting('instanceUrl', e.target.value)}
+                onChange={(e) => handleSettingChange('instanceUrl', e.target.value)}
                 leftSection={
                   <ThemeIcon size="sm" variant="light" color="blue">
                     <IconWorld size={16} />
@@ -110,7 +141,7 @@ function App() {
                 placeholder="Enter your API key"
                 description="Your Shiori Chan API key for authentication"
                 value={settings.apiKey}
-                onChange={(e) => updateSetting('apiKey', e.target.value)}
+                onChange={(e) => handleSettingChange('apiKey', e.target.value)}
                 leftSection={
                   <ThemeIcon size="sm" variant="light" color="grape">
                     <IconKey size={16} />
@@ -145,7 +176,7 @@ function App() {
               </Group>
 
               {/* Success Message */}
-              {saved && (
+              {saved && !testError && (
                 <Alert
                   icon={<IconCheck size={16} />}
                   title="Success!"
@@ -153,19 +184,19 @@ function App() {
                   variant="light"
                   withCloseButton={false}
                 >
-                  Settings saved successfully!
+                  Connection test successful! Settings saved.
                 </Alert>
               )}
 
               {/* Error Message */}
-              {error && (
+              {(testError || error) && (
                 <Alert
                   icon={<IconAlertCircle size={16} />}
-                  title="Error"
+                  title="Connection Test Failed"
                   color="red"
                   variant="light"
                 >
-                  {error}
+                  {testError || error}
                 </Alert>
               )}
             </Stack>
