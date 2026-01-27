@@ -32,6 +32,8 @@ interface CollectionLauncherSectionProps {
   onEditBookmark: (bookmark: BookmarkWithIcon) => void;
   onDeleteBookmark: (bookmark: BookmarkWithIcon) => void;
   onEditCollection: (collection: CollectionWithBookmarks) => void;
+  onEnterEditMode?: () => void;
+  onExitEditMode?: () => void;
   isDropTarget?: boolean;
   dragHandleProps?: DragHandleProps;
   isExpanded: boolean;
@@ -49,6 +51,8 @@ export function CollectionLauncherSection({
   onEditBookmark,
   onDeleteBookmark,
   onEditCollection,
+  onEnterEditMode,
+  onExitEditMode,
   isDropTarget = false,
   dragHandleProps = undefined,
   isExpanded,
@@ -220,6 +224,8 @@ export function CollectionLauncherSection({
                   editMode={editMode}
                   onEdit={() => onEditBookmark(bookmark)}
                   onDelete={() => onDeleteBookmark(bookmark)}
+                  onEnterEditMode={onEnterEditMode}
+                  onExitEditMode={onExitEditMode}
                 />
               </SortableItem>
             ))}

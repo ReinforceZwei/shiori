@@ -297,7 +297,9 @@
     "copy_failed_title": "Failed to copy",
     "copy_failed_message": "Could not copy the link to clipboard",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "enter_edit_mode": "Enter edit mode",
+    "exit_edit_mode": "Exit edit mode"
   },
   "DeleteAccount": {
     "title": "Delete My Account",

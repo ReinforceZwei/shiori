@@ -16,6 +16,8 @@ interface BookmarkLauncherItemProps {
   editMode?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
+  onEnterEditMode?: () => void;
+  onExitEditMode?: () => void;
 }
 
 const SIZE_CONFIG = {
@@ -45,7 +47,9 @@ export function BookmarkLauncherItem({
   size = "medium", 
   editMode = false,
   onEdit,
-  onDelete 
+  onDelete,
+  onEnterEditMode,
+  onExitEditMode
 }: BookmarkLauncherItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const config = SIZE_CONFIG[size];
@@ -57,6 +61,9 @@ export function BookmarkLauncherItem({
     url,
     onEdit,
     onDelete,
+    onEnterEditMode,
+    onExitEditMode,
+    editMode,
   });
 
   const handleClick = (e: React.MouseEvent) => {

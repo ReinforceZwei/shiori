@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { IconEdit, IconTrash, IconExternalLink, IconCopy, IconWindow } from "@tabler/icons-react";
+import { IconEdit, IconTrash, IconExternalLink, IconCopy, IconWindow, IconPencil } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useTranslations } from "next-intl";
 import { ContextMenuItem, useContextMenu } from "@/lib/context-menu";
@@ -33,6 +33,21 @@ export interface BookmarkContextMenuOptions {
   onDelete?: () => void;
   
   /**
+   * Optional callback when enter edit mode is clicked
+   */
+  onEnterEditMode?: () => void;
+  
+  /**
+   * Optional callback when exit edit mode is clicked
+   */
+  onExitEditMode?: () => void;
+  
+  /**
+   * Whether currently in edit mode (to show/hide enter edit mode option)
+   */
+  editMode?: boolean;
+  
+  /**
    * Customize which actions to show
    */
   actions?: {
@@ -41,6 +56,8 @@ export interface BookmarkContextMenuOptions {
     copyLink?: boolean;
     edit?: boolean;
     delete?: boolean;
+    enterEditMode?: boolean;
+    exitEditMode?: boolean;
   };
 }
 
@@ -66,12 +83,17 @@ export function useBookmarkContextMenu(options: BookmarkContextMenuOptions) {
     url,
     onEdit,
     onDelete,
+    onEnterEditMode,
+    onExitEditMode,
+    editMode = false,
     actions = {
       openInNewTab: true,
       openInNewWindow: true,
       copyLink: true,
       edit: true,
       delete: true,
+      enterEditMode: true,
+      exitEditMode: true,
     },
   } = options;
 
@@ -110,14 +132,24 @@ export function useBookmarkContextMenu(options: BookmarkContextMenuOptions) {
       onDelete?.();
     };
 
+    const handleEnterEditMode = () => {
+      onEnterEditMode?.();
+    };
+
+    const handleExitEditMode = () => {
+      onExitEditMode?.();
+    };
+
     return {
       handleOpenInNewTab,
       handleOpenInNewWindow,
       handleCopyLink,
       handleEdit,
       handleDelete,
+      handleEnterEditMode,
+      handleExitEditMode,
     };
-  }, [url, onEdit, onDelete]);
+  }, [url, onEdit, onDelete, onEnterEditMode, onExitEditMode]);
 
   // Build menu items based on enabled actions
   const items = useMemo(() => {
@@ -130,6 +162,26 @@ export function useBookmarkContextMenu(options: BookmarkContextMenuOptions) {
         icon: <IconEdit size={16} />,
         onClick: handlers.handleEdit,
         disabled: !onEdit,
+      });
+    }
+
+    // Enter edit mode action (only show when not in edit mode)
+    if (actions.enterEditMode && !editMode) {
+      menuItems.push({
+        label: t('enter_edit_mode'),
+        icon: <IconPencil size={16} />,
+        onClick: handlers.handleEnterEditMode,
+        disabled: !onEnterEditMode,
+      });
+    }
+
+    // Exit edit mode action (only show when in edit mode)
+    if (actions.exitEditMode && editMode) {
+      menuItems.push({
+        label: t('exit_edit_mode'),
+        icon: <IconPencil size={16} />,
+        onClick: handlers.handleExitEditMode,
+        disabled: !onExitEditMode,
       });
     }
 
@@ -180,7 +232,7 @@ export function useBookmarkContextMenu(options: BookmarkContextMenuOptions) {
     }
 
     return menuItems;
-  }, [actions, handlers, onEdit, onDelete, t]);
+  }, [actions, handlers, onEdit, onDelete, onEnterEditMode, onExitEditMode, editMode, t]);
 
   // Apply context menu to items
   const { getTriggerProps } = useContextMenu({ items });

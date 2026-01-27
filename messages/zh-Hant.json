@@ -297,7 +297,9 @@
     "copy_failed_title": "複製失敗",
     "copy_failed_message": "無法將連結複製到剪貼簿",
     "edit": "編輯",
-    "delete": "刪除"
+    "delete": "刪除",
+    "enter_edit_mode": "進入編輯模式",
+    "exit_edit_mode": "退出編輯模式"
   },
   "DeleteAccount": {
     "title": "刪除我的帳戶",

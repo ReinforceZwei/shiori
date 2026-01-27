@@ -376,6 +376,8 @@ export function BookmarkLauncherGrid({
                           editMode={editMode}
                           onEdit={() => handleEditBookmark(bookmark)}
                           onDelete={() => handleDeleteBookmark(bookmark)}
+                          onEnterEditMode={() => setEditMode(true)}
+                          onExitEditMode={() => setEditMode(false)}
                         />
                       </SortableItem>
                     ))}
@@ -409,6 +411,8 @@ export function BookmarkLauncherGrid({
                     onEditBookmark={handleEditBookmark}
                     onDeleteBookmark={handleDeleteBookmark}
                     onEditCollection={handleEditCollection}
+                    onEnterEditMode={() => setEditMode(true)}
+                    onExitEditMode={() => setEditMode(false)}
                     isDropTarget={
                       activeContainerId === collection.id &&
                       itemSourceContainerId !== collection.id
